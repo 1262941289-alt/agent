@@ -14,7 +14,9 @@ spring:
         options:
           model: qwen2.5:1.5b
           temperature: 0.1
-          num-ctx: 2048
+          num-ctx: 1024
+          num-batch: 256
+          num-predict: 256
 
 # 筛选框架配置（可随业务调整）
 sk-agent:

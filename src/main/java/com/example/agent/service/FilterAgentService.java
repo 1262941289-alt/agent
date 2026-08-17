@@ -131,6 +131,49 @@ public class FilterAgentService {
     }
 
     /**
+     * 对单个数据项执行完整三阶段筛选（分层 → 属性 → 规则筛选决策），
+     * 并返回含分层 / 属性 / 决策的完整结果（用于闭环验证与排障）。
+     *
+     * @param itemId 数据项 ID
+     * @return 单个数据项的完整筛选结果
+     */
+    public FilterResult filterOneDetail(String itemId) {
+        long startNs = System.nanoTime();
+        filterStore.clear();
+
+        FilterResult result = new FilterResult();
+        result.setTaskId(itemId);
+
+        Optional<DataItem> item = dataRepository.findById(itemId);
+        String contentHash = item.map(i -> sha256(i.getContent())).orElse("");
+        FilterCache.Entry cached = filterCache.get(itemId, contentHash);
+        if (cached != null) {
+            result.getLayers().add(cached.layer);
+            result.getAttributes().add(cached.attributes);
+            result.getDecisions().add(cached.decision);
+            result.setCached(1);
+        } else {
+            ItemLayer layer = layeringService.layerItem(itemId);
+            ItemAttributes attributes = attributeExtractor.extractAttributes(itemId);
+            Decision decision = decide(itemId);
+            filterCache.put(itemId, contentHash, layer, attributes, decision);
+            result.getLayers().add(layer);
+            result.getAttributes().add(attributes);
+            result.getDecisions().add(decision);
+        }
+
+        result.setTotal(1);
+        result.setPassed(result.getDecisions().stream()
+                .filter(d -> "OK".equals(d.getStatus()) && d.isPassed()).count());
+        result.setRejected(result.getDecisions().stream()
+                .filter(d -> "OK".equals(d.getStatus()) && !d.isPassed()).count());
+        result.setFailed(result.getDecisions().stream()
+                .filter(d -> "FAILED".equals(d.getStatus())).count());
+        result.setCostMs((System.nanoTime() - startNs) / 1_000_000);
+        return result;
+    }
+
+    /**
      * 第三阶段核心：LLM 依据规则对数据项作出通过/拒绝决策。
      */
     private Decision decide(String itemId) {

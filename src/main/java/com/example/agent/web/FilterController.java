@@ -38,4 +38,13 @@ public class FilterController {
         // 先清空，再跑单条
         return filterAgentService.filterOne(itemId);
     }
+
+    /**
+     * 对单个数据项执行三阶段筛选并返回完整闭环结果（分层/属性/决策）。
+     * POST /api/filter/detail/{itemId}
+     */
+    @PostMapping("/detail/{itemId}")
+    public FilterResult detailOne(@PathVariable String itemId) {
+        return filterAgentService.filterOneDetail(itemId);
+    }
 }

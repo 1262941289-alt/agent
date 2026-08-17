@@ -64,26 +64,66 @@ public class LayeringService {
         return result;
     }
 
-    /** 从 LLM 文本响应中兜底解析分层结论（形如 {"itemId":"D001","layerCode":"L1","reason":"..."}） */
+    /** 从 LLM 文本响应中兜底解析分层结论（优先 JSON，其次纯文本正则） */
     private ItemLayer parseLayerFromText(String itemId, String response) {
         if (response == null || response.isBlank()) {
             return null;
         }
+        // 1) 尝试 JSON：形如 {"itemId":"D001","layerCode":"L1","reason":"..."}
         try {
             JsonNode root = objectMapper.readTree(PromptRenderer.extractJsonObject(response));
             String code = root.path("layerCode").asText(null);
             String reason = root.path("reason").asText(null);
-            if (code == null || code.isBlank()) {
-                return null;
+            String norm = code == null ? null : normalizeLayerCode(code);
+            if (norm != null) {
+                return buildLayer(itemId, norm, reason == null ? "（从文本兜底解析）" : reason);
             }
-            ItemLayer layer = new ItemLayer();
-            layer.setItemId(itemId);
-            layer.setLayerCode(code.trim());
-            layer.setReason(reason == null ? "（从文本兜底解析）" : reason);
-            return layer;
-        } catch (Exception ex) {
+        } catch (Exception ignored) {
+            // 继续尝试纯文本
+        }
+        // 2) 尝试纯文本：形如「数据项 D002 属于 L3 风险层」「分为第2层」「L1」
+        // 按优先级匹配，避免把数据项 ID（如 D002）误判为层编码
+        String[] patterns = {
+                "(?i)\\bL\\s*\\d+\\b",        // L3 / L 3
+                "第\\s*\\d+\\s*层",            // 第2层
+                "(?<![A-Za-z0-9])\\d+(?![A-Za-z0-9])"  // 独立数字 3（排除 D002 这类带前缀的编号）
+        };
+        for (String p : patterns) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile(p).matcher(response);
+            if (m.find()) {
+                String code = normalizeLayerCode(m.group(0));
+                if (code != null) {
+                    return buildLayer(itemId, code, "（从纯文本兜底解析）" + response.trim());
+                }
+            }
+        }
+        return null;
+    }
+
+    /** 归一化层编码：L3 / 第2层 / 3 -> L3；无法识别返回 null */
+    private String normalizeLayerCode(String raw) {
+        if (raw == null || raw.isBlank()) {
             return null;
         }
+        String s = raw.trim()
+                .replaceAll("第\\s*", "L")
+                .replaceAll("\\s*层", "")
+                .replaceAll("\\s+", "");
+        if (s.matches("(?i)L\\d+")) {
+            return s.toUpperCase();
+        }
+        if (s.matches("\\d+")) {
+            return "L" + s;
+        }
+        return null;
+    }
+
+    private ItemLayer buildLayer(String itemId, String code, String reason) {
+        ItemLayer layer = new ItemLayer();
+        layer.setItemId(itemId);
+        layer.setLayerCode(code);
+        layer.setReason(reason);
+        return layer;
     }
 
     private String renderLayers() {
