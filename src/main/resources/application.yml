@@ -1,0 +1,64 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: sk-agent
+  ai:
+    # 关闭 @Tool 方法的全局自动注册，由各阶段 ChatClient 显式绑定工具
+    tool-callbacks:
+      auto-register: false
+    ollama:
+      base-url: http://127.0.0.1:11434
+      chat:
+        options:
+          model: qwen2.5:1.5b
+          temperature: 0.1
+          num-ctx: 2048
+
+# 筛选框架配置（可随业务调整）
+sk-agent:
+  filter:
+    layers:
+      - code: L1
+        name: 高风险层
+        description: 存在明显重大风险、数据异常或涉及敏感要素的数据
+        order: 1
+      - code: L2
+        name: 中风险层
+        description: 存在部分风险特征、需要重点关注的异常数据
+        order: 2
+      - code: L3
+        name: 低风险层
+        description: 风险特征不明显、基本正常的数据
+        order: 3
+    attributes:
+      - key: 金额
+        description: 涉及金额，单位元；无金额填"无"
+      - key: 地区
+        description: 数据所属地区或国家
+      - key: 主体类型
+        description: 数据主体的类型，如个人/企业/机构等
+      - key: 风险特征
+        description: 数据中体现的风险点简述
+    rules:
+      - id: R1
+        action: REJECT
+        priority: 1
+        description: 若数据项被划分为 L1 高风险层，则直接拒绝
+      - id: R2
+        action: REJECT
+        priority: 2
+        description: 若数据项金额超过 500000 元（50 万），则拒绝
+      - id: R3
+        action: REJECT
+        priority: 3
+        description: 若数据项地区为"高风险地区"或"未知/境外敏感地区"，则拒绝
+      - id: R4
+        action: PASS
+        priority: 4
+        description: 其余情况一律通过
+
+logging:
+  level:
+    com.example.agent: INFO

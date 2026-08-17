@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据筛选 Agent 演示</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f5f7fa;
+            color: #1a1a2e;
+            padding: 24px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        }
+        .card h2 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #333;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-primary {
+            background: #4f6ef7;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #3b54d9;
+        }
+        .btn-primary:disabled {
+            background: #a0b0f0;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: #e8ecf4;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background: #d5dce8;
+        }
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .stat {
+            background: #f0f2f8;
+            border-radius: 8px;
+            padding: 12px 20px;
+            text-align: center;
+            min-width: 100px;
+        }
+        .stat .num {
+            font-size: 28px;
+            font-weight: 700;
+            color: #4f6ef7;
+        }
+        .stat .label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+        .stat.pass .num {
+            color: #22c55e;
+        }
+        .stat.reject .num {
+            color: #ef4444;
+        }
+        .stat.fail .num {
+            color: #f59e0b;
+        }
+        .stat.cost .num {
+            color: #8b5cf6;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th {
+            background: #f8f9fc;
+            text-align: left;
+            padding: 10px 12px;
+            font-weight: 600;
+            border-bottom: 2px solid #e8ecf4;
+            white-space: nowrap;
+        }
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eef1f7;
+            vertical-align: top;
+        }
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .tag-l1 {
+            background: #fce4e4;
+            color: #d32f2f;
+        }
+        .tag-l2 {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        .tag-l3 {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .tag-pass {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .tag-reject {
+            background: #fce4e4;
+            color: #d32f2f;
+        }
+        .tag-fail {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        .log-area {
+            background: #1a1a2e;
+            color: #a8e6cf;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 12px;
+            padding: 16px;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 12px;
+        }
+        .log-area .info {
+            color: #90caf9;
+        }
+        .log-area .warn {
+            color: #ffcc80;
+        }
+        .log-area .err {
+            color: #ef9a9a;
+        }
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .hidden {
+            display: none;
+        }
+        .inline-code {
+            background: #f0f2f8;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>
+        <span>数据筛选 Agent</span>
+        <span class="tag" style="background:#e8f5e9;color:#2e7d32;font-size:11px;">三阶段管线</span>
+    </h1>
+    <p class="subtitle">分层 → 属性抽取 → 规则筛选（Spring AI + Ollama qwen2.5:3b）</p>
+
+    <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <h2>筛选任务</h2>
+            <button id="btnRun" class="btn btn-primary" onclick="runFilter()">
+                ▶ 运行全部筛选
+            </button>
+        </div>
+
+        <div id="statusBar" class="status-bar hidden">
+            <div class="stat"><span class="num" id="statTotal">0</span><div class="label">总数据</div></div>
+            <div class="stat pass"><span class="num" id="statPass">0</span><div class="label">通过</div></div>
+            <div class="stat reject"><span class="num" id="statReject">0</span><div class="label">拒绝</div></div>
+            <div class="stat fail"><span class="num" id="statFail">0</span><div class="label">失败</div></div>
+            <div class="stat cost"><span class="num" id="statCost">0</span><div class="label">耗时 (ms)</div></div>
+        </div>
+
+        <div id="logArea" class="log-area">等待运行...</div>
+    </div>
+
+    <div class="card">
+        <h2>筛选结果明细</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>分层</th>
+                    <th>分层原因</th>
+                    <th>属性</th>
+                    <th>决策</th>
+                    <th>理由</th>
+                    <th>规则</th>
+                </tr>
+                </thead>
+                <tbody id="resultBody">
+                <tr><td colspan="7" style="text-align:center;color:#999;">点击"运行全部筛选"查看结果</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const btnRun = document.getElementById('btnRun');
+    const statusBar = document.getElementById('statusBar');
+    const logArea = document.getElementById('logArea');
+    const resultBody = document.getElementById('resultBody');
+
+    function log(msg, level = 'info') {
+        const time = new Date().toLocaleTimeString();
+        logArea.innerHTML += `<span class="${level}">[${time}] ${msg}</span>\n`;
+        logArea.scrollTop = logArea.scrollHeight;
+    }
+
+    function loading(on) {
+        btnRun.disabled = on;
+        btnRun.innerHTML = on ? '<span class="spinner"></span> 运行中...' : '▶ 运行全部筛选';
+    }
+
+    async function runFilter() {
+        loading(true);
+        log('开始执行三阶段筛选...', 'info');
+        statusBar.classList.add('hidden');
+        document.getElementById('statTotal').textContent = '0';
+        document.getElementById('statPass').textContent = '0';
+        document.getElementById('statReject').textContent = '0';
+        document.getElementById('statFail').textContent = '0';
+        document.getElementById('statCost').textContent = '0';
+        resultBody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">执行中...</td></tr>';
+
+        try {
+            const res = await fetch('/api/filter/run', { method: 'POST' });
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+            const data = await res.json();
+            log(`筛选完成：总 ${data.total} 条，通过 ${data.passed} 条，拒绝 ${data.rejected} 条，失败 ${data.failed} 条，耗时 ${data.costMs}ms`, 'info');
+            renderResult(data);
+        } catch (e) {
+            log(`错误: ${e.message}`, 'err');
+            resultBody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;">请求失败: ${e.message}</td></tr>`;
+        } finally {
+            loading(false);
+        }
+    }
+
+    function renderResult(data) {
+        document.getElementById('statTotal').textContent = data.total;
+        document.getElementById('statPass').textContent = data.passed;
+        document.getElementById('statReject').textContent = data.rejected;
+        document.getElementById('statFail').textContent = data.failed;
+        document.getElementById('statCost').textContent = data.costMs;
+        statusBar.classList.remove('hidden');
+
+        // 构建明细行（按 itemId 索引）
+        const layerMap = {}, attrMap = {};
+        (data.layers || []).forEach(l => layerMap[l.itemId] = l);
+        (data.attributes || []).forEach(a => attrMap[a.itemId] = a);
+
+        let html = '';
+        (data.decisions || []).forEach(d => {
+            const layer = layerMap[d.itemId];
+            const attrs = attrMap[d.itemId];
+            const isOk = d.status === 'OK';
+            const isPass = isOk && d.passed;
+            const isReject = isOk && !d.passed;
+            const isFail = d.status === 'FAILED';
+
+            // 层标签
+            let layerTag = '-';
+            if (layer) {
+                const lc = (layer.layerCode || '').toLowerCase();
+                const cls = lc.includes('l1') ? 'tag-l1' : lc.includes('l2') ? 'tag-l2' : lc.includes('l3') ? 'tag-l3' : '';
+                layerTag = `<span class="tag ${cls}">${layer.layerCode || '-'}</span>`;
+            }
+
+            // 属性
+            let attrText = '-';
+            if (attrs && attrs.status === 'OK' && attrs.attributes) {
+                attrText = attrs.attributes.map(a => `${a.key}=${a.value}`).join('<br>');
+            }
+
+            // 决策
+            let decisionTag = '-';
+            if (isFail) decisionTag = `<span class="tag tag-fail">失败</span>`;
+            else if (isPass) decisionTag = `<span class="tag tag-pass">通过</span>`;
+            else if (isReject) decisionTag = `<span class="tag tag-reject">拒绝</span>`;
+
+            html += `<tr>
+                <td><code>${d.itemId}</code></td>
+                <td>${layerTag}</td>
+                <td style="max-width:200px;white-space:normal;">${layer ? (layer.reason || '-') : '-'}</td>
+                <td style="max-width:200px;white-space:normal;">${attrText}</td>
+                <td>${decisionTag}</td>
+                <td style="max-width:250px;white-space:normal;">${d.reason || '-'}</td>
+                <td>${d.matchedRuleId || '-'}</td>
+            </tr>`;
+        });
+        if (!html) html = '<tr><td colspan="7" style="text-align:center;">无结果</td></tr>';
+        resultBody.innerHTML = html;
+    }
+</script>
+</body>
+</html>

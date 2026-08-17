@@ -1,18 +1,27 @@
-# Build and Release Folders
+# 本地工具链（JDK/Maven/Ollama/git/模型，体积大不入库）
+.local/
+
+# Maven 构建产物
+target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# 日志与临时文件
+*.log
+*.tmp
+
+# 兼容远程仓库原有规则（旧工程遗留）
 bin-debug/
 bin-release/
 [Oo]bj/
 [Bb]in/
-
-# Other files and folders
-.settings/
-
-# Executables
 *.swf
 *.air
 *.ipa
 *.apk
-
-# Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
-# should NOT be excluded as they contain compiler settings and other important
-# information for Eclipse / Flash Builder.
