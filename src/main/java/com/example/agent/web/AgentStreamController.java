@@ -1,7 +1,7 @@
 package com.example.agent.web;
 
 import com.example.agent.agent.AgentRunResult;
-import com.example.agent.agent.HierarchicalAgent;
+import com.example.agent.agent.ManagerAgent;
 import com.example.agent.memory.ShortTermMemory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
@@ -21,14 +21,14 @@ import java.util.concurrent.Executor;
 @RequestMapping("/api/agent")
 public class AgentStreamController {
 
-    private final HierarchicalAgent hierarchicalAgent;
+    private final ManagerAgent managerAgent;
     private final ShortTermMemory shortTermMemory;
     private final Executor executor;
 
-    public AgentStreamController(HierarchicalAgent hierarchicalAgent,
+    public AgentStreamController(ManagerAgent managerAgent,
                                  ShortTermMemory shortTermMemory,
                                  @Qualifier("agentExecutor") Executor executor) {
-        this.hierarchicalAgent = hierarchicalAgent;
+        this.managerAgent = managerAgent;
         this.shortTermMemory = shortTermMemory;
         this.executor = executor;
     }
@@ -45,7 +45,7 @@ public class AgentStreamController {
 
         executor.execute(() -> {
             try {
-                AgentRunResult result = hierarchicalAgent.execute(
+                AgentRunResult result = managerAgent.execute(
                         goal, history, conversationId, runId, new SseEventSink(emitter));
                 shortTermMemory.add(conversationId, "用户: " + goal);
                 shortTermMemory.add(conversationId, "助手: " + result.getFinalAnswer());

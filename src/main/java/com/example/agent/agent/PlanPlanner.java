@@ -1,5 +1,6 @@
 package com.example.agent.agent;
 
+import com.example.agent.capability.CapabilityMeta;
 import com.example.agent.util.PromptRenderer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,7 +13,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * HLA 规划器：将总体目标拆解为子任务步骤（LLM 输出 JSON 计划），支持步骤依赖、历史经验注入与失败重规划。
+ * 规划器：将总体目标拆解为子任务步骤（LLM 输出 JSON 计划），支持步骤依赖、记忆注入与失败重规划。
+ * <p>输入由旧 {@code WorkerAgent} 名称列表改为能力清单 {@link CapabilityMeta}，按能力标签分派。
  */
 @Component
 public class PlanPlanner {
@@ -25,20 +27,20 @@ public class PlanPlanner {
     }
 
     /**
-     * 拆解目标为步骤列表（不注入历史经验）。
+     * 拆解目标为步骤列表（不注入记忆）。
      */
-    public List<AgentStep> plan(String goal, List<WorkerAgent> workers) {
-        return plan(goal, workers, "");
+    public List<AgentStep> plan(String goal, List<CapabilityMeta> capabilities) {
+        return plan(goal, capabilities, "");
     }
 
     /**
-     * 拆解目标为步骤列表，并把召回的历史经验拼进提示词指导规划。
+     * 拆解目标为步骤列表，并把 Manager 召回的记忆拼进提示词指导规划。
      */
-    public List<AgentStep> plan(String goal, List<WorkerAgent> workers, String experience) {
+    public List<AgentStep> plan(String goal, List<CapabilityMeta> capabilities, String memory) {
         String prompt = PromptRenderer.render(
                 PromptRenderer.load("prompts/planner-system.st"),
-                Map.of("goal", goal, "workers", renderWorkers(workers),
-                        "experience", experience == null ? "" : experience)
+                Map.of("goal", goal, "workers", renderCapabilities(capabilities),
+                        "experience", memory == null ? "" : memory)
         );
         String response = planningClient.prompt().user(prompt).call().content();
         return parseSteps(response);
@@ -47,7 +49,7 @@ public class PlanPlanner {
     /**
      * 失败重规划：针对执行失败的步骤，让 Planner 重新产出补救步骤。
      */
-    public List<AgentStep> replan(String goal, List<AgentStep> failed, List<WorkerAgent> workers) {
+    public List<AgentStep> replan(String goal, List<AgentStep> failed, List<CapabilityMeta> capabilities) {
         StringBuilder sb = new StringBuilder();
         for (AgentStep f : failed) {
             sb.append("- ").append(f.getGoal()).append("（失败原因：")
@@ -55,13 +57,13 @@ public class PlanPlanner {
         }
         String replanGoal = "以下子步骤执行失败，请针对失败部分重新规划补救步骤：\n"
                 + sb + "\n原始总体目标：\n" + goal;
-        return plan(replanGoal, workers);
+        return plan(replanGoal, capabilities);
     }
 
-    private String renderWorkers(List<WorkerAgent> workers) {
+    private String renderCapabilities(List<CapabilityMeta> capabilities) {
         StringBuilder sb = new StringBuilder();
-        for (WorkerAgent w : workers) {
-            sb.append("- ").append(w.name()).append(": ").append(w.description()).append("\n");
+        for (CapabilityMeta c : capabilities) {
+            sb.append("- ").append(c.label()).append(": ").append(c.description()).append("\n");
         }
         return sb.toString();
     }

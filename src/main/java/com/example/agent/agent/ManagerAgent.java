@@ -1,5 +1,7 @@
 package com.example.agent.agent;
 
+import com.example.agent.capability.AgentRegistry;
+import com.example.agent.capability.CapabilityAgent;
 import com.example.agent.memory.Memory;
 import com.example.agent.util.PromptRenderer;
 import org.slf4j.Logger;
@@ -12,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,43 +22,38 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 /**
- * Hierarchical Agent（HLA，最高层级自主性）编排器。
- * <p>流程：召回历史经验 → Planner 拆解目标 → 按依赖关系并行/串行分派给 Worker（Worker 内部跑反思循环）
- * → 失败重规划 → 汇总为最终答复 → 异步写经验。
- * <p>执行全程通过 {@link AgentEventSink} 发射事件；同步接口仅在内部收集，SSE 接口实时推送。
+ * ManagerAgent：多 agent 框架的编排者（纯分配，不执行）。
+ * <p>流程：读公共记忆池召回 → Planner 拆解目标 → 按能力标签路由给能力 agent →
+ * 失败重规划 → 汇总 → 异步写经验。
+ * <p>执行全程通过 {@link AgentEventSink} 发射事件；Manager 自身不执行任何子任务。
  */
 @Service
-public class HierarchicalAgent {
+public class ManagerAgent {
 
-    private static final Logger log = LoggerFactory.getLogger(HierarchicalAgent.class);
+    private static final Logger log = LoggerFactory.getLogger(ManagerAgent.class);
 
     /** 失败重规划的最大轮数，防止无限重规划 */
     private static final int MAX_REPLAN_ROUNDS = 1;
 
     private final PlanPlanner planPlanner;
     private final ChatClient planningClient;
+    private final AgentRegistry registry;
     private final Memory memory;
     private final Executor executor;
-    private final ExperienceRetriever experienceRetriever;
     private final ExperienceCollector experienceCollector;
-    private final Map<String, WorkerAgent> workers = new LinkedHashMap<>();
 
-    public HierarchicalAgent(PlanPlanner planPlanner,
-                             List<WorkerAgent> workerList,
-                             @Qualifier("planningChatClient") ChatClient planningClient,
-                             Memory memory,
-                             @Qualifier("agentExecutor") Executor executor,
-                             ExperienceRetriever experienceRetriever,
-                             ExperienceCollector experienceCollector) {
+    public ManagerAgent(PlanPlanner planPlanner,
+                        @Qualifier("planningChatClient") ChatClient planningClient,
+                        AgentRegistry registry,
+                        Memory memory,
+                        @Qualifier("agentExecutor") Executor executor,
+                        ExperienceCollector experienceCollector) {
         this.planPlanner = planPlanner;
         this.planningClient = planningClient;
+        this.registry = registry;
         this.memory = memory;
         this.executor = executor;
-        this.experienceRetriever = experienceRetriever;
         this.experienceCollector = experienceCollector;
-        for (WorkerAgent w : workerList) {
-            this.workers.put(w.name().toLowerCase(), w);
-        }
     }
 
     /** 执行总体目标（无会话上下文）。 */
@@ -92,8 +88,8 @@ public class HierarchicalAgent {
             String planningGoal = (conversationContext == null || conversationContext.isBlank())
                     ? goal
                     : conversationContext + "\n\n当前目标（需要完成的任务）：\n" + goal;
-            String experience = experienceRetriever.retrieve(goal, 5);
-            List<AgentStep> steps = planPlanner.plan(planningGoal, new ArrayList<>(workers.values()), experience);
+            String experience = memoryAsString(goal);
+            List<AgentStep> steps = planPlanner.plan(planningGoal, registry.metas(), experience);
             emit(events, streamSink, "run:plan", runId, Map.of("steps", toPlanData(steps)));
 
             executeSteps(steps, events, streamSink, runId);
@@ -105,11 +101,11 @@ public class HierarchicalAgent {
                     break;
                 }
                 emit(events, streamSink, "run:replan", runId, Map.of("failed", toStepBrief(failed)));
-                List<AgentStep> recovery = planPlanner.replan(goal, failed, new ArrayList<>(workers.values()));
+                List<AgentStep> recovery = planPlanner.replan(goal, failed, registry.metas());
                 int nextStep = steps.stream().mapToInt(AgentStep::getStep).max().orElse(0) + 1;
                 for (AgentStep r : recovery) {
                     r.setStep(nextStep++);
-                    r.setDependsOn(new ArrayList<>()); // 补救步骤独立执行
+                    r.setDependsOn(new ArrayList<>());
                     steps.add(r);
                 }
                 executeSteps(recovery, events, streamSink, runId);
@@ -131,6 +127,11 @@ public class HierarchicalAgent {
             triggerExperienceAsync(runId, goal, events, result);
         }
         return result;
+    }
+
+    private String memoryAsString(String goal) {
+        List<String> recalled = memory.recall(goal, 5);
+        return recalled.isEmpty() ? "" : String.join("\n", recalled);
     }
 
     private void triggerExperienceAsync(String runId, String goal, List<AgentEvent> events, AgentRunResult result) {
@@ -234,14 +235,16 @@ public class HierarchicalAgent {
     }
 
     private void runStep(AgentStep step, List<AgentEvent> events, AgentEventSink sink, String runId) {
-        WorkerAgent worker = resolve(step.getWorker());
+        String label = (step.getWorker() == null || step.getWorker().isBlank())
+                ? "general" : step.getWorker();
+        CapabilityAgent agent = registry.resolve(label);
         step.setStatus("RUNNING");
         emit(events, sink, "step:status", runId, Map.of(
-                "step", step.getStep(), "status", "RUNNING", "worker", worker.name()));
+                "step", step.getStep(), "status", "RUNNING", "worker", label));
 
         AgentResult r = null;
         try {
-            r = worker.run(step.getGoal());
+            r = agent.run(step.getGoal());
             step.setStatus(r.isSuccess() ? "SUCCESS" : "FAILED");
             step.setResult(r.getOutput());
             step.setReflections(r.getReflections());
@@ -253,7 +256,7 @@ public class HierarchicalAgent {
         int reflections = r == null ? 0 : r.getReflections();
         List<Reflection> trail = r == null ? List.of() : r.getReflectionTrail();
         emitReflections(step, trail, events, sink, runId);
-        emit(events, sink, "step:status", runId, stepStatus(step, worker.name(), reflections));
+        emit(events, sink, "step:status", runId, stepStatus(step, label, reflections));
     }
 
     private void emitReflections(AgentStep step, List<Reflection> trail,
@@ -315,32 +318,6 @@ public class HierarchicalAgent {
             reflections += s.getReflections();
         }
         return Map.of("total", steps.size(), "success", success, "failed", failed, "reflections", reflections);
-    }
-
-    private WorkerAgent resolve(String name) {
-        if (name != null) {
-            WorkerAgent w = workers.get(name.toLowerCase());
-            if (w != null) {
-                return w;
-            }
-        }
-        WorkerAgent general = workers.get("general");
-        return general != null ? general : new WorkerAgent() {
-            @Override
-            public String name() {
-                return "fallback";
-            }
-
-            @Override
-            public String description() {
-                return "回退执行器";
-            }
-
-            @Override
-            public AgentResult run(String goal) {
-                return AgentResult.fail("无可用执行器");
-            }
-        };
     }
 
     private String synthesize(String goal, List<AgentStep> steps) {

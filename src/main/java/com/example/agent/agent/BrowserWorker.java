@@ -1,19 +1,19 @@
 package com.example.agent.agent;
 
-import com.example.agent.memory.Memory;
+import com.example.agent.capability.Capability;
+import com.example.agent.capability.CapabilityAgent;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 /**
- * 浏览器 Worker：通过内嵌 Playwright 工具真实操作浏览器。
+ * 浏览器能力 agent：通过内嵌 Playwright 工具真实操作浏览器。
  * <p>负责打开网页、抓取页面真实数据、点击/填写/提交表单（例如在 GitHub 网页抓数据、创建仓库）。
- * <p>作为 {@link WorkerAgent} 注册后，会被 {@link HierarchicalAgent} 自动发现并按 name="browser" 分派。
+ * <p>记忆读权已收归 Manager，本 agent 只执行，不直接 recall。
  */
 @Component
-public class BrowserWorker implements WorkerAgent {
+@Capability(label = "browser", description = "浏览器自动化助手：可打开网页、抓取页面真实数据、操作页面（点击/填写/提交），例如在 GitHub 网页抓取数据或创建仓库")
+public class BrowserWorker implements CapabilityAgent {
 
     private static final String SYSTEM_PROMPT = """
             你是一个浏览器自动化助手，通过工具真实地操作一个浏览器页面。
@@ -28,33 +28,15 @@ public class BrowserWorker implements WorkerAgent {
 
     private final ReflectionLoop reflectionLoop;
     private final ChatClient browserClient;
-    private final Memory memory;
 
     public BrowserWorker(ReflectionLoop reflectionLoop,
-                         @Qualifier("browserChatClient") ChatClient browserClient,
-                         Memory memory) {
+                         @Qualifier("browserChatClient") ChatClient browserClient) {
         this.reflectionLoop = reflectionLoop;
         this.browserClient = browserClient;
-        this.memory = memory;
-    }
-
-    @Override
-    public String name() {
-        return "browser";
-    }
-
-    @Override
-    public String description() {
-        return "浏览器自动化助手：可打开网页、抓取页面真实数据、操作页面（点击/填写/提交），例如在 GitHub 网页抓取数据或创建仓库";
     }
 
     @Override
     public AgentResult run(String goal) {
-        List<String> recalled = memory.recall(goal, 3);
-        String enriched = goal;
-        if (!recalled.isEmpty()) {
-            enriched = goal + "\n\n（已积累的相关知识，供参考）\n" + String.join("\n", recalled);
-        }
-        return reflectionLoop.execute(enriched, browserClient, SYSTEM_PROMPT);
+        return reflectionLoop.execute(goal, browserClient, SYSTEM_PROMPT);
     }
 }
