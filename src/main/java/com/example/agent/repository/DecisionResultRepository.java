@@ -18,4 +18,6 @@ public interface DecisionResultRepository extends JpaRepository<DecisionResultEn
     void deleteAllByTaskId(String taskId);
 
     List<DecisionResultEntity> findByTaskId(String taskId);
+
+    List<DecisionResultEntity> findTop50ByOrderByIdDesc();
 }
