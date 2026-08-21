@@ -27,6 +27,16 @@ public class DataItemEntity {
     @Column(name = "content", columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    /** 确定性清洗后的内容（JSON），与原始 content 并列以支持前后对比 */
+    @Lob
+    @Column(name = "cleaned_content", columnDefinition = "TEXT")
+    private String cleanedContent;
+
+    /** 清洗变更日志（JSON 数组），逐字段记录 before/after */
+    @Lob
+    @Column(name = "cleaning_log", columnDefinition = "TEXT")
+    private String cleaningLog;
+
     /** 数据来源：REST / DB / MQ / FILE */
     @Column(name = "source_type", length = 16)
     private String sourceType;
@@ -61,6 +71,22 @@ public class DataItemEntity {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public String getCleanedContent() {
+        return cleanedContent;
+    }
+
+    public void setCleanedContent(String cleanedContent) {
+        this.cleanedContent = cleanedContent;
+    }
+
+    public String getCleaningLog() {
+        return cleaningLog;
+    }
+
+    public void setCleaningLog(String cleaningLog) {
+        this.cleaningLog = cleaningLog;
     }
 
     public String getSourceType() {

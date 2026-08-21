@@ -1,13 +1,19 @@
 package com.example.agent.service;
 
+import com.example.agent.cleaning.CleaningReport;
+import com.example.agent.cleaning.DeterministicCleaningEngine;
 import com.example.agent.dto.DataItemInput;
 import com.example.agent.entity.DataItemEntity;
 import com.example.agent.repository.DataItemRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -18,9 +24,15 @@ import java.util.UUID;
 public class DataIngestionServiceImpl implements DataIngestionService {
 
     private final DataItemRepository dataItemRepository;
+    private final DeterministicCleaningEngine cleaningEngine;
+    private final ObjectMapper objectMapper;
 
-    public DataIngestionServiceImpl(DataItemRepository dataItemRepository) {
+    public DataIngestionServiceImpl(DataItemRepository dataItemRepository,
+                                    DeterministicCleaningEngine cleaningEngine,
+                                    ObjectMapper objectMapper) {
         this.dataItemRepository = dataItemRepository;
+        this.cleaningEngine = cleaningEngine;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -47,9 +59,32 @@ public class DataIngestionServiceImpl implements DataIngestionService {
             entity.setContent(content);
             entity.setSourceType(sourceType);
             entity.setStatus("PENDING");
+            applyCleaning(entity, content);
             dataItemRepository.save(entity);
             ids.add(id);
         }
         return ids;
+    }
+
+    /**
+     * 尝试对扁平 JSON 内容做确定性清洗，产出 cleaned_content 与 cleaning_log。
+     * 无法按 JSON 对象解析的内容（纯文本、嵌套等）跳过清洗。
+     */
+    private void applyCleaning(DataItemEntity entity, String content) {
+        try {
+            Map<String, String> raw = objectMapper.readValue(
+                    content, new TypeReference<LinkedHashMap<String, String>>() {});
+            CleaningReport report = cleaningEngine.clean(raw);
+            if (report.changes().isEmpty()) {
+                entity.setCleanedContent(null);
+                entity.setCleaningLog("[]");
+            } else {
+                entity.setCleanedContent(objectMapper.writeValueAsString(report.cleaned()));
+                entity.setCleaningLog(objectMapper.writeValueAsString(report.changes()));
+            }
+        } catch (Exception ignored) {
+            entity.setCleanedContent(null);
+            entity.setCleaningLog("[]");
+        }
     }
 }

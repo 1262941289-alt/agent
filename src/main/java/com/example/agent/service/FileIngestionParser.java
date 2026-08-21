@@ -6,37 +6,56 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 文件批量导入解析器：将上传文件解析为 {@link DataItemInput} 列表。
- * 支持三种格式：
+ * <p>依赖 {@link SpreadsheetParser} 做真实格式识别与表格解析，先支持：
  * <ul>
- *   <li>JSON 数组：{@code [{"id":"D001","content":"..."}, ...]}</li>
- *   <li>JSON Lines：每行一个 JSON 对象</li>
- *   <li>纯文本：每行一条数据内容（ID 自动生成）</li>
+ *   <li>Excel(.xlsx，多 sheet)</li>
+ *   <li>分隔文本(CSV/TSV)</li>
+ *   <li>JSON 数组 / JSON Lines / 纯文本</li>
  * </ul>
+ * 表格的每一行序列化为一条结构化 JSON 写入 content。
  */
 @Component
 public class FileIngestionParser {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final SpreadsheetParser spreadsheetParser;
 
-    /**
-     * 解析文件内容为输入对象列表。
-     *
-     * @param in 文件输入流
-     * @return 数据项输入列表
-     */
+    public FileIngestionParser(SpreadsheetParser spreadsheetParser) {
+        this.spreadsheetParser = spreadsheetParser;
+    }
+
     public List<DataItemInput> parse(InputStream in) {
-        String text;
+        byte[] bytes;
         try {
-            text = new String(in.readAllBytes(), StandardCharsets.UTF_8).strip();
+            bytes = in.readAllBytes();
         } catch (Exception e) {
             throw new IllegalArgumentException("读取文件内容失败: " + e.getMessage(), e);
         }
+        if (bytes.length == 0) {
+            return List.of();
+        }
+
+        if (spreadsheetParser.supports(bytes)) {
+            List<Map<String, String>> rows = spreadsheetParser.parse(bytes);
+            List<DataItemInput> items = new ArrayList<>(rows.size());
+            for (Map<String, String> row : rows) {
+                try {
+                    String content = objectMapper.writeValueAsString(row);
+                    items.add(new DataItemInput(null, content, DataIngestionService.SOURCE_FILE));
+                } catch (Exception e) {
+                    throw new IllegalArgumentException("结构化数据序列化失败: " + e.getMessage(), e);
+                }
+            }
+            return items;
+        }
+
+        String text = SpreadsheetParser.decodeText(bytes).strip();
         if (text.isEmpty()) {
             return List.of();
         }
