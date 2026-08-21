@@ -2,27 +2,34 @@ package com.example.agent.agent;
 
 import com.example.agent.memory.Memory;
 import com.example.agent.util.PromptRenderer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 /**
  * Hierarchical Agent（HLA，最高层级自主性）编排器。
- * <p>流程：Planner 拆解目标 → 按依赖关系并行/串行分派给 Worker（Worker 内部跑反思循环）→ 失败重规划 → 汇总为最终答复。
- * <p>Worker 以 Spring Bean 形式注入并自动注册；办公能力接入时只需新增 {@link WorkerAgent} 实现即可被自动发现。
+ * <p>流程：召回历史经验 → Planner 拆解目标 → 按依赖关系并行/串行分派给 Worker（Worker 内部跑反思循环）
+ * → 失败重规划 → 汇总为最终答复 → 异步写经验。
+ * <p>执行全程通过 {@link AgentEventSink} 发射事件；同步接口仅在内部收集，SSE 接口实时推送。
  */
 @Service
 public class HierarchicalAgent {
+
+    private static final Logger log = LoggerFactory.getLogger(HierarchicalAgent.class);
 
     /** 失败重规划的最大轮数，防止无限重规划 */
     private static final int MAX_REPLAN_ROUNDS = 1;
@@ -31,64 +38,118 @@ public class HierarchicalAgent {
     private final ChatClient planningClient;
     private final Memory memory;
     private final Executor executor;
+    private final ExperienceRetriever experienceRetriever;
+    private final ExperienceCollector experienceCollector;
     private final Map<String, WorkerAgent> workers = new LinkedHashMap<>();
 
     public HierarchicalAgent(PlanPlanner planPlanner,
                              List<WorkerAgent> workerList,
                              @Qualifier("planningChatClient") ChatClient planningClient,
                              Memory memory,
-                             @Qualifier("agentExecutor") Executor executor) {
+                             @Qualifier("agentExecutor") Executor executor,
+                             ExperienceRetriever experienceRetriever,
+                             ExperienceCollector experienceCollector) {
         this.planPlanner = planPlanner;
         this.planningClient = planningClient;
         this.memory = memory;
         this.executor = executor;
+        this.experienceRetriever = experienceRetriever;
+        this.experienceCollector = experienceCollector;
         for (WorkerAgent w : workerList) {
             this.workers.put(w.name().toLowerCase(), w);
         }
     }
 
-    /**
-     * 执行总体目标，返回拆解步骤与最终答复。
-     */
+    /** 执行总体目标（无会话上下文）。 */
     public AgentRunResult execute(String goal) {
         return execute(goal, "");
     }
 
-    /**
-     * 携带会话上下文执行总体目标。
-     *
-     * @param goal                本次要完成的总体目标
-     * @param conversationContext 短期记忆召回的前文（可为空），仅用于规划/执行增强上下文
-     */
+    /** 携带会话上下文执行总体目标。 */
     public AgentRunResult execute(String goal, String conversationContext) {
-        String planningGoal = (conversationContext == null || conversationContext.isBlank())
-                ? goal
-                : conversationContext + "\n\n当前目标（需要完成的任务）：\n" + goal;
-        List<AgentStep> steps = planPlanner.plan(planningGoal, new ArrayList<>(workers.values()));
-        executeSteps(steps);
+        return execute(goal, conversationContext, null);
+    }
 
-        // 失败重规划：针对失败/跳过的步骤，最多重规划 MAX_REPLAN_ROUNDS 轮
-        for (int round = 0; round < MAX_REPLAN_ROUNDS; round++) {
-            List<AgentStep> failed = collectFailed(steps);
-            if (failed.isEmpty()) {
-                break;
-            }
-            List<AgentStep> recovery = planPlanner.replan(goal, failed, new ArrayList<>(workers.values()));
-            int nextStep = steps.stream().mapToInt(AgentStep::getStep).max().orElse(0) + 1;
-            for (AgentStep r : recovery) {
-                r.setStep(nextStep++);
-                r.setDependsOn(new ArrayList<>()); // 补救步骤独立执行
-                steps.add(r);
-            }
-            executeSteps(recovery);
-        }
+    /** 携带会话上下文与 conversationId 执行（同步路径）。 */
+    public AgentRunResult execute(String goal, String conversationContext, String conversationId) {
+        return execute(goal, conversationContext, conversationId, newRunId(), null);
+    }
 
+    /**
+     * 核心执行：同步 / SSE 共用。
+     *
+     * @param streamSink 可空；非空时事件实时推送给该 sink（SSE）
+     */
+    public AgentRunResult execute(String goal, String conversationContext, String conversationId,
+                                  String runId, AgentEventSink streamSink) {
+        List<AgentEvent> events = Collections.synchronizedList(new ArrayList<>());
         AgentRunResult result = new AgentRunResult();
         result.setGoal(goal);
-        result.setSteps(steps);
-        result.setFinalAnswer(synthesize(goal, steps));
-        memory.remember("TASK", goal, result.getFinalAnswer());
+        try {
+            emit(events, streamSink, "run:started", runId,
+                    Map.of("goal", nz(goal), "conversationId", nz(conversationId)));
+
+            String planningGoal = (conversationContext == null || conversationContext.isBlank())
+                    ? goal
+                    : conversationContext + "\n\n当前目标（需要完成的任务）：\n" + goal;
+            String experience = experienceRetriever.retrieve(goal, 5);
+            List<AgentStep> steps = planPlanner.plan(planningGoal, new ArrayList<>(workers.values()), experience);
+            emit(events, streamSink, "run:plan", runId, Map.of("steps", toPlanData(steps)));
+
+            executeSteps(steps, events, streamSink, runId);
+
+            // 失败重规划：针对失败/跳过的步骤，最多重规划 MAX_REPLAN_ROUNDS 轮
+            for (int round = 0; round < MAX_REPLAN_ROUNDS; round++) {
+                List<AgentStep> failed = collectFailed(steps);
+                if (failed.isEmpty()) {
+                    break;
+                }
+                emit(events, streamSink, "run:replan", runId, Map.of("failed", toStepBrief(failed)));
+                List<AgentStep> recovery = planPlanner.replan(goal, failed, new ArrayList<>(workers.values()));
+                int nextStep = steps.stream().mapToInt(AgentStep::getStep).max().orElse(0) + 1;
+                for (AgentStep r : recovery) {
+                    r.setStep(nextStep++);
+                    r.setDependsOn(new ArrayList<>()); // 补救步骤独立执行
+                    steps.add(r);
+                }
+                executeSteps(recovery, events, streamSink, runId);
+            }
+
+            String finalAnswer = nz(synthesize(goal, steps));
+            result.setSteps(steps);
+            result.setFinalAnswer(finalAnswer);
+            emit(events, streamSink, "run:synthesis", runId, Map.of("finalAnswer", finalAnswer));
+            emit(events, streamSink, "run:completed", runId,
+                    Map.of("finalAnswer", finalAnswer, "stats", statsOf(steps)));
+            memory.remember("TASK", goal, finalAnswer);
+        } catch (Exception e) {
+            String error = errorMessage(e);
+            log.error("Agent 执行失败 runId={}: {}", runId, error, e);
+            result.setFinalAnswer("执行失败：" + error);
+            emit(events, streamSink, "run:failed", runId, Map.of("error", error));
+        } finally {
+            triggerExperienceAsync(runId, goal, events, result);
+        }
         return result;
+    }
+
+    private void triggerExperienceAsync(String runId, String goal, List<AgentEvent> events, AgentRunResult result) {
+        executor.execute(() -> {
+            try {
+                experienceCollector.collect(runId, goal, events, result);
+            } catch (Exception e) {
+                log.warn("经验写入失败 runId={}: {}", runId, e.getMessage());
+            }
+        });
+    }
+
+    private void emit(List<AgentEvent> events, AgentEventSink sink, String type, String runId,
+                      Map<String, Object> data) {
+        AgentEvent event = new AgentEvent(type, runId, data);
+        events.add(event);
+        if (sink != null) {
+            sink.emit(event);
+        }
     }
 
     private List<AgentStep> collectFailed(List<AgentStep> steps) {
@@ -105,7 +166,7 @@ public class HierarchicalAgent {
      * 按依赖关系调度执行：无依赖的步骤在同波次并行执行；
      * 依赖步骤需等其前置步骤"已定"（SUCCESS/FAILED）后才执行，前置失败则标记 SKIPPED。
      */
-    private void executeSteps(List<AgentStep> steps) {
+    private void executeSteps(List<AgentStep> steps, List<AgentEvent> events, AgentEventSink sink, String runId) {
         Map<Integer, AgentStep> byNumber = new HashMap<>();
         for (AgentStep s : steps) {
             byNumber.put(s.getStep(), s);
@@ -114,6 +175,7 @@ public class HierarchicalAgent {
         Set<Integer> settled = new HashSet<>();
         Set<Integer> pending = new HashSet<>(byNumber.keySet());
 
+        int wave = 0;
         int guard = 0;
         while (!pending.isEmpty() && guard++ <= steps.size() + 1) {
             List<AgentStep> ready = new ArrayList<>();
@@ -141,13 +203,18 @@ public class HierarchicalAgent {
                     blocked.add(s);
                 }
             } else {
-                runInParallel(ready);
+                wave++;
+                List<Integer> stepNums = ready.stream().map(AgentStep::getStep).toList();
+                emit(events, sink, "wave:started", runId, Map.of("wave", wave, "stepNums", stepNums));
+                runInParallel(ready, events, sink, runId);
+                emit(events, sink, "wave:completed", runId, Map.of("wave", wave, "stepNums", stepNums));
             }
             for (AgentStep s : ready) {
                 pending.remove(s.getStep());
                 settled.add(s.getStep());
             }
             for (AgentStep s : blocked) {
+                emit(events, sink, "step:status", runId, stepStatus(s, "", 0));
                 pending.remove(s.getStep());
                 settled.add(s.getStep());
             }
@@ -158,25 +225,96 @@ public class HierarchicalAgent {
         return "FAILED".equals(s.getStatus()) || "SKIPPED".equals(s.getStatus());
     }
 
-    private void runInParallel(List<AgentStep> ready) {
+    private void runInParallel(List<AgentStep> ready, List<AgentEvent> events, AgentEventSink sink, String runId) {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (AgentStep step : ready) {
-            futures.add(CompletableFuture.runAsync(() -> runStep(step), executor));
+            futures.add(CompletableFuture.runAsync(() -> runStep(step, events, sink, runId), executor));
         }
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
-    private void runStep(AgentStep step) {
+    private void runStep(AgentStep step, List<AgentEvent> events, AgentEventSink sink, String runId) {
         WorkerAgent worker = resolve(step.getWorker());
         step.setStatus("RUNNING");
+        emit(events, sink, "step:status", runId, Map.of(
+                "step", step.getStep(), "status", "RUNNING", "worker", worker.name()));
+
+        AgentResult r = null;
         try {
-            AgentResult r = worker.run(step.getGoal());
+            r = worker.run(step.getGoal());
             step.setStatus(r.isSuccess() ? "SUCCESS" : "FAILED");
             step.setResult(r.getOutput());
+            step.setReflections(r.getReflections());
         } catch (Exception e) {
             step.setStatus("FAILED");
-            step.setResult("执行异常: " + e.getMessage());
+            step.setResult("执行异常: " + errorMessage(e));
         }
+
+        int reflections = r == null ? 0 : r.getReflections();
+        List<Reflection> trail = r == null ? List.of() : r.getReflectionTrail();
+        emitReflections(step, trail, events, sink, runId);
+        emit(events, sink, "step:status", runId, stepStatus(step, worker.name(), reflections));
+    }
+
+    private void emitReflections(AgentStep step, List<Reflection> trail,
+                                 List<AgentEvent> events, AgentEventSink sink, String runId) {
+        int iteration = 0;
+        for (Reflection rf : trail) {
+            iteration++;
+            emit(events, sink, "step:reflection", runId, Map.of(
+                    "step", step.getStep(),
+                    "iteration", iteration,
+                    "satisfied", rf.isSatisfied(),
+                    "critique", clip(rf.getCritique()),
+                    "nextAction", clip(rf.getNextAction())));
+        }
+    }
+
+    private Map<String, Object> stepStatus(AgentStep step, String worker, int reflections) {
+        return Map.of(
+                "step", step.getStep(),
+                "status", nz(step.getStatus()),
+                "worker", nz(worker),
+                "output", nz(step.getResult()),
+                "reflections", reflections);
+    }
+
+    private List<Map<String, Object>> toPlanData(List<AgentStep> steps) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (AgentStep s : steps) {
+            out.add(Map.of(
+                    "step", s.getStep(),
+                    "goal", nz(s.getGoal()),
+                    "worker", nz(s.getWorker()),
+                    "dependsOn", s.getDependsOn() == null ? List.of() : s.getDependsOn()));
+        }
+        return out;
+    }
+
+    private List<Map<String, Object>> toStepBrief(List<AgentStep> failed) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (AgentStep s : failed) {
+            out.add(Map.of(
+                    "step", s.getStep(),
+                    "goal", nz(s.getGoal()),
+                    "result", nz(s.getResult())));
+        }
+        return out;
+    }
+
+    private Map<String, Object> statsOf(List<AgentStep> steps) {
+        int success = 0;
+        int failed = 0;
+        int reflections = 0;
+        for (AgentStep s : steps) {
+            if ("SUCCESS".equals(s.getStatus())) {
+                success++;
+            } else {
+                failed++;
+            }
+            reflections += s.getReflections();
+        }
+        return Map.of("total", steps.size(), "success", success, "failed", failed, "reflections", reflections);
     }
 
     private WorkerAgent resolve(String name) {
@@ -216,5 +354,24 @@ public class HierarchicalAgent {
                 Map.of("goal", goal, "steps", sb.toString())
         );
         return planningClient.prompt().user(prompt).call().content();
+    }
+
+    private String clip(String text) {
+        if (text == null) {
+            return "";
+        }
+        return text.length() > 200 ? text.substring(0, 200) : text;
+    }
+
+    private static String nz(String s) {
+        return s == null ? "" : s;
+    }
+
+    private static String errorMessage(Throwable e) {
+        return e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+    }
+
+    private static String newRunId() {
+        return UUID.randomUUID().toString().replace("-", "");
     }
 }

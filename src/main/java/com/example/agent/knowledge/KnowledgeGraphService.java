@@ -112,6 +112,11 @@ public class KnowledgeGraphService {
         return nodeRepository.findByNameContainingIgnoreCase(keyword).stream().limit(k).toList();
     }
 
+    /** 按类型检索节点（如 EXPERIENCE / PITFALL / ANNOTATION），供经验召回使用。 */
+    public List<KnowledgeNodeEntity> findByType(String type) {
+        return nodeRepository.findByType(type);
+    }
+
     /** 组装 GraphRAG 上下文：命中节点 + 一跳邻居（正向/反向链接） */
     public String buildContext(String query, int k) {
         List<KnowledgeNodeEntity> hits = search(query, k);
@@ -133,6 +138,37 @@ public class KnowledgeGraphService {
             }
         }
         return sb.toString();
+    }
+
+    // ---------- 人工标注 ----------
+
+    /**
+     * 写入一条人工标注（ANNOTATION 节点）：正向=该操作正确且富有成效、值得复用；负向=低效/有误、应避免。
+     * 标注作为人类监督信号被 {@code ExperienceRetriever} 召回并注入 Planner，指导后续规划。
+     */
+    @Transactional
+    public void annotate(String goal, boolean positive, String comment) {
+        String g = goal == null ? "" : goal;
+        String content = "目标: " + g + "\n"
+                + "标注: " + (positive ? "正向（该操作正确且富有成效，值得复用）" : "负向（该操作低效或有误，应避免）") + "\n"
+                + "说明: " + (comment == null ? "" : comment);
+        String nodeName = "标注:" + clipName(g) + ":" + shortId();
+        upsertNode(nodeName, "ANNOTATION", content,
+                Map.of("positive", String.valueOf(positive), "goal", g));
+        if (!g.isBlank()) {
+            addRelation(g, "HUMAN_ANNOTATED", nodeName, true);
+        }
+    }
+
+    private String clipName(String s) {
+        if (s == null) {
+            return "";
+        }
+        return s.length() > 40 ? s.substring(0, 40) : s;
+    }
+
+    private String shortId() {
+        return UUID.randomUUID().toString().replace("-", "").substring(0, 8);
     }
 
     private String writeJson(Map<String, String> properties) {

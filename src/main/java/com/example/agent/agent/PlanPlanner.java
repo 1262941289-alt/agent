@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * HLA 规划器：将总体目标拆解为子任务步骤（LLM 输出 JSON 计划），支持步骤依赖与失败重规划。
+ * HLA 规划器：将总体目标拆解为子任务步骤（LLM 输出 JSON 计划），支持步骤依赖、历史经验注入与失败重规划。
  */
 @Component
 public class PlanPlanner {
@@ -25,16 +25,20 @@ public class PlanPlanner {
     }
 
     /**
-     * 拆解目标为步骤列表。
-     *
-     * @param goal    总体目标
-     * @param workers 可用执行器（供 Planner 选择）
-     * @return 子任务步骤（带序号、可选 worker 名与依赖关系）
+     * 拆解目标为步骤列表（不注入历史经验）。
      */
     public List<AgentStep> plan(String goal, List<WorkerAgent> workers) {
+        return plan(goal, workers, "");
+    }
+
+    /**
+     * 拆解目标为步骤列表，并把召回的历史经验拼进提示词指导规划。
+     */
+    public List<AgentStep> plan(String goal, List<WorkerAgent> workers, String experience) {
         String prompt = PromptRenderer.render(
                 PromptRenderer.load("prompts/planner-system.st"),
-                Map.of("goal", goal, "workers", renderWorkers(workers))
+                Map.of("goal", goal, "workers", renderWorkers(workers),
+                        "experience", experience == null ? "" : experience)
         );
         String response = planningClient.prompt().user(prompt).call().content();
         return parseSteps(response);

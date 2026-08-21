@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>通用办公 Agent 控制台</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --card: #ffffff;
+      --border: #e3e6ea;
+      --text: #1f2329;
+      --muted: #7a8089;
+      --brand: #2f6bff;
+      --brand-dark: #2454cc;
+      --ok: #1f9d55;
+      --bad: #d94444;
+      --warn: #c78a00;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 24px 16px 64px; }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    .sub { color: var(--muted); margin: 0 0 20px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .card h2 { font-size: 15px; margin: 0 0 12px; }
+    label { display: block; color: var(--muted); margin-bottom: 6px; font-size: 13px; }
+    input[type=text], textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    textarea { min-height: 64px; resize: vertical; }
+    button {
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 16px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button:hover { background: var(--brand-dark); }
+    button:disabled { background: #a9b4c9; cursor: not-allowed; }
+    .row { display: flex; gap: 10px; align-items: center; }
+    .row input[type=text] { flex: 1; }
+    .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .seg button {
+      background: #fff;
+      color: var(--muted);
+      border: none;
+      border-radius: 0;
+      padding: 8px 16px;
+      font-size: 13px;
+    }
+    .seg button.active-pos { background: var(--ok); color: #fff; }
+    .seg button.active-neg { background: var(--bad); color: #fff; }
+    .status { font-size: 13px; color: var(--muted); }
+    .status.running::before {
+      content: "";
+      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--brand); margin-right: 6px; animation: pulse 1s infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+    #timeline { max-height: 360px; overflow-y: auto; padding: 4px; }
+    .evt {
+      border-left: 3px solid var(--border);
+      padding: 6px 10px 6px 12px;
+      margin-bottom: 6px;
+      background: #fafbfc;
+      border-radius: 0 8px 8px 0;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 12.5px;
+      word-break: break-all;
+    }
+    .evt .t { font-weight: 600; color: var(--brand); }
+    .evt.run-completed { border-left-color: var(--ok); }
+    .evt.run-failed { border-left-color: var(--bad); }
+    .evt.step-reflection { border-left-color: var(--warn); }
+    .evt .meta { color: var(--muted); }
+    .toast { margin-top: 8px; font-size: 13px; color: var(--ok); min-height: 18px; }
+    .toast.err { color: var(--bad); }
+    .hint { color: var(--muted); font-size: 12.5px; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>通用办公 Agent 控制台</h1>
+    <p class="sub">HLA 自主编排 + 反思增强工具使用 + GraphRAG 知识自学习</p>
+
+    <div class="card">
+      <h2>执行目标</h2>
+      <div class="row">
+        <input type="text" id="goal" placeholder="例如：整理本周会议纪要并生成周报摘要">
+        <button id="runBtn" onclick="startRun()">运行</button>
+      </div>
+      <div class="status" id="status">就绪</div>
+      <div id="timeline"></div>
+    </div>
+
+    <div class="card">
+      <h2>人工数据标注</h2>
+      <p class="sub" style="margin-top:-4px">
+        告诉模型哪些操作“正确且富有成效”（正向）或“低效/有误”（负向）。
+        标注会写入知识图谱，并在后续规划时被召回，用于指导自学习迭代。
+      </p>
+      <label>操作 / 目标描述</label>
+      <input type="text" id="annoGoal" placeholder="描述这次操作或目标，例如：用 L1 层规则过滤高风险数据">
+
+      <label style="margin-top:12px">标注类型</label>
+      <div class="seg">
+        <button id="segPos" class="active-pos" onclick="setPolarity(true)">正向（正确且富有成效）</button>
+        <button id="segNeg" onclick="setPolarity(false)">负向（低效或有误）</button>
+      </div>
+
+      <label style="margin-top:12px">备注（可选）</label>
+      <textarea id="annoComment" placeholder="补充说明该操作为什么有效或无效"></textarea>
+
+      <div class="row" style="margin-top:12px">
+        <button id="annoBtn" onclick="submitAnnotate()">提交标注</button>
+        <span class="status" id="annoStatus"></span>
+      </div>
+      <div class="toast" id="annoToast"></div>
+    </div>
+  </div>
+
+  <script>
+    const EVENT_TYPES = [
+      'run:started', 'run:plan', 'run:replan', 'wave:started', 'wave:completed',
+      'step:status', 'step:reflection', 'run:synthesis', 'run:completed', 'run:failed'
+    ];
+    let polarity = true;
+
+    function setPolarity(p) {
+      polarity = p;
+      document.getElementById('segPos').className = p ? 'active-pos' : '';
+      document.getElementById('segNeg').className = p ? '' : 'active-neg';
+    }
+
+    function startRun() {
+      const goal = document.getElementById('goal').value.trim();
+      if (!goal) return;
+      const statusEl = document.getElementById('status');
+      const timeline = document.getElementById('timeline');
+      const runBtn = document.getElementById('runBtn');
+      timeline.innerHTML = '';
+      statusEl.textContent = '运行中';
+      statusEl.className = 'status running';
+      runBtn.disabled = true;
+
+      const es = new EventSource('/api/agent/run/stream?goal=' + encodeURIComponent(goal));
+      EVENT_TYPES.forEach(function (t) {
+        es.addEventListener(t, function (e) { renderEvent(t, e.data); });
+      });
+
+      es.onclose = function () {
+        statusEl.textContent = '已结束';
+        statusEl.className = 'status';
+        runBtn.disabled = false;
+        es.close();
+      };
+      es.onerror = function () {
+        statusEl.textContent = '连接中断';
+        statusEl.className = 'status';
+        runBtn.disabled = false;
+        es.close();
+      };
+    }
+
+    function renderEvent(type, data) {
+      const timeline = document.getElementById('timeline');
+      const div = document.createElement('div');
+      let payload;
+      try { payload = JSON.parse(data); } catch (err) { payload = { raw: data }; }
+
+      const cls = type.replace(':', '-');
+      div.className = 'evt ' + cls;
+      const time = payload.ts ? new Date(payload.ts).toLocaleTimeString() : '';
+      div.innerHTML = '<span class="t">' + type + '</span>'
+        + ' <span class="meta">' + time + '</span>'
+        + '<div>' + formatPayload(payload) + '</div>';
+      timeline.appendChild(div);
+      timeline.scrollTop = timeline.scrollHeight;
+    }
+
+    function formatPayload(p) {
+      const parts = [];
+      for (const key of Object.keys(p)) {
+        if (key === 'runId' || key === 'ts') continue;
+        let v = p[key];
+        if (typeof v === 'object') v = JSON.stringify(v);
+        parts.push(key + '=' + v);
+      }
+      return parts.join(' &nbsp; ');
+    }
+
+    function submitAnnotate() {
+      const goal = document.getElementById('annoGoal').value.trim();
+      const comment = document.getElementById('annoComment').value.trim();
+      const toast = document.getElementById('annoToast');
+      const annoBtn = document.getElementById('annoBtn');
+      const statusEl = document.getElementById('annoStatus');
+      if (!goal) {
+        toast.className = 'toast err';
+        toast.textContent = '请填写操作 / 目标描述';
+        return;
+      }
+      annoBtn.disabled = true;
+      statusEl.textContent = '提交中...';
+      fetch('/api/agent/annotations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ goal: goal, positive: polarity, comment: comment })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          toast.className = 'toast';
+          toast.textContent = '标注已写入知识图谱';
+          statusEl.textContent = '';
+          document.getElementById('annoGoal').value = '';
+          document.getElementById('annoComment').value = '';
+        })
+        .catch(function (err) {
+          toast.className = 'toast err';
+          toast.textContent = '标注提交失败：' + err;
+          statusEl.textContent = '';
+        })
+        .finally(function () { annoBtn.disabled = false; });
+    }
+  </script>
+</body>
+</html>

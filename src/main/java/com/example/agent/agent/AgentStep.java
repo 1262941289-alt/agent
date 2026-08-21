@@ -18,6 +18,8 @@ public class AgentStep {
     private String status = "PENDING";
     /** 执行结果摘要 */
     private String result;
+    /** 该步骤触发反思重试的次数 */
+    private int reflections;
 
     public AgentStep() {
     }
@@ -68,5 +70,13 @@ public class AgentStep {
 
     public void setResult(String result) {
         this.result = result;
+    }
+
+    public int getReflections() {
+        return reflections;
+    }
+
+    public void setReflections(int reflections) {
+        this.reflections = reflections;
     }
 }
