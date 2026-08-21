@@ -2,10 +2,11 @@ package com.example.agent.agent;
 
 import com.example.agent.knowledge.KnowledgeGraphService;
 import com.example.agent.knowledge.KnowledgeNodeEntity;
+import com.example.agent.service.EmbeddingVectorClient;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -13,15 +14,18 @@ import java.util.Set;
 /**
  * 数据后处理：按目标相似度召回历史经验（EXPERIENCE / PITFALL）与人工标注（ANNOTATION），
  * 拼成指导 Planner 的上下文，实现“利用历史最优”的自学习反馈。
- * <p>MVP 用字符二元组（bigram）重叠度做相似度打分，替代重量级向量检索；后续可平滑替换为 embedding。
+ * <p>打分优先采用 Python 向量服务（{@link EmbeddingVectorClient}）的余弦相似度（语义向量化推理），
+ * 服务不可用时 fail-open 回退到字符二元组（bigram）重叠度，保证召回始终可用。
  */
 @Component
 public class ExperienceRetriever {
 
     private final KnowledgeGraphService graphService;
+    private final EmbeddingVectorClient vectorClient;
 
-    public ExperienceRetriever(KnowledgeGraphService graphService) {
+    public ExperienceRetriever(KnowledgeGraphService graphService, EmbeddingVectorClient vectorClient) {
         this.graphService = graphService;
+        this.vectorClient = vectorClient;
     }
 
     /**
@@ -36,10 +40,7 @@ public class ExperienceRetriever {
         candidates.addAll(graphService.findByType("PITFALL"));
         candidates.addAll(graphService.findByType("ANNOTATION"));
 
-        List<KnowledgeNodeEntity> ranked = candidates.stream()
-                .sorted(Comparator.comparingDouble((KnowledgeNodeEntity n) -> score(goal, n)).reversed())
-                .limit(k)
-                .toList();
+        List<KnowledgeNodeEntity> ranked = ranked(goal, candidates, k);
         if (ranked.isEmpty()) {
             return "";
         }
@@ -50,10 +51,36 @@ public class ExperienceRetriever {
         return sb.toString();
     }
 
-    private double score(String goal, KnowledgeNodeEntity n) {
-        String text = (n.getName() == null ? "" : n.getName())
+    private List<KnowledgeNodeEntity> ranked(String goal, List<KnowledgeNodeEntity> candidates, int k) {
+        int n = candidates.size();
+        double[] bigram = new double[n];
+        List<String> texts = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            String t = text(candidates.get(i));
+            texts.add(t);
+            bigram[i] = bigramOverlap(goal, t);
+        }
+        double[] vec = vectorClient.similarity(goal, texts);
+        double[] combined = new double[n];
+        for (int i = 0; i < n; i++) {
+            combined[i] = (vec != null && i < vec.length) ? vec[i] : bigram[i];
+        }
+        Integer[] order = new Integer[n];
+        for (int i = 0; i < n; i++) {
+            order[i] = i;
+        }
+        Arrays.sort(order, (a, b) -> Double.compare(combined[b], combined[a]));
+        int count = Math.min(Math.max(k, 0), n);
+        List<KnowledgeNodeEntity> out = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            out.add(candidates.get(order[i]));
+        }
+        return out;
+    }
+
+    private String text(KnowledgeNodeEntity n) {
+        return (n.getName() == null ? "" : n.getName())
                 + " " + (n.getContent() == null ? "" : n.getContent());
-        return bigramOverlap(goal, text);
     }
 
     private double bigramOverlap(String a, String b) {

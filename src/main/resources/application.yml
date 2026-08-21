@@ -90,3 +90,11 @@ management:
 logging:
   level:
     com.example.agent: INFO
+
+# 基于 Python 的向量化推理边车（经验/标注的语义召回）
+agent:
+  vector:
+    # 是否启用向量相似度打分（禁用或服务不可用时自动回退 bigram）
+    enabled: true
+    base-url: ${VECTOR_BASE_URL:http://127.0.0.1:8000}
+    timeout-ms: ${VECTOR_TIMEOUT_MS:8000}

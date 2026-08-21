@@ -26,13 +26,16 @@ public class DataIngestionServiceImpl implements DataIngestionService {
     private final DataItemRepository dataItemRepository;
     private final DeterministicCleaningEngine cleaningEngine;
     private final ObjectMapper objectMapper;
+    private final AuditLogService auditLogService;
 
     public DataIngestionServiceImpl(DataItemRepository dataItemRepository,
                                     DeterministicCleaningEngine cleaningEngine,
-                                    ObjectMapper objectMapper) {
+                                    ObjectMapper objectMapper,
+                                    AuditLogService auditLogService) {
         this.dataItemRepository = dataItemRepository;
         this.cleaningEngine = cleaningEngine;
         this.objectMapper = objectMapper;
+        this.auditLogService = auditLogService;
     }
 
     @Override
@@ -81,6 +84,8 @@ public class DataIngestionServiceImpl implements DataIngestionService {
             } else {
                 entity.setCleanedContent(objectMapper.writeValueAsString(report.cleaned()));
                 entity.setCleaningLog(objectMapper.writeValueAsString(report.changes()));
+                auditLogService.record("CLEAN", "UPDATE", "data_item", entity.getId(),
+                        "确定性清洗 " + report.changes().size() + " 处变更", report.changes(), "system");
             }
         } catch (Exception ignored) {
             entity.setCleanedContent(null);

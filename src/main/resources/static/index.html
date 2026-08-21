@@ -109,6 +109,15 @@
     .badge.derived { background: #eef2ff; color: var(--brand); }
     .decision { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; background: #fff; }
     .decision .dhead { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+    .chip { display: inline-block; border: 1px solid var(--border); border-radius: 14px; padding: 2px 10px; font-size: 12px; color: var(--muted); cursor: pointer; background: #fff; margin-right: 6px; }
+    .chip.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .badge.ingest { background: #eef2ff; color: var(--brand); }
+    .badge.clean { background: #e6f7ee; color: var(--ok); }
+    .badge.decision { background: #fff4e0; color: var(--warn); }
+    .badge.annotation { background: #f3e8ff; color: #7c3aed; }
+    .log { border-left: 3px solid var(--border); padding: 7px 10px; margin-bottom: 6px; background: #fafbfc; border-radius: 0 8px 8px 0; font-size: 13px; }
+    .log .lhead { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .kv { color: var(--muted); font-size: 12.5px; font-family: ui-monospace, Menlo, Consolas, monospace; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -119,6 +128,7 @@
     <div class="tabs">
       <button id="tabRunBtn" class="tab active" onclick="switchTab('run')">执行监控</button>
       <button id="tabAnnoBtn" class="tab" onclick="switchTab('anno')">数据标注</button>
+      <button id="tabInsightBtn" class="tab" onclick="switchTab('insight')">系统洞察</button>
     </div>
 
     <!-- ============ 执行监控 ============ -->
@@ -187,6 +197,40 @@
         <div class="toast" id="annoToast"></div>
       </div>
     </section>
+
+    <!-- ============ 系统洞察 ============ -->
+    <section id="tab-insight" style="display:none">
+      <div class="card">
+        <h2>能力清单 · 信用分 · 当前管理者</h2>
+        <div class="row">
+          <button onclick="loadInsight()">刷新</button>
+          <span class="status" id="insightStatus"></span>
+        </div>
+        <div id="manager" style="margin-top:10px"></div>
+        <div id="capabilities" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <h2>选举结果（最近）</h2>
+        <div id="elections"></div>
+      </div>
+
+      <div class="card">
+        <h2>分配记录（最近）</h2>
+        <div id="allocations"></div>
+      </div>
+
+      <div class="card">
+        <h2>审计日志（数据更改操作）</h2>
+        <div id="auditFilters" style="margin-bottom:10px"></div>
+        <div id="audit"></div>
+      </div>
+
+      <div class="card">
+        <h2>事件 Schema</h2>
+        <div id="eventsSchema"></div>
+      </div>
+    </section>
   </div>
 
   <script>
@@ -203,8 +247,11 @@
     function switchTab(name) {
       document.getElementById('tab-run').style.display = name === 'run' ? '' : 'none';
       document.getElementById('tab-anno').style.display = name === 'anno' ? '' : 'none';
+      document.getElementById('tab-insight').style.display = name === 'insight' ? '' : 'none';
       document.getElementById('tabRunBtn').className = 'tab' + (name === 'run' ? ' active' : '');
       document.getElementById('tabAnnoBtn').className = 'tab' + (name === 'anno' ? ' active' : '');
+      document.getElementById('tabInsightBtn').className = 'tab' + (name === 'insight' ? ' active' : '');
+      if (name === 'insight') refreshInsight();
     }
 
     // ---------- 执行监控 ----------
@@ -472,6 +519,204 @@
           toast.className = 'toast err'; toast.textContent = '标注提交失败：' + err; statusEl.textContent = '';
         })
         .finally(function () { annoBtn.disabled = false; });
+    }
+
+    // ---------- 系统洞察 ----------
+    function fmtMs(ms) {
+      const n = Number(ms) || 0;
+      return n >= 1000 ? (n / 1000).toFixed(1) + 's' : n + 'ms';
+    }
+
+    function refreshInsight() {
+      loadInsight();
+      loadElections();
+      loadAllocations();
+      loadAuditLogs('');
+      renderEventsSchema();
+    }
+
+    function loadInsight() {
+      const st = document.getElementById('insightStatus');
+      st.textContent = '加载中...';
+      Promise.all([
+        fetch('/api/agents/capabilities').then(function (r) { return r.json(); }),
+        fetch('/api/agents/credit-scores').then(function (r) { return r.json(); }),
+        fetch('/api/agents/stats').then(function (r) { return r.json(); }),
+        fetch('/api/agents/manager').then(function (r) { return r.json(); })
+      ]).then(function (res) {
+        const capabilities = res[0], scores = res[1], stats = res[2], manager = res[3];
+        renderManager(manager);
+        renderCapabilities(capabilities, scores, stats);
+        st.textContent = '已加载 ' + capabilities.length + ' 个能力';
+      }).catch(function (e) { st.textContent = '加载失败：' + e; });
+    }
+
+    function lookup(obj, key) {
+      if (obj[key] !== undefined) return obj[key];
+      const lk = String(key).toLowerCase();
+      for (const k of Object.keys(obj)) { if (String(k).toLowerCase() === lk) return obj[k]; }
+      return undefined;
+    }
+
+    function renderManager(manager) {
+      document.getElementById('manager').innerHTML =
+        '<div class="kv">当前管理者（下一轮）：<b style="color:var(--brand)">' + esc(manager.currentManager) + '</b></div>';
+    }
+
+    function renderCapabilities(capabilities, scores, stats) {
+      const cont = document.getElementById('capabilities');
+      if (!capabilities.length) { cont.innerHTML = '<p class="muted">无已注册能力</p>'; return; }
+      let html = '<table class="fields"><tr><th>能力</th><th>描述</th><th>信用分</th><th>分配次数</th><th>成功率</th><th>平均耗时</th></tr>';
+      capabilities.forEach(function (c) {
+        const label = c.label;
+        const s = lookup(stats, label) || {};
+        const score = lookup(scores, label);
+        html += '<tr>'
+          + '<td><b>' + esc(label) + '</b></td>'
+          + '<td class="muted">' + esc(c.description || '') + '</td>'
+          + '<td>' + (score !== undefined ? score : 50) + '</td>'
+          + '<td>' + (s.allocationCount !== undefined ? s.allocationCount : 0) + '</td>'
+          + '<td>' + (s.successRate !== undefined ? Math.round(s.successRate * 100) + '%' : '—') + '</td>'
+          + '<td>' + (s.avgDurationMs !== undefined ? esc(fmtMs(s.avgDurationMs)) : '—') + '</td>'
+          + '</tr>';
+      });
+      html += '</table>';
+      cont.innerHTML = html;
+    }
+
+    function loadElections() {
+      fetch('/api/agents/elections?limit=20')
+        .then(function (r) { return r.json(); })
+        .then(function (list) {
+          const cont = document.getElementById('elections');
+          if (!list.length) { cont.innerHTML = '<p class="muted">暂无选举记录，运行一次任务后自动产生。</p>'; return; }
+          let html = '';
+          list.forEach(function (e) {
+            const candArr = Array.isArray(safeParse(e.candidates)) ? safeParse(e.candidates) : [];
+            html += '<div class="log">'
+              + '<div class="lhead">'
+              + '<b>第 ' + esc(e.round) + ' 轮</b>'
+              + '<span class="badge ingest">' + esc(e.winner || '—') + ' 当选</span>'
+              + '<span class="muted">本轮管理者：' + esc(e.managerRef || '—') + '</span>'
+              + '<span class="muted">' + esc(e.createdAt || '') + '</span>'
+              + '</div>';
+            if (candArr.length) {
+              html += '<div style="margin-top:6px">';
+              candArr.forEach(function (v) {
+                const win = v.candidate === e.winner;
+                html += '<span class="chip' + (win ? ' active' : '') + '" title="信用分=' + v.creditScore + ' · 成功率=' + v.successRate + ' · 耗时=' + v.timeScore + ' · 均衡=' + v.balanceScore + ' · term=' + v.scoreTerm + '">'
+                  + esc(v.candidate) + ' ' + esc(v.composite) + '</span>';
+              });
+              html += '</div>';
+            }
+            html += '</div>';
+          });
+          cont.innerHTML = html;
+        })
+        .catch(function (e) { document.getElementById('elections').innerHTML = '<p class="toast err">加载失败：' + e + '</p>'; });
+    }
+
+    function loadAllocations() {
+      fetch('/api/agents/allocations?limit=20')
+        .then(function (r) { return r.json(); })
+        .then(function (list) {
+          const cont = document.getElementById('allocations');
+          if (!list.length) { cont.innerHTML = '<p class="muted">暂无分配记录。</p>'; return; }
+          let html = '';
+          list.forEach(function (a) {
+            const ok = a.status === 'SUCCESS';
+            html += '<div class="log">'
+              + '<div class="lhead">'
+              + '<span class="badge ' + (ok ? 'clean' : 'decision') + '">' + esc(a.status || '') + '</span>'
+              + '<b>' + esc(a.capability || '') + '</b>'
+              + '<span class="muted">第 ' + esc(a.round) + ' 轮 / 步 ' + esc(a.stepNo) + '</span>'
+              + '<span class="muted">' + esc(fmtMs(a.durationMs)) + '</span>'
+              + '</div>'
+              + '<div class="kv">' + esc(a.subtaskGoal || '') + '</div>'
+              + '</div>';
+          });
+          cont.innerHTML = html;
+        })
+        .catch(function (e) { document.getElementById('allocations').innerHTML = '<p class="toast err">加载失败：' + e + '</p>'; });
+    }
+
+    const AUDIT_CATEGORIES = [
+      { key: '', label: '全部' },
+      { key: 'INGEST', label: '接入' },
+      { key: 'CLEAN', label: '清洗' },
+      { key: 'DECISION', label: '决策' },
+      { key: 'ANNOTATION', label: '标注' }
+    ];
+
+    function renderAuditFilters(active) {
+      let html = '';
+      AUDIT_CATEGORIES.forEach(function (c) {
+        html += '<span class="chip' + (c.key === active ? ' active' : '') + '" onclick="loadAuditLogs(\'' + c.key + '\')">' + c.label + '</span>';
+      });
+      document.getElementById('auditFilters').innerHTML = html;
+    }
+
+    function loadAuditLogs(category) {
+      const cat = category === undefined ? '' : category;
+      renderAuditFilters(cat);
+      const url = '/api/audit?limit=100' + (cat ? '&category=' + encodeURIComponent(cat) : '');
+      fetch(url)
+        .then(function (r) { return r.json(); })
+        .then(function (list) {
+          const cont = document.getElementById('audit');
+          if (!list.length) { cont.innerHTML = '<p class="muted">暂无审计日志。</p>'; return; }
+          let html = '';
+          list.forEach(function (l) {
+            html += '<div class="log">'
+              + '<div class="lhead">'
+              + '<span class="badge ' + esc(String(l.category || '').toLowerCase()) + '">' + esc(l.category || '') + '</span>'
+              + '<b>' + esc(l.action || '') + '</b>'
+              + '<span class="muted">' + esc(l.entityType || '') + '#' + esc(String(l.entityId || '').slice(0, 8)) + '</span>'
+              + '<span class="muted">' + esc(l.actor || '') + '</span>'
+              + '<span class="muted">' + esc(l.createdAt || '') + '</span>'
+              + '</div>'
+              + '<div>' + esc(l.summary || '') + '</div>'
+              + (l.detail ? '<div class="kv">' + esc(safeJsonSummary(l.detail)) + '</div>' : '')
+              + '</div>';
+          });
+          cont.innerHTML = html;
+        })
+        .catch(function (e) { document.getElementById('audit').innerHTML = '<p class="toast err">加载失败：' + e + '</p>'; });
+    }
+
+    function safeJsonSummary(s) {
+      let d;
+      try { d = JSON.parse(typeof s === 'string' ? s : JSON.stringify(s)); } catch (e) { return s; }
+      if (typeof d !== 'object' || d === null) return String(d);
+      const items = [];
+      for (const k of Object.keys(d)) {
+        let v = d[k];
+        if (typeof v === 'object') v = JSON.stringify(v);
+        items.push(k + '=' + v);
+      }
+      return items.join('  ');
+    }
+
+    function renderEventsSchema() {
+      const schema = [
+        ['run:started', '一次运行开始，含 runId 与目标'],
+        ['run:plan', '管理者完成目标拆解，产出执行计划'],
+        ['run:replan', '执行受阻后重新规划'],
+        ['wave:started', '一波（轮）任务开始'],
+        ['wave:completed', '一波任务结束'],
+        ['step:status', '单个分配步骤的状态（能力路由/结果）'],
+        ['step:reflection', '步骤反思增强'],
+        ['run:synthesis', '汇总各步骤产出'],
+        ['run:elected', '本轮结束完成选举，产出当选管理者'],
+        ['run:completed', '运行成功结束'],
+        ['run:failed', '运行失败']
+      ];
+      let html = '<table class="fields"><tr><th style="width:30%">事件类型</th><th>说明</th></tr>';
+      schema.forEach(function (e) {
+        html += '<tr><td class="kv">' + e[0] + '</td><td>' + e[1] + '</td></tr>';
+      });
+      html += '</table>';
+      document.getElementById('eventsSchema').innerHTML = html;
     }
   </script>
 </body>

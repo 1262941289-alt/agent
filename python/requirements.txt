@@ -1,0 +1,5 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+# 可选：启用语义 embedding（会额外安装 torch，并首次联网下载模型，约数百 MB）
+# 不安装时服务自动使用纯 Python 的 hashing 向量兜底，Java 侧另有 bigram fail-open。
+# sentence-transformers>=2.7

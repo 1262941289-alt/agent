@@ -7,6 +7,7 @@ import com.example.agent.knowledge.KnowledgeGraphService;
 import com.example.agent.repository.DataItemRepository;
 import com.example.agent.repository.DecisionResultRepository;
 import com.example.agent.service.AnnotationService;
+import com.example.agent.service.AuditLogService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,29 +33,40 @@ public class AnnotationController {
     private final AnnotationService annotationService;
     private final DecisionResultRepository decisionResultRepository;
     private final DataItemRepository dataItemRepository;
+    private final AuditLogService auditLogService;
 
     public AnnotationController(KnowledgeGraphService graphService,
                                 AnnotationService annotationService,
                                 DecisionResultRepository decisionResultRepository,
-                                DataItemRepository dataItemRepository) {
+                                DataItemRepository dataItemRepository,
+                                AuditLogService auditLogService) {
         this.graphService = graphService;
         this.annotationService = annotationService;
         this.decisionResultRepository = decisionResultRepository;
         this.dataItemRepository = dataItemRepository;
+        this.auditLogService = auditLogService;
     }
 
     /** 操作/目标级标注。 POST /api/agent/annotations */
     @PostMapping("/annotations")
     public Map<String, Object> annotate(@RequestBody AnnotationRequest request) {
         graphService.annotate(request.goal(), request.positive(), request.comment());
+        auditLogService.record("ANNOTATION", request.positive() ? "AGREE" : "REJECT", "goal", "",
+                "目标级标注：" + (request.positive() ? "正向" : "负向"), request.comment(), "human");
         return Map.of("ok", true);
     }
 
     /** 数据条目级标注（三态 + 字段纠错）。 POST /api/agent/annotations/item */
     @PostMapping("/annotations/item")
     public Map<String, Object> annotateItem(@RequestBody ItemAnnotationRequest request) {
-        return annotationService.annotateItem(
+        Map<String, Object> r = annotationService.annotateItem(
                 request.itemId(), request.verdict(), request.corrections(), request.comment());
+        auditLogService.record("ANNOTATION", "ITEM", "data_item", request.itemId(),
+                "条目级标注 verdict=" + request.verdict(),
+                Map.of("verdict", request.verdict() == null ? "" : request.verdict(),
+                        "corrections", request.corrections() == null ? List.of() : request.corrections()),
+                "human");
+        return r;
     }
 
     /** 决策结果级标注。 POST /api/agent/annotations/decision */
@@ -62,6 +74,9 @@ public class AnnotationController {
     public Map<String, Object> annotateDecision(@RequestBody DecisionAnnotationRequest request) {
         annotationService.annotateDecision(
                 request.taskId(), request.itemId(), request.passed(), request.correct(), request.comment());
+        auditLogService.record("ANNOTATION", "DECISION", "decision", request.itemId(),
+                "决策级标注 correct=" + request.correct(),
+                Map.of("passed", request.passed(), "correct", request.correct()), "human");
         return Map.of("ok", true);
     }
 

@@ -19,6 +19,11 @@ target/
 # 本地敏感配置（密钥不入库）
 application-local.yml
 
+# Python 向量服务
+__pycache__/
+*.pyc
+.venv/
+
 # 兼容远程仓库原有规则（旧工程遗留）
 bin-debug/
 bin-release/
