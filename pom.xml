@@ -69,6 +69,13 @@
             <version>5.3.0</version>
         </dependency>
 
+        <!-- Playwright 浏览器自动化：agent 抓网页 / 操作页面（走系统已装 Edge，免下 Chromium） -->
+        <dependency>
+            <groupId>com.microsoft.playwright</groupId>
+            <artifactId>playwright</artifactId>
+            <version>1.49.0</version>
+        </dependency>
+
         <!-- Spring AI OpenAI 兼容云端模型 Starter（base-url/api-key 可外置） -->
         <dependency>
             <groupId>org.springframework.ai</groupId>

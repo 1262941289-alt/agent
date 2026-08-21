@@ -69,6 +69,13 @@ sk-agent:
         action: PASS
         priority: 4
         description: 其余情况一律通过
+  browser:
+    # 是否无头运行；台账验收需要人可观察、可介入登录，默认有头
+    headless: false
+    # 复用系统已安装的 Edge，避免下载 Chromium
+    channel: msedge
+    # 持久化用户数据目录：登录态（如 GitHub）跨启动保留
+    profile-dir: ${user.dir}/target/playwright-profile
 
 # 可观测：健康检查与基本信息端点
 management:

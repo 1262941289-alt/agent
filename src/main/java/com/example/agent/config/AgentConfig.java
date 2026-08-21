@@ -1,6 +1,7 @@
 package com.example.agent.config;
 
 import com.example.agent.tools.AttributeRecordTools;
+import com.example.agent.tools.BrowserTools;
 import com.example.agent.tools.DataQueryTools;
 import com.example.agent.tools.DecisionTools;
 import com.example.agent.tools.LayerRecordTools;
@@ -52,5 +53,14 @@ public class AgentConfig {
     @Bean
     public ChatClient planningChatClient(OpenAiChatModel chatModel) {
         return ChatClient.builder(chatModel).build();
+    }
+
+    @Bean
+    public ChatClient browserChatClient(
+            OpenAiChatModel chatModel,
+            BrowserTools browserTools) {
+        return ChatClient.builder(chatModel)
+                .defaultTools(browserTools)
+                .build();
     }
 }
