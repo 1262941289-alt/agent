@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -67,6 +68,24 @@ public class AgentStatsService {
             out.put(en.getKey(), m);
         }
         return out;
+    }
+
+    /** 某轮内出现 SUCCESS 分配的能力标签集合（阶段三候选池：率先/成功完成任务）。 */
+    public Set<String> successLabelsInRound(int round) {
+        return repository.findAll().stream()
+                .filter(e -> e.getRound() == round && "SUCCESS".equals(e.getStatus()))
+                .map(AllocationRecordEntity::getCapability)
+                .filter(c -> c != null && !c.isBlank())
+                .collect(Collectors.toSet());
+    }
+
+    /** 某轮内被分配过（任意状态）的能力标签集合。 */
+    public Set<String> allocatedLabelsInRound(int round) {
+        return repository.findAll().stream()
+                .filter(e -> e.getRound() == round)
+                .map(AllocationRecordEntity::getCapability)
+                .filter(c -> c != null && !c.isBlank())
+                .collect(Collectors.toSet());
     }
 
     /** 最近 N 条分配记录（供前端/日志查看数据更改操作）。 */

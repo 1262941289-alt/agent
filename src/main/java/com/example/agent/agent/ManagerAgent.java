@@ -2,9 +2,11 @@ package com.example.agent.agent;
 
 import com.example.agent.capability.AgentRegistry;
 import com.example.agent.capability.CapabilityAgent;
+import com.example.agent.entity.ElectionEntity;
 import com.example.agent.memory.Memory;
 import com.example.agent.service.AgentStatsService;
 import com.example.agent.service.CreditScoreService;
+import com.example.agent.service.ElectionService;
 import com.example.agent.util.PromptRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +48,7 @@ public class ManagerAgent {
     private final ExperienceCollector experienceCollector;
     private final CreditScoreService creditScoreService;
     private final AgentStatsService agentStatsService;
+    private final ElectionService electionService;
 
     public ManagerAgent(PlanPlanner planPlanner,
                         @Qualifier("planningChatClient") ChatClient planningClient,
@@ -54,7 +57,8 @@ public class ManagerAgent {
                         @Qualifier("agentExecutor") Executor executor,
                         ExperienceCollector experienceCollector,
                         CreditScoreService creditScoreService,
-                        AgentStatsService agentStatsService) {
+                        AgentStatsService agentStatsService,
+                        ElectionService electionService) {
         this.planPlanner = planPlanner;
         this.planningClient = planningClient;
         this.registry = registry;
@@ -63,6 +67,7 @@ public class ManagerAgent {
         this.experienceCollector = experienceCollector;
         this.creditScoreService = creditScoreService;
         this.agentStatsService = agentStatsService;
+        this.electionService = electionService;
     }
 
     /** 执行总体目标（无会话上下文）。 */
@@ -95,9 +100,12 @@ public class ManagerAgent {
                     Map.of("goal", nz(goal), "conversationId", nz(conversationId)));
 
             int termRound = agentStatsService.nextRound();
+            String managerRef = electionService.currentManager();
             String planningGoal = (conversationContext == null || conversationContext.isBlank())
                     ? goal
                     : conversationContext + "\n\n当前目标（需要完成的任务）：\n" + goal;
+            // 阶段三最小版：注入当选管理者身份，供规划器感知（管理者只分配不执行）
+            planningGoal = "本轮管理者（负责拆解与分配，不直接执行）：" + managerRef + "\n" + planningGoal;
             String experience = memoryAsString(goal);
             List<AgentStep> steps = planPlanner.plan(planningGoal, registry.metas(), experience);
             emit(events, streamSink, "run:plan", runId, Map.of("steps", toPlanData(steps)));
@@ -121,12 +129,20 @@ public class ManagerAgent {
                 executeSteps(recovery, events, streamSink, runId, termRound, goal);
             }
 
+            // 阶段三：每轮分配/执行结束后自动选举下一轮管理者（冷启动为 default，平票信用分高者胜）
+            ElectionEntity election = electionService.elect(termRound, managerRef);
+            Map<String, Object> electionData = electionData(termRound, managerRef, election);
+            emit(events, streamSink, "run:elected", runId, electionData);
+
             String finalAnswer = nz(synthesize(goal, steps));
             result.setSteps(steps);
             result.setFinalAnswer(finalAnswer);
             emit(events, streamSink, "run:synthesis", runId, Map.of("finalAnswer", finalAnswer));
-            emit(events, streamSink, "run:completed", runId,
-                    Map.of("finalAnswer", finalAnswer, "stats", statsOf(steps)));
+            Map<String, Object> completed = new HashMap<>();
+            completed.put("finalAnswer", finalAnswer);
+            completed.put("stats", statsOf(steps));
+            completed.put("election", electionData);
+            emit(events, streamSink, "run:completed", runId, completed);
             memory.remember("TASK", goal, finalAnswer);
         } catch (Exception e) {
             String error = errorMessage(e);
@@ -142,6 +158,15 @@ public class ManagerAgent {
     private String memoryAsString(String goal) {
         List<String> recalled = memory.recall(goal, 5);
         return recalled.isEmpty() ? "" : String.join("\n", recalled);
+    }
+
+    private Map<String, Object> electionData(int round, String managerRef, ElectionEntity e) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("round", round);
+        m.put("previousManager", nz(managerRef));
+        m.put("winner", nz(e.getWinner()));
+        m.put("candidates", e.getCandidatesJson() == null ? "" : e.getCandidatesJson());
+        return m;
     }
 
     private void triggerExperienceAsync(String runId, String goal, List<AgentEvent> events, AgentRunResult result) {

@@ -3,6 +3,7 @@ package com.example.agent.web;
 import com.example.agent.capability.AgentRegistry;
 import com.example.agent.service.AgentStatsService;
 import com.example.agent.service.CreditScoreService;
+import com.example.agent.service.ElectionService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,13 +23,16 @@ public class AgentRegistryController {
     private final AgentRegistry registry;
     private final CreditScoreService creditScoreService;
     private final AgentStatsService agentStatsService;
+    private final ElectionService electionService;
 
     public AgentRegistryController(AgentRegistry registry,
                                    CreditScoreService creditScoreService,
-                                   AgentStatsService agentStatsService) {
+                                   AgentStatsService agentStatsService,
+                                   ElectionService electionService) {
         this.registry = registry;
         this.creditScoreService = creditScoreService;
         this.agentStatsService = agentStatsService;
+        this.electionService = electionService;
     }
 
     /** GET /api/agents/capabilities —— 已注册能力清单。 */
@@ -59,5 +63,31 @@ public class AgentRegistryController {
     @GetMapping("/allocations")
     public List<Map<String, Object>> allocations(@RequestParam(defaultValue = "20") int limit) {
         return agentStatsService.recent(limit);
+    }
+
+    /** GET /api/agents/manager —— 当前（下一轮）管理者身份（冷启动 default）。 */
+    @GetMapping("/manager")
+    public Map<String, Object> manager() {
+        return Map.of("currentManager", electionService.currentManager());
+    }
+
+    /** GET /api/agents/elections?limit=20 —— 最近 N 次选举结果（阶段三）。 */
+    @GetMapping("/elections")
+    public List<Map<String, Object>> elections(@RequestParam(defaultValue = "20") int limit) {
+        return electionService.recent(limit).stream()
+                .map(e -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("round", e.getRound());
+                    m.put("managerRef", blank(e.getManagerRef()));
+                    m.put("winner", blank(e.getWinner()));
+                    m.put("createdAt", e.getCreatedAt() == null ? "" : e.getCreatedAt().toString());
+                    m.put("candidates", e.getCandidatesJson() == null ? "[]" : e.getCandidatesJson());
+                    return m;
+                })
+                .toList();
+    }
+
+    private static String blank(String s) {
+        return s == null || s.isBlank() ? "" : s;
     }
 }
