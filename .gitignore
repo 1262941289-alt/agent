@@ -16,6 +16,9 @@ target/
 *.log
 *.tmp
 
+# 本地敏感配置（密钥不入库）
+application-local.yml
+
 # 兼容远程仓库原有规则（旧工程遗留）
 bin-debug/
 bin-release/
