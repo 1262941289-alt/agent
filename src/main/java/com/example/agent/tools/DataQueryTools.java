@@ -10,6 +10,7 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -24,6 +25,29 @@ public class DataQueryTools {
     public DataQueryTools(DataRepository dataRepository, FilterStore store) {
         this.dataRepository = dataRepository;
         this.store = store;
+    }
+
+    @Tool(description = "列出数据项清单：返回最多 limit 条数据项的 ID 与内容摘要，用于枚举条目、再按 ID 深查/分层/属性/决策")
+    public String listItems(@ToolParam(description = "最多返回条数，默认 20，上限 100") Integer limit) {
+        int n = (limit == null || limit <= 0) ? 20 : Math.min(limit, 100);
+        List<DataItem> all = dataRepository.findAll();
+        if (all == null || all.isEmpty()) {
+            return "数据库当前没有任何数据项";
+        }
+        int shown = Math.min(n, all.size());
+        StringBuilder sb = new StringBuilder("共 " + all.size() + " 条数据项，返回前 " + shown + " 条：\n");
+        int i = 0;
+        for (DataItem d : all) {
+            if (i++ >= n) {
+                break;
+            }
+            String c = d.getContent();
+            if (c != null && c.length() > 80) {
+                c = c.substring(0, 80) + "…";
+            }
+            sb.append("- ID:").append(d.getId()).append(" | 内容:").append(c == null || c.isBlank() ? "(空)" : c).append("\n");
+        }
+        return sb.toString();
     }
 
     @Tool(description = "根据数据项 ID 获取该数据项的原始内容")

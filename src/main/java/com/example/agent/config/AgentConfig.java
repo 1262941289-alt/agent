@@ -4,6 +4,7 @@ import com.example.agent.tools.AttributeRecordTools;
 import com.example.agent.tools.BrowserTools;
 import com.example.agent.tools.DataQueryTools;
 import com.example.agent.tools.DecisionTools;
+import com.example.agent.tools.HistoryTools;
 import com.example.agent.tools.LayerRecordTools;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
@@ -61,6 +62,27 @@ public class AgentConfig {
             BrowserTools browserTools) {
         return ChatClient.builder(chatModel)
                 .defaultTools(browserTools)
+                .build();
+    }
+
+    @Bean
+    public ChatClient dataChatClient(
+            OpenAiChatModel chatModel,
+            DataQueryTools queryTools,
+            LayerRecordTools layerTools,
+            AttributeRecordTools attrTools,
+            DecisionTools decisionTools) {
+        return ChatClient.builder(chatModel)
+                .defaultTools(queryTools, layerTools, attrTools, decisionTools)
+                .build();
+    }
+
+    @Bean
+    public ChatClient historyChatClient(
+            OpenAiChatModel chatModel,
+            HistoryTools historyTools) {
+        return ChatClient.builder(chatModel)
+                .defaultTools(historyTools)
                 .build();
     }
 }
