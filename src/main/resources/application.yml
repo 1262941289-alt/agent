@@ -4,19 +4,28 @@ server:
 spring:
   application:
     name: sk-agent
+  datasource:
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/sk_agent?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    show-sql: false
   ai:
     # 关闭 @Tool 方法的全局自动注册，由各阶段 ChatClient 显式绑定工具
     tool-callbacks:
       auto-register: false
-    ollama:
-      base-url: http://127.0.0.1:11434
+    openai:
+      base-url: ${AI_BASE_URL:https://api.openai.com}
+      api-key: ${AI_API_KEY:}
       chat:
         options:
-          model: qwen2.5:1.5b
+          model: ${AI_MODEL:gpt-4o-mini}
           temperature: 0.1
-          num-ctx: 1024
-          num-batch: 256
-          num-predict: 256
+          max-tokens: 256
 
 # 筛选框架配置（可随业务调整）
 sk-agent:
@@ -60,6 +69,16 @@ sk-agent:
         action: PASS
         priority: 4
         description: 其余情况一律通过
+
+# 可观测：健康检查与基本信息端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
 
 logging:
   level:

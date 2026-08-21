@@ -1,32 +1,26 @@
 package com.example.agent.service;
 
 import com.example.agent.config.FilterConfig;
-import com.example.agent.model.DataItem;
 import com.example.agent.model.Decision;
 import com.example.agent.model.FilterResult;
 import com.example.agent.model.FilterRule;
 import com.example.agent.model.ItemAttributes;
 import com.example.agent.model.ItemLayer;
-import com.example.agent.store.DataRepository;
-import com.example.agent.store.FilterCache;
 import com.example.agent.store.FilterStore;
+import com.example.agent.store.TaskContext;
 import com.example.agent.util.PromptRenderer;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * 第三阶段：规则筛选 Agent，并编排完整三阶段管线。
- * <p>管线：数据源 → 分层（{@link LayeringService}）→ 属性（{@link AttributeExtractor}）
+ * <p>管线：数据项 → 分层（{@link LayeringService}）→ 属性（{@link AttributeExtractor}）
  * → Agent 规则筛选（本类 decide）。
- * <p>通过 {@link FilterCache} 缓存同一数据项的三阶段结果，重复筛选直接命中缓存，避免重复调用 LLM。
+ * <p>每次筛选以 taskId 隔离，分层/属性/决策结果按 taskId 写入结果表。
  */
 @Service
 public class FilterAgentService {
@@ -35,140 +29,60 @@ public class FilterAgentService {
     private final LayeringService layeringService;
     private final AttributeExtractor attributeExtractor;
     private final ChatClient filterChatClient;
-    private final DataRepository dataRepository;
     private final FilterStore filterStore;
-    private final FilterCache filterCache;
+    private final TaskContext taskContext;
 
     public FilterAgentService(
             FilterConfig filterConfig,
             LayeringService layeringService,
             AttributeExtractor attributeExtractor,
             @Qualifier("filterChatClient") ChatClient filterChatClient,
-            DataRepository dataRepository,
             FilterStore filterStore,
-            FilterCache filterCache) {
+            TaskContext taskContext) {
         this.filterConfig = filterConfig;
         this.layeringService = layeringService;
         this.attributeExtractor = attributeExtractor;
         this.filterChatClient = filterChatClient;
-        this.dataRepository = dataRepository;
         this.filterStore = filterStore;
-        this.filterCache = filterCache;
+        this.taskContext = taskContext;
     }
 
     /**
-     * 对仓库中所有数据执行完整三阶段筛选。
+     * 对指定数据项执行完整三阶段筛选，结果按 taskId 写入结果表。
      *
-     * @param taskId 任务 ID，用于结果标识
-     * @return 完整筛选结果
+     * @param taskId  任务 ID
+     * @param itemIds 待筛选数据项 ID 列表
+     * @return 完整筛选结果（含分层 / 属性 / 决策明细与统计）
      */
-    public FilterResult filterAll(String taskId) {
+    public FilterResult process(String taskId, List<String> itemIds) {
         long startNs = System.nanoTime();
-        filterStore.clear();
-
         FilterResult result = new FilterResult();
         result.setTaskId(taskId);
 
-        List<DataItem> items = dataRepository.findAll();
-        for (DataItem item : items) {
-            String itemId = item.getId();
-            String contentHash = sha256(item.getContent());
-
-            // 命中缓存：直接复用三阶段结果
-            FilterCache.Entry cached = filterCache.get(itemId, contentHash);
-            if (cached != null) {
-                result.getLayers().add(cached.layer);
-                result.getAttributes().add(cached.attributes);
-                result.getDecisions().add(cached.decision);
-                result.setCached(result.getCached() + 1);
-                continue;
+        taskContext.set(taskId);
+        try {
+            for (String itemId : itemIds) {
+                ItemLayer layer = layeringService.layerItem(itemId);
+                ItemAttributes attributes = attributeExtractor.extractAttributes(itemId);
+                Decision decision = decide(itemId);
+                result.getLayers().add(layer);
+                result.getAttributes().add(attributes);
+                result.getDecisions().add(decision);
             }
-
-            // 阶段1：分层
-            ItemLayer layer = layeringService.layerItem(itemId);
-            // 阶段2：属性抽取
-            ItemAttributes attributes = attributeExtractor.extractAttributes(itemId);
-            // 阶段3：Agent 规则筛选决策
-            Decision decision = decide(itemId);
-
-            filterCache.put(itemId, contentHash, layer, attributes, decision);
-            result.getLayers().add(layer);
-            result.getAttributes().add(attributes);
-            result.getDecisions().add(decision);
+        } finally {
+            taskContext.clear();
         }
 
-        result.setTotal(items.size());
+        result.setTotal(itemIds.size());
         result.setPassed(result.getDecisions().stream()
-                .filter(d -> "OK".equals(d.getStatus()) && d.isPassed()).count());
+                .filter(d -> "OK".equals(d.getStatus()) && d.isPassed())
+                .count());
         result.setRejected(result.getDecisions().stream()
-                .filter(d -> "OK".equals(d.getStatus()) && !d.isPassed()).count());
+                .filter(d -> "OK".equals(d.getStatus()) && !d.isPassed())
+                .count());
         result.setFailed(result.getDecisions().stream()
-                .filter(d -> "FAILED".equals(d.getStatus())).count());
-        result.setCostMs((System.nanoTime() - startNs) / 1_000_000);
-        return result;
-    }
-
-    /**
-     * 对单个数据项执行完整三阶段筛选（分层 → 属性 → 规则筛选决策）。
-     *
-     * @param itemId 数据项 ID
-     * @return 筛选决策
-     */
-    public Decision filterOne(String itemId) {
-        Optional<DataItem> item = dataRepository.findById(itemId);
-        String contentHash = item.map(i -> sha256(i.getContent())).orElse("");
-
-        FilterCache.Entry cached = filterCache.get(itemId, contentHash);
-        if (cached != null) {
-            return cached.decision;
-        }
-
-        ItemLayer layer = layeringService.layerItem(itemId);
-        ItemAttributes attributes = attributeExtractor.extractAttributes(itemId);
-        Decision decision = decide(itemId);
-        filterCache.put(itemId, contentHash, layer, attributes, decision);
-        return decision;
-    }
-
-    /**
-     * 对单个数据项执行完整三阶段筛选（分层 → 属性 → 规则筛选决策），
-     * 并返回含分层 / 属性 / 决策的完整结果（用于闭环验证与排障）。
-     *
-     * @param itemId 数据项 ID
-     * @return 单个数据项的完整筛选结果
-     */
-    public FilterResult filterOneDetail(String itemId) {
-        long startNs = System.nanoTime();
-        filterStore.clear();
-
-        FilterResult result = new FilterResult();
-        result.setTaskId(itemId);
-
-        Optional<DataItem> item = dataRepository.findById(itemId);
-        String contentHash = item.map(i -> sha256(i.getContent())).orElse("");
-        FilterCache.Entry cached = filterCache.get(itemId, contentHash);
-        if (cached != null) {
-            result.getLayers().add(cached.layer);
-            result.getAttributes().add(cached.attributes);
-            result.getDecisions().add(cached.decision);
-            result.setCached(1);
-        } else {
-            ItemLayer layer = layeringService.layerItem(itemId);
-            ItemAttributes attributes = attributeExtractor.extractAttributes(itemId);
-            Decision decision = decide(itemId);
-            filterCache.put(itemId, contentHash, layer, attributes, decision);
-            result.getLayers().add(layer);
-            result.getAttributes().add(attributes);
-            result.getDecisions().add(decision);
-        }
-
-        result.setTotal(1);
-        result.setPassed(result.getDecisions().stream()
-                .filter(d -> "OK".equals(d.getStatus()) && d.isPassed()).count());
-        result.setRejected(result.getDecisions().stream()
-                .filter(d -> "OK".equals(d.getStatus()) && !d.isPassed()).count());
-        result.setFailed(result.getDecisions().stream()
-                .filter(d -> "FAILED".equals(d.getStatus())).count());
+                .filter(d -> "FAILED".equals(d.getStatus()))
+                .count());
         result.setCostMs((System.nanoTime() - startNs) / 1_000_000);
         return result;
     }
@@ -204,16 +118,5 @@ public class FilterAgentService {
                     .append("：").append(rule.getDescription()).append("\n");
         }
         return sb.toString();
-    }
-
-    /** 计算数据内容 SHA-256 摘要，用于缓存失效判断 */
-    private static String sha256(String content) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] digest = md.digest(content.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(digest);
-        } catch (Exception e) {
-            throw new IllegalStateException("SHA-256 计算失败", e);
-        }
     }
 }

@@ -6,13 +6,13 @@ import com.example.agent.tools.DecisionTools;
 import com.example.agent.tools.LayerRecordTools;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
-import org.springframework.ai.ollama.OllamaChatModel;
+import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
  * Spring AI ChatClient 配置。
- * 基于 Ollama 本地模型 qwen2.5:1.5b（支持 Function Calling）。
+ * 基于 OpenAI 兼容云端模型（base-url / api-key 外置，支持切换任意兼容厂商）。
  * 按三阶段（分层 / 属性 / 筛选）分别绑定不同的工具集。
  */
 @Configuration
@@ -20,7 +20,7 @@ public class AgentConfig {
 
     @Bean
     public ChatClient layeringChatClient(
-            OllamaChatModel chatModel,
+            OpenAiChatModel chatModel,
             DataQueryTools queryTools,
             LayerRecordTools layerTools) {
         return ChatClient.builder(chatModel)
@@ -30,7 +30,7 @@ public class AgentConfig {
 
     @Bean
     public ChatClient attributeChatClient(
-            OllamaChatModel chatModel,
+            OpenAiChatModel chatModel,
             DataQueryTools queryTools,
             AttributeRecordTools attrTools) {
         return ChatClient.builder(chatModel)
@@ -40,12 +40,17 @@ public class AgentConfig {
 
     @Bean
     public ChatClient filterChatClient(
-            OllamaChatModel chatModel,
+            OpenAiChatModel chatModel,
             DataQueryTools queryTools,
             DecisionTools decisionTools) {
         return ChatClient.builder(chatModel)
                 .defaultAdvisors(new SimpleLoggerAdvisor())
                 .defaultTools(queryTools, decisionTools)
                 .build();
+    }
+
+    @Bean
+    public ChatClient planningChatClient(OpenAiChatModel chatModel) {
+        return ChatClient.builder(chatModel).build();
     }
 }
