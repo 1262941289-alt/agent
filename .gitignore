@@ -18,6 +18,7 @@ target/
 
 # 本地敏感配置（密钥不入库）
 application-local.yml
+local/
 
 # Python 向量服务
 __pycache__/

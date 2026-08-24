@@ -123,7 +123,7 @@
 <body>
   <div class="wrap">
     <h1>通用办公 Agent 控制台</h1>
-    <p class="sub">HLA 自主编排 + 反思增强 + GraphRAG 自学习 + 数据预处理/后处理人工标注</p>
+    <p class="sub">HLA 自主编排 + 反思增强 + GraphRAG 自学习 + 数据预处理/后处理人工标注 · <a href="run.html" style="color:var(--brand)">执行过程流式呈现页 →</a></p>
 
     <div class="tabs">
       <button id="tabRunBtn" class="tab active" onclick="switchTab('run')">执行监控</button>
@@ -256,7 +256,7 @@
 
     // ---------- 执行监控 ----------
     const EVENT_TYPES = [
-      'run:started', 'run:plan', 'run:replan', 'wave:started', 'wave:completed',
+      'run:started', 'run:plan', 'run:iteration', 'wave:started', 'wave:completed',
       'step:status', 'step:reflection', 'run:synthesis', 'run:completed', 'run:failed'
     ];
     let polarity = true;
@@ -700,8 +700,8 @@
     function renderEventsSchema() {
       const schema = [
         ['run:started', '一次运行开始，含 runId 与目标'],
-        ['run:plan', '管理者完成目标拆解，产出执行计划'],
-        ['run:replan', '执行受阻后重新规划'],
+        ['run:plan', '首轮：管理者完成目标拆解，产出执行计划'],
+        ['run:iteration', '递归主循环第2轮起的观察与决策（DONE/CONTINUE/ABORT + 下一批步骤）'],
         ['wave:started', '一波（轮）任务开始'],
         ['wave:completed', '一波任务结束'],
         ['step:status', '单个分配步骤的状态（能力路由/结果）'],

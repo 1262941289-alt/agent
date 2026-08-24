@@ -47,17 +47,65 @@ public class PlanPlanner {
     }
 
     /**
-     * 失败重规划：针对执行失败的步骤，让 Planner 重新产出补救步骤。
+     * 递归主循环的每轮决策：基于已执行步骤的真实结果（环境观察）判定 DONE/CONTINUE/ABORT，
+     * 并在 CONTINUE 时产出下一批步骤（补救或追加）。步骤序号为批次内局部序号，由 Manager 重编。
      */
-    public List<AgentStep> replan(String goal, List<AgentStep> failed, List<CapabilityMeta> capabilities) {
+    public IterationDecision decideNext(int iteration, String goal, List<AgentStep> steps,
+                                        List<CapabilityMeta> capabilities, String memory) {
+        String prompt = PromptRenderer.render(
+                PromptRenderer.load("prompts/iterator-system.st"),
+                Map.of(
+                        "iteration", String.valueOf(iteration),
+                        "lastStep", String.valueOf(lastStepNumber(steps)),
+                        "goal", goal,
+                        "workers", renderCapabilities(capabilities),
+                        "experience", memory == null ? "" : memory,
+                        "observation", renderObservation(steps)
+                )
+        );
+        String response = planningClient.prompt().user(prompt).call().content();
+        return parseDecision(response);
+    }
+
+    private int lastStepNumber(List<AgentStep> steps) {
+        return steps.stream().mapToInt(AgentStep::getStep).max().orElse(0);
+    }
+
+    private String renderObservation(List<AgentStep> steps) {
         StringBuilder sb = new StringBuilder();
-        for (AgentStep f : failed) {
-            sb.append("- ").append(f.getGoal()).append("（失败原因：")
-                    .append(f.getResult() == null ? "未知" : f.getResult()).append("）\n");
+        for (AgentStep s : steps) {
+            sb.append("[步骤").append(s.getStep()).append(' ').append(s.getStatus()).append("] ")
+                    .append(s.getGoal()).append('\n')
+                    .append("  结果: ").append(clipResult(s.getResult())).append('\n');
         }
-        String replanGoal = "以下子步骤执行失败，请针对失败部分重新规划补救步骤：\n"
-                + sb + "\n原始总体目标：\n" + goal;
-        return plan(replanGoal, capabilities);
+        return sb.toString();
+    }
+
+    private String clipResult(String r) {
+        if (r == null || r.isBlank()) {
+            return "（无输出）";
+        }
+        String t = r.trim().replace("\n", " ");
+        return t.length() > 600 ? t.substring(0, 600) + "…（截断）" : t;
+    }
+
+    private IterationDecision parseDecision(String text) {
+        IterationDecision d = new IterationDecision();
+        String json = PromptRenderer.extractJsonObject(text);
+        if (json != null) {
+            try {
+                JsonNode root = objectMapper.readTree(json);
+                String dec = root.path("decision").asText("CONTINUE").trim().toUpperCase();
+                if ("DONE".equals(dec) || "ABORT".equals(dec) || "CONTINUE".equals(dec)) {
+                    d.setDecision(dec);
+                }
+                d.setReason(root.path("reason").asText(""));
+                d.setSteps(parseSteps(json));
+            } catch (Exception ignored) {
+                // 解析失败保持默认 CONTINUE，由空批次兜底转 DONE
+            }
+        }
+        return d;
     }
 
     private String renderCapabilities(List<CapabilityMeta> capabilities) {

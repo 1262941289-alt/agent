@@ -1,5 +1,6 @@
 package com.example.agent.agent;
 
+import com.example.agent.knowledge.ExperienceService;
 import com.example.agent.knowledge.KnowledgeGraphService;
 import com.example.agent.knowledge.KnowledgeNodeEntity;
 import com.example.agent.service.EmbeddingVectorClient;
@@ -12,32 +13,41 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * 数据后处理：按目标相似度召回历史经验（EXPERIENCE / PITFALL）与人工标注（ANNOTATION），
- * 拼成指导 Planner 的上下文，实现“利用历史最优”的自学习反馈。
- * <p>打分优先采用 Python 向量服务（{@link EmbeddingVectorClient}）的余弦相似度（语义向量化推理），
- * 服务不可用时 fail-open 回退到字符二元组（bigram）重叠度，保证召回始终可用。
+ * 数据后处理：按目标相似度召回历史经验与人工标注，拼成指导 Planner 的上下文。
+ * <p>召回范围：优质经验（EXPERIENCE/PITFALL 中「重复出现且经人工认可」的沉淀）+ 全部人工标注
+ * （ANNOTATION 本身即人类信号）。打分优先采用 Python 向量服务的余弦相似度，
+ * 服务不可用时 fail-open 回退字符 bigram 重叠度，保证召回始终可用。
  */
 @Component
 public class ExperienceRetriever {
 
     private final KnowledgeGraphService graphService;
+    private final ExperienceService experienceService;
     private final EmbeddingVectorClient vectorClient;
 
-    public ExperienceRetriever(KnowledgeGraphService graphService, EmbeddingVectorClient vectorClient) {
+    public ExperienceRetriever(KnowledgeGraphService graphService,
+                               ExperienceService experienceService,
+                               EmbeddingVectorClient vectorClient) {
         this.graphService = graphService;
+        this.experienceService = experienceService;
         this.vectorClient = vectorClient;
     }
 
     /**
-     * 召回 top-k 相关经验/标注，返回可直接拼进 Planner 提示词的文本；无相关经验返回空串。
+     * 召回 top-k 相关优质经验/标注，返回可直接拼进 Planner 提示词的文本；无相关经验返回空串。
      */
     public String retrieve(String goal, int k) {
         if (goal == null || goal.isBlank()) {
             return "";
         }
         List<KnowledgeNodeEntity> candidates = new ArrayList<>();
-        candidates.addAll(graphService.findByType("EXPERIENCE"));
-        candidates.addAll(graphService.findByType("PITFALL"));
+        for (String type : List.of("EXPERIENCE", "PITFALL")) {
+            for (KnowledgeNodeEntity n : graphService.findByType(type)) {
+                if (experienceService.isQuality(n)) {
+                    candidates.add(n);
+                }
+            }
+        }
         candidates.addAll(graphService.findByType("ANNOTATION"));
 
         List<KnowledgeNodeEntity> ranked = ranked(goal, candidates, k);

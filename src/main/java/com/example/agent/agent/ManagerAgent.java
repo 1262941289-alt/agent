@@ -27,9 +27,9 @@ import java.util.concurrent.Executor;
 
 /**
  * ManagerAgent：多 agent 框架的编排者（纯分配，不执行）。
- * <p>流程：读公共记忆池召回 → Planner 拆解目标 → 按能力标签路由给能力 agent →
- * 失败重规划 → 汇总 → 异步写经验。
- * <p>每次分配都会落「分配记录」并更新对应能力 agent 的信用分（阶段二）。
+ * <p>递归主循环：观察（聚合已执行步骤的真实结果）→ 决策（DONE/CONTINUE/ABORT + 下一批步骤）→
+ * 执行（按依赖分波并行）→ 循环，直到目标达成、中止或达到轮数上限。
+ * <p>每轮分配都会落「分配记录」并更新对应能力 agent 的信用分；每轮结束自动选举管理者。
  * <p>执行全程通过 {@link AgentEventSink} 发射事件；Manager 自身不执行任何子任务。
  */
 @Service
@@ -37,8 +37,8 @@ public class ManagerAgent {
 
     private static final Logger log = LoggerFactory.getLogger(ManagerAgent.class);
 
-    /** 失败重规划的最大轮数，防止无限重规划 */
-    private static final int MAX_REPLAN_ROUNDS = 1;
+    /** 递归主循环的最大轮数，防止无限循环（首轮规划 + 最多 4 轮观察决策） */
+    private static final int MAX_ITERATIONS = 5;
 
     private final PlanPlanner planPlanner;
     private final ChatClient planningClient;
@@ -107,26 +107,56 @@ public class ManagerAgent {
             // 阶段三最小版：注入当选管理者身份，供规划器感知（管理者只分配不执行）
             planningGoal = "本轮管理者（负责拆解与分配，不直接执行）：" + managerRef + "\n" + planningGoal;
             String experience = memoryAsString(goal);
-            List<AgentStep> steps = planPlanner.plan(planningGoal, registry.metas(), experience);
-            emit(events, streamSink, "run:plan", runId, Map.of("steps", toPlanData(steps)));
 
-            executeSteps(steps, events, streamSink, runId, termRound, goal);
-
-            // 失败重规划：针对失败/跳过的步骤，最多重规划 MAX_REPLAN_ROUNDS 轮
-            for (int round = 0; round < MAX_REPLAN_ROUNDS; round++) {
-                List<AgentStep> failed = collectFailed(steps);
-                if (failed.isEmpty()) {
+            // 递归主循环：获取信息（观察已执行步骤的真实结果）→ 制定计划（决策 + 下一批步骤）
+            // → 执行操作（分波并行）→ 循环，直到 DONE / ABORT / 超上限
+            List<AgentStep> steps = new ArrayList<>();
+            int iterations = 0;
+            String termination;
+            while (true) {
+                iterations++;
+                List<AgentStep> batch;
+                if (iterations == 1) {
+                    batch = planPlanner.plan(planningGoal, registry.metas(), experience);
+                    emit(events, streamSink, "run:plan", runId, Map.of("steps", toPlanData(batch)));
+                    if (batch == null || batch.isEmpty()) {
+                        // 目标无法拆解：不再空转后续决策轮，直接终止
+                        termination = "PLAN_EMPTY";
+                        break;
+                    }
+                } else {
+                    IterationDecision d;
+                    try {
+                        d = planPlanner.decideNext(
+                                iterations, planningGoal, steps, registry.metas(), experience);
+                    } catch (Exception e) {
+                        // 决策调用失败不应丢弃已执行的成果：保留部分结果继续汇总
+                        log.warn("第 {} 轮决策调用失败 runId={}: {}", iterations, runId, e.getMessage());
+                        termination = "DECISION_ERROR";
+                        break;
+                    }
+                    emit(events, streamSink, "run:iteration", runId, iterationData(iterations, d));
+                    if ("DONE".equals(d.getDecision())) {
+                        termination = "DONE";
+                        break;
+                    }
+                    if ("ABORT".equals(d.getDecision())) {
+                        termination = "ABORT";
+                        break;
+                    }
+                    batch = renumber(d.getSteps(), steps);
+                    if (batch.isEmpty()) {
+                        // 判 CONTINUE 却给不出新步骤：视为已完成
+                        termination = "DONE";
+                        break;
+                    }
+                }
+                steps.addAll(batch);
+                executeSteps(batch, events, streamSink, runId, termRound, goal);
+                if (iterations >= MAX_ITERATIONS) {
+                    termination = "MAX_ITERATIONS";
                     break;
                 }
-                emit(events, streamSink, "run:replan", runId, Map.of("failed", toStepBrief(failed)));
-                List<AgentStep> recovery = planPlanner.replan(goal, failed, registry.metas());
-                int nextStep = steps.stream().mapToInt(AgentStep::getStep).max().orElse(0) + 1;
-                for (AgentStep r : recovery) {
-                    r.setStep(nextStep++);
-                    r.setDependsOn(new ArrayList<>());
-                    steps.add(r);
-                }
-                executeSteps(recovery, events, streamSink, runId, termRound, goal);
             }
 
             // 阶段三：每轮分配/执行结束后自动选举下一轮管理者（冷启动为 default，平票信用分高者胜）
@@ -134,7 +164,10 @@ public class ManagerAgent {
             Map<String, Object> electionData = electionData(termRound, managerRef, election);
             emit(events, streamSink, "run:elected", runId, electionData);
 
-            String finalAnswer = nz(synthesize(goal, steps));
+            String finalAnswer = steps.isEmpty()
+                    ? "未能将目标拆解为可执行步骤（PLAN_EMPTY），请调整目标描述后重试。"
+                    : nz(synthesize(
+                            goal + "\n\n（递归循环终止状态：" + termination + "，共 " + iterations + " 轮）", steps));
             result.setSteps(steps);
             result.setFinalAnswer(finalAnswer);
             emit(events, streamSink, "run:synthesis", runId, Map.of("finalAnswer", finalAnswer));
@@ -142,6 +175,8 @@ public class ManagerAgent {
             completed.put("finalAnswer", finalAnswer);
             completed.put("stats", statsOf(steps));
             completed.put("election", electionData);
+            completed.put("iterations", iterations);
+            completed.put("termination", termination);
             emit(events, streamSink, "run:completed", runId, completed);
             memory.remember("TASK", goal, finalAnswer);
         } catch (Exception e) {
@@ -179,6 +214,40 @@ public class ManagerAgent {
         });
     }
 
+    private Map<String, Object> iterationData(int iteration, IterationDecision d) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("iteration", iteration);
+        m.put("decision", d.getDecision());
+        m.put("reason", clip(d.getReason()));
+        m.put("nextSteps", toPlanData(d.getSteps()));
+        return m;
+    }
+
+    /**
+     * 将决策器给出的批次内局部序号重编为全局序号；批内依赖同步平移，
+     * 引用历史批次步骤的依赖已被满足（进入下一轮前全部 settled），直接丢弃。
+     */
+    private List<AgentStep> renumber(List<AgentStep> batch, List<AgentStep> existing) {
+        if (batch == null || batch.isEmpty()) {
+            return new ArrayList<>();
+        }
+        int offset = existing.stream().mapToInt(AgentStep::getStep).max().orElse(0);
+        int localSize = batch.size();
+        List<AgentStep> out = new ArrayList<>();
+        for (AgentStep s : batch) {
+            s.setStep(offset + s.getStep());
+            List<Integer> deps = new ArrayList<>();
+            for (int d : s.getDependsOn()) {
+                if (d >= 1 && d <= localSize) {
+                    deps.add(offset + d);
+                }
+            }
+            s.setDependsOn(deps);
+            out.add(s);
+        }
+        return out;
+    }
+
     private void emit(List<AgentEvent> events, AgentEventSink sink, String type, String runId,
                       Map<String, Object> data) {
         AgentEvent event = new AgentEvent(type, runId, data);
@@ -186,16 +255,6 @@ public class ManagerAgent {
         if (sink != null) {
             sink.emit(event);
         }
-    }
-
-    private List<AgentStep> collectFailed(List<AgentStep> steps) {
-        List<AgentStep> failed = new ArrayList<>();
-        for (AgentStep s : steps) {
-            if ("FAILED".equals(s.getStatus()) || "SKIPPED".equals(s.getStatus())) {
-                failed.add(s);
-            }
-        }
-        return failed;
     }
 
     /**
@@ -347,17 +406,6 @@ public class ManagerAgent {
                     "goal", nz(s.getGoal()),
                     "worker", nz(s.getWorker()),
                     "dependsOn", s.getDependsOn() == null ? List.of() : s.getDependsOn()));
-        }
-        return out;
-    }
-
-    private List<Map<String, Object>> toStepBrief(List<AgentStep> failed) {
-        List<Map<String, Object>> out = new ArrayList<>();
-        for (AgentStep s : failed) {
-            out.add(Map.of(
-                    "step", s.getStep(),
-                    "goal", nz(s.getGoal()),
-                    "result", nz(s.getResult())));
         }
         return out;
     }

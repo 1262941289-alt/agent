@@ -1,6 +1,8 @@
 package com.example.agent.agent;
 
+import com.example.agent.knowledge.ExperienceService;
 import com.example.agent.knowledge.KnowledgeGraphService;
+import com.example.agent.knowledge.KnowledgeNodeEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -8,12 +10,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
 
 /**
- * 数据预处理：把一次执行的事件流聚合为结构化“经验”，并在 run 结束后异步写入知识图谱。
+ * 数据预处理：把一次执行的事件流聚合为结构化“经验”，并在 run 结束后异步写入。
  * <p>流程：规则聚合（成功/失败、步骤、反思次数）→ 失败 run 用 LLM 精炼改进点 →
- * 写经验节点（EXPERIENCE / PITFALL）并双向关联任务节点，形成累积知识网络。
+ * 经 {@link ExperienceService} 去重合并落库（先为候选，重复且人工认可后升级为优质经验）。
  */
 @Component
 public class ExperienceCollector {
@@ -21,11 +22,14 @@ public class ExperienceCollector {
     private static final Logger log = LoggerFactory.getLogger(ExperienceCollector.class);
 
     private final KnowledgeGraphService graphService;
+    private final ExperienceService experienceService;
     private final ChatClient refineClient;
 
     public ExperienceCollector(KnowledgeGraphService graphService,
+                               ExperienceService experienceService,
                                @Qualifier("planningChatClient") ChatClient refineClient) {
         this.graphService = graphService;
+        this.experienceService = experienceService;
         this.refineClient = refineClient;
     }
 
@@ -47,7 +51,6 @@ public class ExperienceCollector {
             }
         }
         boolean ok = failed == 0 && skipped == 0;
-        String experienceType = ok ? "EXPERIENCE" : "PITFALL";
         String summary = "目标: " + goal + "\n"
                 + "结果: " + (ok ? "成功" : "失败") + "\n"
                 + "步骤: 成功 " + success + " / 失败 " + failed + " / 跳过 " + skipped
@@ -55,11 +58,10 @@ public class ExperienceCollector {
         if (!ok) {
             summary += "\n改进建议: " + refine(goal, events);
         }
-        String nodeName = "经验:" + clipName(goal);
-        graphService.upsertNode(nodeName, experienceType, summary,
-                Map.of("runId", runId == null ? "" : runId, "success", String.valueOf(ok)));
-        graphService.addRelation(goal, "HAS_EXPERIENCE", nodeName, true);
-        log.info("经验已写入 runId={} type={}", runId, experienceType);
+        KnowledgeNodeEntity node = experienceService.collectExperience(runId, goal, summary, ok);
+        graphService.addRelation(goal, "HAS_EXPERIENCE", node.getName(), true);
+        log.info("经验已收集 runId={} type={} repeat={}", runId, node.getType(),
+                experienceService.repeatCount(node));
     }
 
     private String refine(String goal, List<AgentEvent> events) {
@@ -85,12 +87,5 @@ public class ExperienceCollector {
             }
         }
         return sb.length() == 0 ? "（无失败步骤明细）" : sb.toString();
-    }
-
-    private String clipName(String goal) {
-        if (goal == null) {
-            return "";
-        }
-        return goal.length() > 180 ? goal.substring(0, 180) : goal;
     }
 }

@@ -70,4 +70,14 @@ public class BrowserTools {
     public String screenshot(@ToolParam(description = "保存路径，如 target/shot.png") String filePath) {
         return browser.screenshot(filePath);
     }
+
+    @Tool(description = "【网络抓包】开启开发者工具式响应捕获：开始记录页面的 XHR/Fetch/POST 网络请求与响应报文。适用于 SPA 或 iframe 内嵌的企业系统（如用友 U9 ERP）直接获取数据接口报文，比解析 DOM 更可靠。用法：先开启抓包 → 执行 navigate/click 触发数据加载 → 再调用 stopNetworkCapture 读取报文")
+    public String startNetworkCapture(@ToolParam(description = "URL 过滤子串，如 'display.aspx'、'DataService'、'uimvc'；留空记录全部数据请求（自动跳过静态资源）") String urlPattern) {
+        return browser.startNetworkCapture(urlPattern);
+    }
+
+    @Tool(description = "【网络抓包】停止抓包并返回捕获的响应清单（方法/状态/Content-Type/URL/响应报文正文，每条最多 5000 字）。在触发页面数据加载的操作完成后立即调用")
+    public String stopNetworkCapture(@ToolParam(description = "最多返回条数，默认 30") Integer maxEntries) {
+        return browser.stopNetworkCapture(maxEntries == null ? 30 : maxEntries);
+    }
 }

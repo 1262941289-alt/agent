@@ -65,6 +65,12 @@ public class KnowledgeGraphService {
         return nodeRepository.findById(id).orElse(null);
     }
 
+    /** 直接保存节点（供经验服务在节点上合并属性后落库）。 */
+    @Transactional
+    public KnowledgeNodeEntity save(KnowledgeNodeEntity node) {
+        return nodeRepository.save(node);
+    }
+
     // ---------- 关系（双向链接） ----------
 
     @Transactional
