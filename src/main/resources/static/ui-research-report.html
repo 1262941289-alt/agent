@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent 监控界面 UI 设计调研报告</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --card: #ffffff;
+      --border: #e3e6ea;
+      --text: #1f2329;
+      --muted: #7a8089;
+      --brand: #2f6bff;
+      --brand-dark: #2454cc;
+      --ok: #1f9d55;
+      --bad: #d94444;
+      --warn: #c78a00;
+      --dark-bg: #0a0a0a;
+      --dark-card: #1a1a2e;
+      --dark-border: #2a2a3e;
+      --dark-text: #e0e0e0;
+      --dark-muted: #a0a0b0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 16px 64px; }
+    h1 { font-size: 24px; margin: 0 0 8px; }
+    h2 { font-size: 18px; margin: 24px 0 12px; color: var(--brand); }
+    h3 { font-size: 15px; margin: 16px 0 8px; }
+    .sub { color: var(--muted); margin: 0 0 24px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+    .repo-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      transition: box-shadow 0.2s;
+    }
+    .repo-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .repo-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+    .repo-name { font-weight: 600; font-size: 15px; color: var(--brand); }
+    .repo-name a { color: inherit; text-decoration: none; }
+    .repo-name a:hover { text-decoration: underline; }
+    .repo-tech { font-size: 12px; color: var(--muted); background: #f0f2f5; padding: 2px 8px; border-radius: 10px; }
+    .repo-desc { font-size: 13.5px; color: var(--text); margin-bottom: 8px; }
+    .repo-features { font-size: 13px; color: var(--muted); }
+    .repo-features li { margin-bottom: 4px; }
+    .tag { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11.5px; background: #eef2ff; color: var(--brand); margin-right: 4px; }
+    .tag.ok { background: #e6f7ee; color: var(--ok); }
+    .tag.warn { background: #fff4e0; color: var(--warn); }
+    .tag.bad { background: #fdeaea; color: var(--bad); }
+    .highlight { background: linear-gradient(120deg, #fff3cd 0%, #ffeaa7 100%); padding: 12px 16px; border-radius: 8px; border-left: 4px solid var(--warn); margin: 16px 0; }
+    .code { background: #f8f9fa; border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; font-family: "Consolas", "Monaco", monospace; font-size: 12.5px; overflow-x: auto; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+    .metric-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+    .metric-value { font-size: 28px; font-weight: 700; color: var(--brand); }
+    .metric-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .layout-demo { background: var(--dark-card); border: 1px solid var(--dark-border); border-radius: 10px; padding: 20px; margin: 16px 0; }
+    .layout-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .layout-cell { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 16px; color: var(--dark-text); }
+    .layout-cell h4 { margin: 0 0 8px; font-size: 13px; color: var(--brand); }
+    .layout-cell p { margin: 0; font-size: 12px; color: var(--dark-muted); }
+    .color-palette { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+    .color-swatch { width: 60px; height: 60px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+    .footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Agent 监控界面 UI 设计调研报告</h1>
+    <p class="sub">调研 GitHub 上优秀的多 Agent 监控仪表盘设计，为 sk-agent 前端提供设计参考</p>
+
+    <div class="card">
+      <h2>调研概览</h2>
+      <div class="grid-3">
+        <div class="metric-card">
+          <div class="metric-value">10</div>
+          <div class="metric-label">调研仓库数</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">4</div>
+          <div class="metric-label">核心设计模式</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">2</div>
+          <div class="metric-label">推荐参考</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="highlight">
+      <h3 style="margin-top: 0;">核心发现</h3>
+      <p style="margin-bottom: 0;">
+        <strong>multiagent-dashboard</strong>（2×2 网格布局）和 <strong>agent-credit</strong>（信用分排行榜 + 趋势图）
+        最贴合 sk-agent 需求：前者提供多 Agent 状态可视化的完整布局方案，后者提供信用分展示的具体实现。
+        两者均使用轻量技术栈（Vanilla JS / Chart.js），易于集成到 Spring Boot 后端。
+      </p>
+    </div>
+
+    <h2>重点推荐（Top 2）</h2>
+
+    <div class="repo-card">
+      <div class="repo-header">
+        <span class="repo-name"><a href="https://github.com/seongjinpark-speak/multiagent-dashboard" target="_blank">seongjinpark-speak/multiagent-dashboard</a></span>
+        <span class="repo-tech">Next.js 15 + React 19 + Tailwind CSS 4 + HTML5 Canvas + SSE</span>
+      </div>
+      <p class="repo-desc">像素风 "Agent Village" 多 Agent 监控面板，实时展示 Agent 状态、任务进度、Token 使用</p>
+      <div class="repo-features">
+        <strong>核心特性：</strong>
+        <ul style="margin: 8px 0 0; padding-left: 20px;">
+          <li><span class="tag ok">2×2 网格布局</span> Agent Village（Canvas 像素画）| Monitor Panel（指标面板）| Ticket Tracker（任务追踪）| Activity Log（活动日志）</li>
+          <li><span class="tag">状态生命周期</span> Working（绿色）→ Completed（蓝色）→ Idle（黄色），颜色编码统一</li>
+          <li><span class="tag">SSE 实时流</span> /api/events 端点，文件系统 watcher 驱动，100ms 防抖</li>
+          <li><span class="tag">像素风 Agent</span> 工作动画（chop/hammer/dig）、休息（Zzz）、完成庆祝（sparkles）</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-header">
+        <span class="repo-name"><a href="https://github.com/AmoryMing/agent-credit" target="_blank">AmoryMing/agent-credit</a></span>
+        <span class="repo-tech">Python Flask + SQLite + Vanilla HTML/CSS/JS + Chart.js</span>
+      </div>
+      <p class="repo-desc">Agent 信用评分系统，评估可靠性、准确性、一致性，提供排行榜和趋势图</p>
+      <div class="repo-features">
+        <strong>核心特性：</strong>
+        <ul style="margin: 8px 0 0; padding-left: 20px;">
+          <li><span class="tag ok">信用等级</span> SSS (950+) / SS (850+) / S (700+) / A (550+) / B (400+) / C (200+) / D (0+)</li>
+          <li><span class="tag">排行榜</span> 按信用分排序，显示趋势指示器（↑↓）</li>
+          <li><span class="tag">历史图表</span> Chart.js 折线图展示分数变化趋势</li>
+          <li><span class="tag">事件流</span> 实时显示分数调整事件</li>
+          <li><span class="tag">轻量实现</span> Vanilla JS + Chart.js，无框架依赖，易于移植</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>完整调研清单（10 个仓库）</h2>
+
+    <div class="grid-2">
+      <div class="repo-card">
+        <div class="repo-header">
+          <span class="repo-name"><a href="https://github.com/liamssbusiness/agent-hq-dashboard" target="_blank">liamssbusiness/agent-hq-dashboard</a></span>
+          <span class="repo-tech">React 18 + Pixi.js + Tailwind</span>
+        </div>
+        <p class="repo-desc">7 色编码房间的 Agent Village，Canvas 缩放/平移，霓虹风格</p>
+        <div class="repo-features">
+          <span class="tag">Canvas 空间布局</span>
+          <span class="tag">霓虹暗色主题</span>
+          <span class="tag">WebSocket 就绪</span>
+        </div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-header">
+          <span class="repo-name"><a href="https://github.com/paul-wosch/Multi-Agent-Dashboard" target="_blank">paul-wosch/Multi-Agent-Dashboard</a></span>
+          <span class="repo-tech">Python Streamlit + LangChain</span>
+        </div>
+        <p class="repo-desc">Streamlit 多 Agent 编排引擎，成本/延迟/历史面板</p>
+        <div class="repo-features">
+          <span class="tag">成本追踪</span>
+          <span class="tag">工具调用控制</span>
+          <span class="tag">SQLite 持久化</span>
+        </div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-header">
+          <span class="repo-name"><a href="https://github.com/dav-niu474/hermes-agent-web" target="_blank">dav-niu474/hermes-agent-web</a></span>
+          <span class="repo-tech">Next.js 16 + shadcn/ui</span>
+        </div>
+        <p class="repo-desc">Dashboard + Tools + Skills + Sessions + Memory + Settings 六视图</p>
+        <div class="repo-features">
+          <span class="tag">标签页导航</span>
+          <span class="tag">模块化面板</span>
+          <span class="tag">4 主题 + 暗色模式</span>
+        </div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-header">
+          <span class="repo-name"><a href="https://github.com/shenli/AgentDog" target="_blank">shenli/AgentDog</a></span>
+          <span class="repo-tech">Rust Tauri + TypeScript + Vite</span>
+        </div>
+        <p class="repo-desc">macOS 桌面应用，Token 成本分解、异常检测、缓存效率追踪</p>
+        <div class="repo-features">
+          <span class="tag">Token 分解</span>
+          <span class="tag">异常检测</span>
+          <span class="tag">桌面原生</span>
+        </div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-header">
+          <span class="repo-name"><a href="https://github.com/Zijian-Ni/agent-replay" target="_blank">Zijian-Ni/agent-replay</a></span>
+          <span class="repo-tech">TypeScript + Node.js</span>
+        </div>
+        <p class="repo-desc">可视化调试器：火焰图、Token 热力图、时间线视图、步骤回放</p>
+        <div class="repo-features">
+          <span class="tag">火焰图</span>
+          <span class="tag">时间旅行</span>
+          <span class="tag">成本异常检测</span>
+        </div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-header">
+          <span class="repo-name"><a href="https://github.com/GradientHQ/Symphony" target="_blank">GradientHQ/Symphony</a></span>
+          <span class="repo-tech">Python 多 Agent 编排框架</span>
+        </div>
+        <p class="repo-desc">智能任务分配、动态匹配、负载均衡、多路径 CoT、多数投票</p>
+        <div class="repo-features">
+          <span class="tag">能力感知路由</span>
+          <span class="tag">实时 Agent 选择</span>
+          <span class="tag">边缘优化</span>
+        </div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-header">
+          <span class="repo-name"><a href="https://github.com/ai-evo-agents/evo-dashboard" target="_blank">ai-evo-agents/evo-dashboard</a></span>
+          <span class="repo-tech">Next.js + Socket.IO</span>
+        </div>
+        <p class="repo-desc">分布式追踪视图、事件流、三模式调试控制台、记忆 CRUD</p>
+        <div class="repo-features">
+          <span class="tag">Span 瀑布图</span>
+          <span class="tag">三模式调试</span>
+          <span class="tag">记忆管理</span>
+        </div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-header">
+          <span class="repo-name"><a href="https://github.com/tonyoconnell/agent-ui" target="_blank">tonyoconnell/agent-ui</a></span>
+          <span class="repo-tech">TypeScript + Cloudflare Workers + Sui</span>
+        </div>
+        <p class="repo-desc">Agent 经济平台：Agent 雇佣、支付轨道、技能系统、链上执行</p>
+        <div class="repo-features">
+          <span class="tag">Agent 市场</span>
+          <span class="tag">支付集成</span>
+          <span class="tag">区块链</span>
+        </div>
+      </div>
+    </div>
+
+    <h2>核心设计模式总结</h2>
+
+    <div class="card">
+      <h3>1. 布局模式：2×2 网格（推荐）</h3>
+      <div class="layout-demo">
+        <div class="layout-grid">
+          <div class="layout-cell">
+            <h4>Agent Village（Canvas）</h4>
+            <p>像素画风格 Agent 状态可视化，工作/休息/完成动画</p>
+          </div>
+          <div class="layout-cell">
+            <h4>Monitor Panel（指标）</h4>
+            <p>任务计数、Token 使用、上下文窗口、阈值标记</p>
+          </div>
+          <div class="layout-cell">
+            <h4>Ticket Tracker（任务）</h4>
+            <p>里程碑进度条、点击展开详情、状态过滤</p>
+          </div>
+          <div class="layout-cell">
+            <h4>Activity Log（日志）</h4>
+            <p>时间戳事件流、角色标签、类型图标、自动滚动</p>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top: 12px; font-size: 13px; color: var(--muted);">
+        <strong>优势：</strong>信息密度高、模块化清晰、响应式友好。来源：<a href="https://github.com/seongjinpark-speak/multiagent-dashboard" target="_blank">multiagent-dashboard</a>
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>2. 信用分可视化</h3>
+      <div class="grid-2">
+        <div>
+          <h4>等级系统</h4>
+          <div class="color-palette">
+            <div class="color-swatch" style="background: linear-gradient(135deg, #ffd700, #ffed4e);">SSS<br>950+</div>
+            <div class="color-swatch" style="background: linear-gradient(135deg, #c0c0c0, #e8e8e8); color: #333; text-shadow: none;">SS<br>850+</div>
+            <div class="color-swatch" style="background: linear-gradient(135deg, #cd7f32, #daa520);">S<br>700+</div>
+            <div class="color-swatch" style="background: #4a90d9;">A<br>550+</div>
+            <div class="color-swatch" style="background: #5cb85c;">B<br>400+</div>
+            <div class="color-swatch" style="background: #f0ad4e;">C<br>200+</div>
+            <div class="color-swatch" style="background: #d9534f;">D<br>0+</div>
+          </div>
+        </div>
+        <div>
+          <h4>展示元素</h4>
+          <ul style="font-size: 13.5px; line-height: 1.8;">
+            <li><strong>排行榜卡片：</strong>排名 + Agent 名 + 分数 + 趋势指示器（↑↓）</li>
+            <li><strong>历史图表：</strong>Chart.js 折线图，X 轴时间，Y 轴分数</li>
+            <li><strong>事件流：</strong>实时分数调整事件（+5 成功 / -5 失败）</li>
+            <li><strong>维度分解：</strong>准确性、一致性、完整性、幻觉检测</li>
+          </ul>
+        </div>
+      </div>
+      <p style="margin-top: 12px; font-size: 13px; color: var(--muted);">
+        <strong>优势：</strong>游戏化等级激励、趋势可视化、实时反馈。来源：<a href="https://github.com/AmoryMing/agent-credit" target="_blank">agent-credit</a>
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>3. 状态颜色编码（统一规范）</h3>
+      <div class="color-palette">
+        <div class="color-swatch" style="background: var(--ok);">Working<br>绿色</div>
+        <div class="color-swatch" style="background: var(--brand);">Completed<br>蓝色</div>
+        <div class="color-swatch" style="background: var(--warn);">Idle<br>黄色</div>
+        <div class="color-swatch" style="background: var(--bad);">Error<br>红色</div>
+      </div>
+      <p style="margin-top: 12px; font-size: 13px; color: var(--muted);">
+        <strong>原则：</strong>所有面板使用相同颜色编码，确保状态一致性。来源：multiagent-dashboard
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>4. 实时通信：SSE（推荐）</h3>
+      <div class="code">
+// 后端（Spring Boot）
+@GetMapping("/api/events")
+public SseEmitter streamEvents() {
+    SseEmitter emitter = new SseEmitter();
+    // 发送事件
+    emitter.send(SseEmitter.event()
+        .name("agent-status")
+        .data(agentStatus));
+    return emitter;
+}
+
+// 前端（Vanilla JS）
+const eventSource = new EventSource('/api/events');
+eventSource.addEventListener('agent-status', (e) => {
+    const data = JSON.parse(e.data);
+    updateAgentStatus(data);
+});
+      </div>
+      <p style="margin-top: 12px; font-size: 13px; color: var(--muted);">
+        <strong>优势：</strong>浏览器原生支持、无需 WebSocket 库、自动重连、Spring Boot 内置 SseEmitter。
+        来源：multiagent-dashboard
+      </p>
+    </div>
+
+    <h2>sk-agent 前端改造建议</h2>
+
+    <div class="card">
+      <h3>推荐方案：2×2 网格 + 信用分排行榜</h3>
+      <div class="layout-demo">
+        <div class="layout-grid">
+          <div class="layout-cell">
+            <h4>Agent 状态总览</h4>
+            <p>4 个能力域 Agent 卡片：browser / general / data / history，显示当前状态（Working/Idle/Error）、信用分、最近任务</p>
+          </div>
+          <div class="layout-cell">
+            <h4>执行过程流</h4>
+            <p>当前 run 的实时事件流：run:started → run:plan → wave:started → step:status → run:completed</p>
+          </div>
+          <div class="layout-cell">
+            <h4>信用分排行榜</h4>
+            <p>Agent 按信用分排序，显示 SSS/SS/S/A/B/C/D 等级、趋势指示器、历史图表（Chart.js）</p>
+          </div>
+          <div class="layout-cell">
+            <h4>系统指标</h4>
+            <p>任务统计（成功/失败/反思次数）、平均耗时、Token 使用、上下文窗口、选举结果</p>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top: 12px; font-size: 13px; color: var(--muted);">
+        <strong>技术栈：</strong>Vanilla JS + Chart.js（信用分图表）+ SSE（实时事件流），无框架依赖，易于集成到现有 Spring Boot 后端。
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>实施优先级</h3>
+      <ol style="font-size: 13.5px; line-height: 1.8;">
+        <li><strong>P0：</strong>Agent 状态总览（4 个能力域 Agent 卡片，显示状态 + 信用分）</li>
+        <li><strong>P1：</strong>信用分排行榜（等级系统 + 趋势图 + 事件流）</li>
+        <li><strong>P2：</strong>执行过程流（当前 run 的实时事件流，已有基础）</li>
+        <li><strong>P3：</strong>系统指标（任务统计、Token 使用、选举结果）</li>
+      </ol>
+    </div>
+
+    <div class="footer">
+      <p>调研时间：2026-08-24 | 调研仓库数：10 | 核心参考：multiagent-dashboard、agent-credit</p>
+      <p style="margin-top: 8px;">生成工具：sk-agent 研究助手</p>
+    </div>
+  </div>
+</body>
+</html>
