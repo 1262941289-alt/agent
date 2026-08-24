@@ -49,7 +49,8 @@ public class BrowserService {
     /** 网络抓包：响应监听缓存（Playwright 回调线程写入，主线程读取）。 */
     private final List<Response> capturedResponses = Collections.synchronizedList(new ArrayList<>());
     private volatile boolean capturing = false;
-    private volatile String capturePattern = "";
+    private volatile String capturePatterns = "";
+    private volatile String captureContentTypes = "";
 
     /** 打开 URL 并返回页面摘要。 */
     public synchronized String navigate(String url) {
@@ -213,16 +214,20 @@ public class BrowserService {
 
     // ==================== 网络抓包（开发者工具模式） ====================
 
-    /** 开启网络响应抓包；urlPattern 为空记录全部（自动跳过静态资源）。 */
-    public synchronized String startNetworkCapture(String urlPattern) {
+    /** 开启网络响应抓包。
+     * @param urlPatterns  URL 过滤关键词，多个用逗号分隔（命中任意一个即记录），如 "Controller,ReportJson"；空记录全部。
+     * @param contentTypes Content-Type 过滤，多个用逗号分隔（包含匹配），如 "json,x-javascript"；空不过滤。 */
+    public synchronized String startNetworkCapture(String urlPatterns, String contentTypes) {
         ensureStarted();
         synchronized (capturedResponses) {
             capturedResponses.clear();
         }
-        capturePattern = urlPattern == null ? "" : urlPattern.trim();
+        capturePatterns = urlPatterns == null ? "" : urlPatterns.trim();
+        captureContentTypes = contentTypes == null ? "" : contentTypes.trim().toLowerCase();
         capturing = true;
-        return "抓包已开启" + (capturePattern.isBlank() ? "（记录全部数据请求）" : "（仅记录 URL 含 '" + capturePattern + "' 的请求）")
-                + "。接下来执行 navigate / click 等操作触发数据加载，完成后调用 stopNetworkCapture 读取报文。";
+        String urlDesc = capturePatterns.isBlank() ? "记录全部数据请求" : "URL 含 '" + capturePatterns + "'";
+        String ctDesc = captureContentTypes.isBlank() ? "" : "，且 Content-Type 含 '" + captureContentTypes + "'";
+        return "抓包已开启（" + urlDesc + ctDesc + "）。接下来执行 navigate / click 等操作触发数据加载，完成后调用 stopNetworkCapture 读取报文。";
     }
 
     /** 停止抓包并返回捕获的响应（方法/状态/Content-Type/URL/报文正文，每条报文最多 5000 字）。 */
@@ -337,12 +342,38 @@ public class BrowserService {
                     return;
                 }
                 String url = response.url();
-                if (capturePattern != null && !capturePattern.isBlank()) {
-                    if (!url.contains(capturePattern)) {
+                if (!capturePatterns.isBlank()) {
+                    String lower = url.toLowerCase();
+                    boolean hit = false;
+                    for (String p : capturePatterns.split(",")) {
+                        String k = p.trim().toLowerCase();
+                        if (!k.isEmpty() && lower.contains(k)) {
+                            hit = true;
+                            break;
+                        }
+                    }
+                    if (!hit) {
                         return;
                     }
                 } else if (isStaticResource(url)) {
                     return;
+                }
+                if (!captureContentTypes.isBlank()) {
+                    String ct = safe(() -> {
+                        String h = response.headerValue("content-type");
+                        return h == null ? "" : h;
+                    }, "").toLowerCase();
+                    boolean hit = false;
+                    for (String t : captureContentTypes.split(",")) {
+                        String k = t.trim();
+                        if (!k.isEmpty() && ct.contains(k)) {
+                            hit = true;
+                            break;
+                        }
+                    }
+                    if (!hit) {
+                        return;
+                    }
                 }
                 capturedResponses.add(response);
             } catch (Exception ignored) {

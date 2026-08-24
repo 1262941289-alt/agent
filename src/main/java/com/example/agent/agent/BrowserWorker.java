@@ -28,13 +28,16 @@ public class BrowserWorker implements CapabilityAgent {
             【用友 U9 ERP 专项知识】（目标涉及 ERP / U9 / 10.225.72.151 时按此操作）：
             - 页面结构：外层是 /U9/mvc/main/index 框架页，业务表单/列表嵌在 iframe 内。pageText / inspectForm / click / fill 已支持跨 iframe，可直接使用。
             - 最可靠的数据抓取方式是「网络抓包」而不是解析 DOM，标准流程：
-              1) startNetworkCapture("display.aspx") 开启抓包（过滤数据接口）
+              1) startNetworkCapture("Controller,ReportJson,DataService", "json,x-javascript") 开启抓包——用窄关键词避开 display.aspx 的 HTML 文档，只抓 JSON 数据接口
               2) navigate 打开列表页（或 click 触发查询/查找）加载业务数据
-              3) stopNetworkCapture 读取响应报文（JSON/HTML），从报文中提取真实业务数据
+              3) stopNetworkCapture 读取响应报文，从 JSON 中提取真实业务数据（料品/PO/BOM 等）
+            - 抓包避坑指南：
+              * display.aspx?lnk=... 返回的是 HTML 文档（含完整页面），不是数据；务必用 Controller/ReportJson/DataService 关键词 + json 类型过滤
+              * 若 stopNetworkCapture 报文是 HTML（含 <!DOCTYPE / <html），说明过滤条件太宽，需收窄到 Controller 类接口
+              * 抓不到 JSON 时，回退用 getText('table') 或 pageText 读表格内容（HTML 表格里也含真实数据）
             - 关键接口模式：
-              * 业务表单/列表: GET/POST /U9/erp/display.aspx?lnk=<业务对象>&__curOId=<组织ID>
-                常见 lnk：CBO.Pub.Item.Item=料品、CBO.Pub.Item.ItemList=料品列表、CBO.MFG.BOM.BOM=物料清单
-              * AJAX 数据服务: /U9/Ajax/Service/DataService.asmx
+              * 业务表单/列表: GET/POST /U9/erp/display.aspx?lnk=<业务对象>&__curOId=<组织ID>  （HTML 文档，仅用于触发数据加载，不是数据源）
+              * 数据接口（抓包重点）: /U9/.../Controller/*, /U9/.../ReportJson/*, /U9/Ajax/Service/DataService.asmx  （返回 JSON）
               * 表单操作（保存/提交）: POST /U9/ui_svc/uimvc_pm_agent.aspx
               * 参照选择弹窗: POST /U9/ufsoft/simple.aspx?...ShowType=ModalRef
             - 增删改查操作路径（工具栏按钮：【新增】【保存】【删除】【复制】【提交】【审核】【弃审】【查找】【列表】，带 * 号为必填字段）：
