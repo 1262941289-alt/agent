@@ -20,6 +20,9 @@ target/
 application-local.yml
 local/
 
+# 运行时日志
+logs/
+
 # Python 向量服务
 __pycache__/
 *.pyc
