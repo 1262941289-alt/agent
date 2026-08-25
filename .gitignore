@@ -19,6 +19,8 @@ target/
 # 本地敏感配置（密钥不入库）
 application-local.yml
 local/
+# Docker 真实密钥（.env.example 仍可提交作模板）
+.env
 
 # 运行时日志
 logs/

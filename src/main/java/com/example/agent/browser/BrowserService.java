@@ -331,6 +331,8 @@ public class BrowserService {
                 new BrowserType.LaunchPersistentContextOptions()
                         .setChannel(channel)
                         .setHeadless(headless)
+                        // 容器内以 root 跑无头 chromium，必须禁用沙箱并规避过小的 /dev/shm；本机 Windows 下两参数被忽略，不影响
+                        .setArgs(List.of("--no-sandbox", "--disable-dev-shm-usage"))
                         .setViewportSize(1280, 900);
         context = playwright.chromium().launchPersistentContext(Path.of(profileDir), options);
         page = context.pages().isEmpty() ? context.newPage() : context.pages().get(0);
