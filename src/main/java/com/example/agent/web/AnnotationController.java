@@ -8,6 +8,7 @@ import com.example.agent.repository.DataItemRepository;
 import com.example.agent.repository.DecisionResultRepository;
 import com.example.agent.service.AnnotationService;
 import com.example.agent.service.AuditLogService;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -108,6 +109,16 @@ public class AnnotationController {
             out.add(m);
         }
         return out;
+    }
+
+    /** 清空全部决策结果（决策结果标注工作台「清空」按钮）。 DELETE /api/agent/decisions */
+    @DeleteMapping("/decisions")
+    public Map<String, Object> clearDecisions() {
+        long count = decisionResultRepository.count();
+        decisionResultRepository.deleteAllInBatch();
+        auditLogService.record("DATA", "DELETE", "decision", "",
+                "清空决策结果 " + count + " 条", Map.of("cleared", count), "human");
+        return Map.of("cleared", count);
     }
 
     public record AnnotationRequest(String goal, boolean positive, String comment) {

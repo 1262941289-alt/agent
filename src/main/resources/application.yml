@@ -80,9 +80,11 @@ sk-agent:
     channel: msedge
     # 持久化用户数据目录：登录态（如 GitHub）跨启动保留
     profile-dir: ${user.dir}/target/playwright-profile
-  # 工具守护策略（临时）：让只读的截图不再触发人工审批，加快查询类任务；
-  # click/fill/pressKey 仍走审批门。恢复旧行为时删除本段即可。
+  # 工具守护 / 人机审批：
+  #   enabled: false —— 取消审批环节，所有工具直接放行（无人工值守/追求速度时用）；
+  #   enabled: true  —— 开启审批，高风险工具（fill/click/pressKey/screenshot）需人工批准。
   tool-guard:
+    enabled: false
     policies:
       - names:
           - screenshot

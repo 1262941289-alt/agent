@@ -8,6 +8,7 @@ import com.example.agent.service.DataIngestionService;
 import com.example.agent.service.FileIngestionParser;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 数据接入 REST 接口：实时提交数据（单条/批量）与文件批量导入，以及数据列表查询。
+ * 数据接入 REST 接口：实时提交数据（单条/批量）与文件批量导入，以及数据列表查询与清空。
  */
 @RestController
 @RequestMapping("/api/data")
@@ -72,6 +73,19 @@ public class IngestionController {
                 "文件导入数据 " + ids.size() + " 条", Map.of("accepted", ids.size(),
                         "filename", file.getOriginalFilename() == null ? "" : file.getOriginalFilename()), "human");
         return ResponseEntity.ok(Map.of("accepted", ids.size(), "ids", ids));
+    }
+
+    /**
+     * 清空全部数据条目（数据标注工作台的「清空」按钮）。
+     * DELETE /api/data
+     */
+    @DeleteMapping
+    public ResponseEntity<Map<String, Object>> clearAll() {
+        long count = dataItemRepository.count();
+        dataItemRepository.deleteAllInBatch();
+        auditLogService.record("DATA", "DELETE", "data_item", "",
+                "清空数据条目 " + count + " 条", Map.of("cleared", count), "human");
+        return ResponseEntity.ok(Map.of("cleared", count));
     }
 
     /**

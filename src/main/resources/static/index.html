@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="light">
-<head>
+<html lang="zh-CN" class="light"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>通用办公 Agent 控制台 · 一体化</title>
@@ -75,7 +74,724 @@ body {
   --warn: #c78a00;
 }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script><style>/*! tailwindcss v4.3.1 | MIT License | https://tailwindcss.com */
+@layer properties;
+@layer theme, base, components, utilities;
+@layer theme {
+  :root, :host {
+    --font-sans: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+    --color-white: #fff;
+    --spacing: 0.25rem;
+    --container-6xl: 72rem;
+    --text-xs: 0.75rem;
+    --text-xs--line-height: calc(1 / 0.75);
+    --text-sm: 0.875rem;
+    --text-sm--line-height: calc(1.25 / 0.875);
+    --text-lg: 1.125rem;
+    --text-lg--line-height: calc(1.75 / 1.125);
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --tracking-tight: -0.025em;
+    --leading-relaxed: 1.625;
+    --radius-xl: 0.75rem;
+    --radius-2xl: 1rem;
+    --default-transition-duration: 150ms;
+    --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    --default-font-family: var(--font-sans);
+    --default-mono-font-family: var(--font-mono);
+  }
+}
+@layer base {
+  *, ::after, ::before, ::backdrop, ::file-selector-button {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+  }
+  html, :host {
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    tab-size: 4;
+    font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji');
+    font-feature-settings: var(--default-font-feature-settings, normal);
+    font-variation-settings: var(--default-font-variation-settings, normal);
+    -webkit-tap-highlight-color: transparent;
+  }
+  hr {
+    height: 0;
+    color: inherit;
+    border-top-width: 1px;
+  }
+  abbr:where([title]) {
+    -webkit-text-decoration: underline dotted;
+    text-decoration: underline dotted;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  a {
+    color: inherit;
+    -webkit-text-decoration: inherit;
+    text-decoration: inherit;
+  }
+  b, strong {
+    font-weight: bolder;
+  }
+  code, kbd, samp, pre {
+    font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace);
+    font-feature-settings: var(--default-mono-font-feature-settings, normal);
+    font-variation-settings: var(--default-mono-font-variation-settings, normal);
+    font-size: 1em;
+  }
+  small {
+    font-size: 80%;
+  }
+  sub, sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+  sub {
+    bottom: -0.25em;
+  }
+  sup {
+    top: -0.5em;
+  }
+  table {
+    text-indent: 0;
+    border-color: inherit;
+    border-collapse: collapse;
+  }
+  :-moz-focusring {
+    outline: auto;
+  }
+  progress {
+    vertical-align: baseline;
+  }
+  summary {
+    display: list-item;
+  }
+  ol, ul, menu {
+    list-style: none;
+  }
+  img, svg, video, canvas, audio, iframe, embed, object {
+    display: block;
+    vertical-align: middle;
+  }
+  img, video {
+    max-width: 100%;
+    height: auto;
+  }
+  button, input, select, optgroup, textarea, ::file-selector-button {
+    font: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    border-radius: 0;
+    background-color: transparent;
+    opacity: 1;
+  }
+  :where(select:is([multiple], [size])) optgroup {
+    font-weight: bolder;
+  }
+  :where(select:is([multiple], [size])) optgroup option {
+    padding-inline-start: 20px;
+  }
+  ::file-selector-button {
+    margin-inline-end: 4px;
+  }
+  ::placeholder {
+    opacity: 1;
+  }
+  @supports (not (-webkit-appearance: -apple-pay-button))  or (contain-intrinsic-size: 1px) {
+    ::placeholder {
+      color: currentcolor;
+      @supports (color: color-mix(in lab, red, red)) {
+        color: color-mix(in oklab, currentcolor 50%, transparent);
+      }
+    }
+  }
+  textarea {
+    resize: vertical;
+  }
+  ::-webkit-search-decoration {
+    -webkit-appearance: none;
+  }
+  ::-webkit-date-and-time-value {
+    min-height: 1lh;
+    text-align: inherit;
+  }
+  ::-webkit-datetime-edit {
+    display: inline-flex;
+  }
+  ::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+  }
+  ::-webkit-datetime-edit, ::-webkit-datetime-edit-year-field, ::-webkit-datetime-edit-month-field, ::-webkit-datetime-edit-day-field, ::-webkit-datetime-edit-hour-field, ::-webkit-datetime-edit-minute-field, ::-webkit-datetime-edit-second-field, ::-webkit-datetime-edit-millisecond-field, ::-webkit-datetime-edit-meridiem-field {
+    padding-block: 0;
+  }
+  ::-webkit-calendar-picker-indicator {
+    line-height: 1;
+  }
+  :-moz-ui-invalid {
+    box-shadow: none;
+  }
+  button, input:where([type='button'], [type='reset'], [type='submit']), ::file-selector-button {
+    appearance: button;
+  }
+  ::-webkit-inner-spin-button, ::-webkit-outer-spin-button {
+    height: auto;
+  }
+  [hidden]:where(:not([hidden='until-found'])) {
+    display: none !important;
+  }
+}
+@layer utilities {
+  .sticky {
+    position: sticky;
+  }
+  .top-0 {
+    top: 0;
+  }
+  .z-30 {
+    z-index: 30;
+  }
+  .mx-auto {
+    margin-inline: auto;
+  }
+  .mt-2 {
+    margin-top: calc(var(--spacing) * 2);
+  }
+  .mt-3 {
+    margin-top: calc(var(--spacing) * 3);
+  }
+  .mt-4 {
+    margin-top: calc(var(--spacing) * 4);
+  }
+  .mb-1\.5 {
+    margin-bottom: calc(var(--spacing) * 1.5);
+  }
+  .mb-2 {
+    margin-bottom: calc(var(--spacing) * 2);
+  }
+  .mb-3 {
+    margin-bottom: calc(var(--spacing) * 3);
+  }
+  .mb-4 {
+    margin-bottom: calc(var(--spacing) * 4);
+  }
+  .mb-6 {
+    margin-bottom: calc(var(--spacing) * 6);
+  }
+  .block {
+    display: block;
+  }
+  .flex {
+    display: flex;
+  }
+  .grid {
+    display: grid;
+  }
+  .hidden {
+    display: none;
+  }
+  .inline-flex {
+    display: inline-flex;
+  }
+  .h-3\.5 {
+    height: calc(var(--spacing) * 3.5);
+  }
+  .h-4 {
+    height: calc(var(--spacing) * 4);
+  }
+  .h-5 {
+    height: calc(var(--spacing) * 5);
+  }
+  .h-8 {
+    height: calc(var(--spacing) * 8);
+  }
+  .h-9 {
+    height: calc(var(--spacing) * 9);
+  }
+  .min-h-\[18px\] {
+    min-height: 18px;
+  }
+  .min-h-\[64px\] {
+    min-height: 64px;
+  }
+  .min-h-screen {
+    min-height: 100vh;
+  }
+  .w-3\.5 {
+    width: calc(var(--spacing) * 3.5);
+  }
+  .w-4 {
+    width: calc(var(--spacing) * 4);
+  }
+  .w-5 {
+    width: calc(var(--spacing) * 5);
+  }
+  .w-8 {
+    width: calc(var(--spacing) * 8);
+  }
+  .w-9 {
+    width: calc(var(--spacing) * 9);
+  }
+  .w-full {
+    width: 100%;
+  }
+  .max-w-6xl {
+    max-width: var(--container-6xl);
+  }
+  .resize-y {
+    resize: vertical;
+  }
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .justify-between {
+    justify-content: space-between;
+  }
+  .justify-center {
+    justify-content: center;
+  }
+  .gap-1 {
+    gap: var(--spacing);
+  }
+  .gap-1\.5 {
+    gap: calc(var(--spacing) * 1.5);
+  }
+  .gap-2 {
+    gap: calc(var(--spacing) * 2);
+  }
+  .gap-3 {
+    gap: calc(var(--spacing) * 3);
+  }
+  .gap-5 {
+    gap: calc(var(--spacing) * 5);
+  }
+  .space-y-2 {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 2) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
+  .space-y-3 {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 3) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 3) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
+  .space-y-5 {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 5) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 5) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
+  .rounded-2xl {
+    border-radius: var(--radius-2xl);
+  }
+  .rounded-lg {
+    border-radius: var(--dsh-radius-lg);
+  }
+  .rounded-md {
+    border-radius: var(--dsh-radius-md);
+  }
+  .rounded-xl {
+    border-radius: var(--radius-xl);
+  }
+  .border {
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+  }
+  .border-t {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 1px;
+  }
+  .border-b {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 1px;
+  }
+  .border-border {
+    border-color: var(--dsh-border);
+  }
+  .bg-background {
+    background-color: var(--dsh-background);
+  }
+  .bg-card {
+    background-color: var(--dsh-card);
+  }
+  .bg-card\/80 {
+    background-color: var(--dsh-card);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--dsh-card) 80%, transparent);
+    }
+  }
+  .bg-input {
+    background-color: var(--dsh-input);
+  }
+  .bg-muted {
+    background-color: var(--dsh-muted);
+  }
+  .bg-primary {
+    background-color: var(--dsh-primary);
+  }
+  .p-1 {
+    padding: var(--spacing);
+  }
+  .p-5 {
+    padding: calc(var(--spacing) * 5);
+  }
+  .px-3 {
+    padding-inline: calc(var(--spacing) * 3);
+  }
+  .px-4 {
+    padding-inline: calc(var(--spacing) * 4);
+  }
+  .px-6 {
+    padding-inline: calc(var(--spacing) * 6);
+  }
+  .py-1\.5 {
+    padding-block: calc(var(--spacing) * 1.5);
+  }
+  .py-2 {
+    padding-block: calc(var(--spacing) * 2);
+  }
+  .py-4 {
+    padding-block: calc(var(--spacing) * 4);
+  }
+  .py-6 {
+    padding-block: calc(var(--spacing) * 6);
+  }
+  .pt-3 {
+    padding-top: calc(var(--spacing) * 3);
+  }
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+  .font-sans {
+    font-family: var(--font-sans);
+  }
+  .text-lg {
+    font-size: var(--text-lg);
+    line-height: var(--tw-leading, var(--text-lg--line-height));
+  }
+  .text-sm {
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+  }
+  .text-xs {
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+  }
+  .leading-relaxed {
+    --tw-leading: var(--leading-relaxed);
+    line-height: var(--leading-relaxed);
+  }
+  .font-medium {
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+  }
+  .font-semibold {
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+  }
+  .tracking-tight {
+    --tw-tracking: var(--tracking-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  .text-foreground {
+    color: var(--dsh-foreground);
+  }
+  .text-muted-foreground {
+    color: var(--dsh-muted-foreground);
+  }
+  .text-primary {
+    color: var(--dsh-primary);
+  }
+  .text-primary-foreground {
+    color: var(--dsh-primary-foreground);
+  }
+  .text-white {
+    color: var(--color-white);
+  }
+  .antialiased {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  .shadow-sm {
+    --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+  .ring-ring\/0 {
+    --tw-ring-color: var(--dsh-ring);
+    @supports (color: color-mix(in lab, red, red)) {
+      --tw-ring-color: color-mix(in oklab, var(--dsh-ring) 0%, transparent);
+    }
+  }
+  .backdrop-blur {
+    --tw-backdrop-blur: blur(8px);
+    -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
+    backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
+  }
+  .transition-all {
+    transition-property: all;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+  .transition-colors {
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+  .outline-none {
+    --tw-outline-style: none;
+    outline-style: none;
+  }
+  .placeholder\:text-muted-foreground {
+    &::placeholder {
+      color: var(--dsh-muted-foreground);
+    }
+  }
+  .hover\:border-ring {
+    &:hover {
+      @media (hover: hover) {
+        border-color: var(--dsh-ring);
+      }
+    }
+  }
+  .hover\:bg-muted {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--dsh-muted);
+      }
+    }
+  }
+  .hover\:text-foreground {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--dsh-foreground);
+      }
+    }
+  }
+  .hover\:text-white {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-white);
+      }
+    }
+  }
+  .hover\:opacity-90 {
+    &:hover {
+      @media (hover: hover) {
+        opacity: 90%;
+      }
+    }
+  }
+  .focus\:ring-2 {
+    &:focus {
+      --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+  .focus\:ring-ring\/30 {
+    &:focus {
+      --tw-ring-color: var(--dsh-ring);
+      @supports (color: color-mix(in lab, red, red)) {
+        --tw-ring-color: color-mix(in oklab, var(--dsh-ring) 30%, transparent);
+      }
+    }
+  }
+  .lg\:grid-cols-2 {
+    @media (width >= 64rem) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+}
+@layer base {
+  body {
+    background: var(--dsh-background);
+    color: var(--dsh-foreground);
+  }
+  td, th {
+    overflow-wrap: break-word;
+    word-break: break-all;
+    word-break: auto-phrase;
+  }
+  th {
+    white-space: nowrap;
+  }
+}
+@property --tw-space-y-reverse {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-border-style {
+  syntax: "*";
+  inherits: false;
+  initial-value: solid;
+}
+@property --tw-leading {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-font-weight {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-tracking {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-inset-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-inset-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-ring-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ring-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-ring-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-inset-ring-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-ring-inset {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ring-offset-width {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --tw-ring-offset-color {
+  syntax: "*";
+  inherits: false;
+  initial-value: #fff;
+}
+@property --tw-ring-offset-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-backdrop-blur {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-brightness {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-contrast {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-grayscale {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-hue-rotate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-invert {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-opacity {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-saturate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-sepia {
+  syntax: "*";
+  inherits: false;
+}
+@layer properties {
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
+    *, ::before, ::after, ::backdrop {
+      --tw-space-y-reverse: 0;
+      --tw-border-style: solid;
+      --tw-leading: initial;
+      --tw-font-weight: initial;
+      --tw-tracking: initial;
+      --tw-shadow: 0 0 #0000;
+      --tw-shadow-color: initial;
+      --tw-shadow-alpha: 100%;
+      --tw-inset-shadow: 0 0 #0000;
+      --tw-inset-shadow-color: initial;
+      --tw-inset-shadow-alpha: 100%;
+      --tw-ring-color: initial;
+      --tw-ring-shadow: 0 0 #0000;
+      --tw-inset-ring-color: initial;
+      --tw-inset-ring-shadow: 0 0 #0000;
+      --tw-ring-inset: initial;
+      --tw-ring-offset-width: 0px;
+      --tw-ring-offset-color: #fff;
+      --tw-ring-offset-shadow: 0 0 #0000;
+      --tw-backdrop-blur: initial;
+      --tw-backdrop-brightness: initial;
+      --tw-backdrop-contrast: initial;
+      --tw-backdrop-grayscale: initial;
+      --tw-backdrop-hue-rotate: initial;
+      --tw-backdrop-invert: initial;
+      --tw-backdrop-opacity: initial;
+      --tw-backdrop-saturate: initial;
+      --tw-backdrop-sepia: initial;
+    }
+  }
+}
+</style>
     <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
     <style type="text/tailwindcss">
   @theme inline {
@@ -422,7 +1138,7 @@ body {
           <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
             <div class="flex items-center gap-3">
               <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <i data-lucide="bot" class="h-5 w-5"></i>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="bot" aria-hidden="true" class="lucide lucide-bot h-5 w-5"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>
               </div>
               <div>
                 <h1 class="text-lg font-semibold tracking-tight text-foreground">通用办公 Agent 控制台</h1>
@@ -431,7 +1147,7 @@ body {
             </div>
             <div class="flex items-center gap-2">
               <button id="themeToggle" onclick="toggleTheme()" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:bg-muted transition-colors" aria-label="切换主题">
-                <i data-lucide="moon" class="h-4 w-4"></i>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="moon" aria-hidden="true" class="lucide lucide-moon h-4 w-4"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"></path></svg>
               </button>
             </div>
           </div>
@@ -439,37 +1155,37 @@ body {
 
         <div class="mx-auto max-w-6xl px-6 py-6">
           <nav class="mb-6 inline-flex gap-1 rounded-xl border border-border bg-card p-1 shadow-sm">
-            <button id="tab-run" data-dom-id="tab-run" onclick="switchTab('run')" class="dsh-tab-active inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all">
-              <i data-lucide="play-circle" class="h-4 w-4"></i>
+            <button id="tab-run" data-dom-id="tab-run" onclick="switchTab('run')" class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all text-muted-foreground hover:bg-muted hover:text-foreground">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="play-circle" aria-hidden="true" class="lucide lucide-play-circle h-4 w-4"><path d="M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"></path><circle cx="12" cy="12" r="10"></circle></svg>
               执行监控
             </button>
-            <button id="tab-anno" data-dom-id="tab-anno" onclick="switchTab('anno')" class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all">
-              <i data-lucide="tags" class="h-4 w-4"></i>
+            <button id="tab-anno" data-dom-id="tab-anno" onclick="switchTab('anno')" class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all dsh-tab-active">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="tags" aria-hidden="true" class="lucide lucide-tags h-4 w-4"><path d="M13.172 2a2 2 0 0 1 1.414.586l6.71 6.71a2.4 2.4 0 0 1 0 3.408l-4.592 4.592a2.4 2.4 0 0 1-3.408 0l-6.71-6.71A2 2 0 0 1 6 9.172V3a1 1 0 0 1 1-1z"></path><path d="M2 7v6.172a2 2 0 0 0 .586 1.414l6.71 6.71a2.4 2.4 0 0 0 3.191.193"></path><circle cx="10.5" cy="6.5" r=".5" fill="currentColor"></circle></svg>
               数据标注
             </button>
             <button id="tab-insight" data-dom-id="tab-insight" onclick="switchTab('insight')" class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all">
-              <i data-lucide="bar-chart-2" class="h-4 w-4"></i>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="bar-chart-2" aria-hidden="true" class="lucide lucide-bar-chart-2 h-4 w-4"><path d="M5 21v-6"></path><path d="M12 21V3"></path><path d="M19 21V9"></path></svg>
               系统洞察
             </button>
           </nav>
 
           <!-- =================== 执行监控（整合自 run.html） =================== -->
-          <section id="panel-run" class="space-y-5 ev-wrap">
+          <section id="panel-run" class="space-y-5 ev-wrap hidden">
             <div class="ev-card">
               <div class="ev-row">
                 <input type="text" id="goal" placeholder="输入总体目标，如：在用友U9 ERP中抓取料品列表数据并汇报">
                 <button id="runBtn" onclick="startRun()">开始执行</button>
-                <button class="bad-btn" id="stopBtn" onclick="stopRun()" disabled>停止执行</button>
+                <button class="bad-btn" id="stopBtn" onclick="stopRun()" disabled="">停止执行</button>
                 <select id="exportFormat" style="padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--dsh-input);color:var(--text)">
                   <option value="txt">TXT</option>
                   <option value="md">Markdown</option>
                   <option value="json">JSON</option>
                   <option value="csv">CSV</option>
                 </select>
-                <button class="ghost" id="exportBtn" onclick="exportResult()" disabled>导出结果</button>
+                <button class="ghost" id="exportBtn" onclick="exportResult()" disabled="">导出结果</button>
                 <button class="ghost" onclick="loadExperiences()">刷新经验</button>
-                <button class="ghost" id="appBtn" onclick="startBackendApp()">启动后端应用</button>
-                <span class="ev-status" id="appStatus">后端未检测</span>
+                <button class="ghost" id="appBtn" onclick="startBackendApp()" disabled="">启动后端应用</button>
+                <span class="ev-status app-bad" id="appStatus">后端未运行，等待看门狗拉起…（已等 18s，也可手动双击 start-agent.bat）</span>
                 <span class="ev-status" id="status">空闲</span>
               </div>
             </div>
@@ -505,51 +1221,51 @@ body {
             <div class="flow-canvas">
               <svg viewBox="0 0 600 560" width="100%" style="max-width:600px">
                 <g id="flowMgr" class="flow-node idle" transform="translate(300,40)">
-                  <circle r="22" fill="var(--brand)" opacity="0.12" class="orbit-ring"/>
-                  <circle r="22" fill="#fff" stroke="var(--brand)" stroke-width="2"/>
+                  <circle r="22" fill="var(--brand)" opacity="0.12" class="orbit-ring"></circle>
+                  <circle r="22" fill="#fff" stroke="var(--brand)" stroke-width="2"></circle>
                   <text class="flow-label" y="5" style="font-weight:600;fill:var(--brand)">Mgr</text>
                 </g>
 
-                <path id="path-browser" class="flow-path inactive" d="M300,62 C220,100 160,130 100,170" stroke="var(--brand)" stroke-width="2" fill="none"/>
-                <path id="path-data" class="flow-path inactive" d="M300,62 C260,100 220,130 180,170" stroke="var(--brand)" stroke-width="2" fill="none"/>
-                <path id="path-general" class="flow-path inactive" d="M300,62 C340,100 380,130 420,170" stroke="var(--brand)" stroke-width="2" fill="none"/>
-                <path id="path-history" class="flow-path inactive" d="M300,62 C380,100 440,130 500,170" stroke="var(--brand)" stroke-width="2" fill="none"/>
+                <path id="path-browser" class="flow-path inactive" d="M300,62 C220,100 160,130 100,170" stroke="var(--brand)" stroke-width="2" fill="none"></path>
+                <path id="path-data" class="flow-path inactive" d="M300,62 C260,100 220,130 180,170" stroke="var(--brand)" stroke-width="2" fill="none"></path>
+                <path id="path-general" class="flow-path inactive" d="M300,62 C340,100 380,130 420,170" stroke="var(--brand)" stroke-width="2" fill="none"></path>
+                <path id="path-history" class="flow-path inactive" d="M300,62 C380,100 440,130 500,170" stroke="var(--brand)" stroke-width="2" fill="none"></path>
 
                 <g id="flow-browser" class="flow-node idle" transform="translate(100,190)">
-                  <circle r="20" fill="#fff" stroke="var(--border)" stroke-width="2"/>
+                  <circle r="20" fill="#fff" stroke="var(--border)" stroke-width="2"></circle>
                   <text class="flow-label" y="-2">browser</text>
                   <text class="flow-label" y="10" style="font-size:9px">激进</text>
                   <text class="flow-label" y="32" id="flow-score-browser" style="font-size:10px">50</text>
                 </g>
                 <g id="flow-data" class="flow-node idle" transform="translate(180,190)">
-                  <circle r="20" fill="#fff" stroke="var(--border)" stroke-width="2"/>
+                  <circle r="20" fill="#fff" stroke="var(--border)" stroke-width="2"></circle>
                   <text class="flow-label" y="-2">data</text>
                   <text class="flow-label" y="10" style="font-size:9px">谨慎</text>
                   <text class="flow-label" y="32" id="flow-score-data" style="font-size:10px">50</text>
                 </g>
                 <g id="flow-general" class="flow-node idle" transform="translate(420,190)">
-                  <circle r="20" fill="#fff" stroke="var(--border)" stroke-width="2"/>
+                  <circle r="20" fill="#fff" stroke="var(--border)" stroke-width="2"></circle>
                   <text class="flow-label" y="-2">general</text>
                   <text class="flow-label" y="10" style="font-size:9px">高效</text>
                   <text class="flow-label" y="32" id="flow-score-general" style="font-size:10px">50</text>
                 </g>
                 <g id="flow-history" class="flow-node idle" transform="translate(500,190)">
-                  <circle r="20" fill="#fff" stroke="var(--border)" stroke-width="2"/>
+                  <circle r="20" fill="#fff" stroke="var(--border)" stroke-width="2"></circle>
                   <text class="flow-label" y="-2">history</text>
                   <text class="flow-label" y="10" style="font-size:9px">平衡</text>
                   <text class="flow-label" y="32" id="flow-score-history" style="font-size:10px">50</text>
                 </g>
 
-                <path id="path-back-browser" class="flow-path inactive" d="M100,210 C140,240 220,260 280,280 Q300,290 300,62" stroke="var(--ok)" stroke-width="1.5" fill="none" opacity="0.3"/>
-                <path id="path-back-data" class="flow-path inactive" d="M180,210 C200,240 240,260 280,280 Q300,290 300,62" stroke="var(--ok)" stroke-width="1.5" fill="none" opacity="0.3"/>
-                <path id="path-back-general" class="flow-path inactive" d="M420,210 C400,240 360,260 320,280 Q300,290 300,62" stroke="var(--ok)" stroke-width="1.5" fill="none" opacity="0.3"/>
-                <path id="path-back-history" class="flow-path inactive" d="M500,210 C460,240 380,260 320,280 Q300,290 300,62" stroke="var(--ok)" stroke-width="1.5" fill="none" opacity="0.3"/>
+                <path id="path-back-browser" class="flow-path inactive" d="M100,210 C140,240 220,260 280,280 Q300,290 300,62" stroke="var(--ok)" stroke-width="1.5" fill="none" opacity="0.3"></path>
+                <path id="path-back-data" class="flow-path inactive" d="M180,210 C200,240 240,260 280,280 Q300,290 300,62" stroke="var(--ok)" stroke-width="1.5" fill="none" opacity="0.3"></path>
+                <path id="path-back-general" class="flow-path inactive" d="M420,210 C400,240 360,260 320,280 Q300,290 300,62" stroke="var(--ok)" stroke-width="1.5" fill="none" opacity="0.3"></path>
+                <path id="path-back-history" class="flow-path inactive" d="M500,210 C460,240 380,260 320,280 Q300,290 300,62" stroke="var(--ok)" stroke-width="1.5" fill="none" opacity="0.3"></path>
 
                 <g transform="translate(300,280)">
                   <text class="flow-label" y="14" id="flowPhaseLabel" style="font-size:11px;fill:var(--muted)">等待开始</text>
                 </g>
 
-                <line x1="40" y1="310" x2="560" y2="310" stroke="var(--border)" stroke-width="1" stroke-dasharray="4 4"/>
+                <line x1="40" y1="310" x2="560" y2="310" stroke="var(--border)" stroke-width="1" stroke-dasharray="4 4"></line>
 
                 <g id="electionArea" class="election-hidden" transform="translate(0,320)">
                   <text x="300" y="20" class="flow-label" style="font-size:13px;font-weight:600;fill:var(--text)">管理者选举</text>
@@ -558,34 +1274,34 @@ body {
                   <g id="vote-browser" transform="translate(80,60)">
                     <text x="0" y="0" class="flow-label" style="text-anchor:start;font-size:11px">browser</text>
                     <text x="60" y="0" class="flow-label" style="font-size:9px;fill:var(--muted)">激进</text>
-                    <rect x="0" y="6" width="200" height="10" rx="5" fill="var(--bg)" stroke="var(--border)" stroke-width="0.5"/>
-                    <rect x="0" y="6" width="0" height="10" rx="5" class="vote-bar" id="voteBar-browser" fill="var(--brand)" opacity="0.7"/>
+                    <rect x="0" y="6" width="200" height="10" rx="5" fill="var(--bg)" stroke="var(--border)" stroke-width="0.5"></rect>
+                    <rect x="0" y="6" width="0" height="10" rx="5" class="vote-bar" id="voteBar-browser" fill="var(--brand)" opacity="0.7"></rect>
                     <text x="210" y="14" class="flow-label" id="voteScore-browser" style="text-anchor:start;font-size:10px">-</text>
-                    <circle cx="0" cy="2" r="3" id="voteDot-browser" fill="var(--muted)"/>
+                    <circle cx="0" cy="2" r="3" id="voteDot-browser" fill="var(--muted)"></circle>
                   </g>
                   <g id="vote-data" transform="translate(80,95)">
                     <text x="0" y="0" class="flow-label" style="text-anchor:start;font-size:11px">data</text>
                     <text x="60" y="0" class="flow-label" style="font-size:9px;fill:var(--muted)">谨慎</text>
-                    <rect x="0" y="6" width="200" height="10" rx="5" fill="var(--bg)" stroke="var(--border)" stroke-width="0.5"/>
-                    <rect x="0" y="6" width="0" height="10" rx="5" class="vote-bar" id="voteBar-data" fill="var(--brand)" opacity="0.7"/>
+                    <rect x="0" y="6" width="200" height="10" rx="5" fill="var(--bg)" stroke="var(--border)" stroke-width="0.5"></rect>
+                    <rect x="0" y="6" width="0" height="10" rx="5" class="vote-bar" id="voteBar-data" fill="var(--brand)" opacity="0.7"></rect>
                     <text x="210" y="14" class="flow-label" id="voteScore-data" style="text-anchor:start;font-size:10px">-</text>
-                    <circle cx="0" cy="2" r="3" id="voteDot-data" fill="var(--muted)"/>
+                    <circle cx="0" cy="2" r="3" id="voteDot-data" fill="var(--muted)"></circle>
                   </g>
                   <g id="vote-general" transform="translate(80,130)">
                     <text x="0" y="0" class="flow-label" style="text-anchor:start;font-size:11px">general</text>
                     <text x="60" y="0" class="flow-label" style="font-size:9px;fill:var(--muted)">高效</text>
-                    <rect x="0" y="6" width="200" height="10" rx="5" fill="var(--bg)" stroke="var(--border)" stroke-width="0.5"/>
-                    <rect x="0" y="6" width="0" height="10" rx="5" class="vote-bar" id="voteBar-general" fill="var(--brand)" opacity="0.7"/>
+                    <rect x="0" y="6" width="200" height="10" rx="5" fill="var(--bg)" stroke="var(--border)" stroke-width="0.5"></rect>
+                    <rect x="0" y="6" width="0" height="10" rx="5" class="vote-bar" id="voteBar-general" fill="var(--brand)" opacity="0.7"></rect>
                     <text x="210" y="14" class="flow-label" id="voteScore-general" style="text-anchor:start;font-size:10px">-</text>
-                    <circle cx="0" cy="2" r="3" id="voteDot-general" fill="var(--muted)"/>
+                    <circle cx="0" cy="2" r="3" id="voteDot-general" fill="var(--muted)"></circle>
                   </g>
                   <g id="vote-history" transform="translate(80,165)">
                     <text x="0" y="0" class="flow-label" style="text-anchor:start;font-size:11px">history</text>
                     <text x="60" y="0" class="flow-label" style="font-size:9px;fill:var(--muted)">平衡</text>
-                    <rect x="0" y="6" width="200" height="10" rx="5" fill="var(--bg)" stroke="var(--border)" stroke-width="0.5"/>
-                    <rect x="0" y="6" width="0" height="10" rx="5" class="vote-bar" id="voteBar-history" fill="var(--brand)" opacity="0.7"/>
+                    <rect x="0" y="6" width="200" height="10" rx="5" fill="var(--bg)" stroke="var(--border)" stroke-width="0.5"></rect>
+                    <rect x="0" y="6" width="0" height="10" rx="5" class="vote-bar" id="voteBar-history" fill="var(--brand)" opacity="0.7"></rect>
                     <text x="210" y="14" class="flow-label" id="voteScore-history" style="text-anchor:start;font-size:10px">-</text>
-                    <circle cx="0" cy="2" r="3" id="voteDot-history" fill="var(--muted)"/>
+                    <circle cx="0" cy="2" r="3" id="voteDot-history" fill="var(--muted)"></circle>
                   </g>
 
                   <g transform="translate(340,60)">
@@ -598,7 +1314,7 @@ body {
 
                   <g id="electionHandover" transform="translate(300,200)" class="election-hidden">
                     <text x="0" y="0" class="flow-label" id="handoverPrev" style="font-size:11px;fill:var(--muted)">上轮: -</text>
-                    <path d="M0,6 L60,6" stroke="var(--brand)" stroke-width="2" fill="none" marker-end="url(#arrowHead)" class="flow-path"/>
+                    <path d="M0,6 L60,6" stroke="var(--brand)" stroke-width="2" fill="none" marker-end="url(#arrowHead)" class="flow-path"></path>
                     <text x="70" y="0" class="flow-label" id="handoverNew" style="font-size:11px;font-weight:600;fill:var(--brand)">新任: -</text>
                   </g>
 
@@ -608,7 +1324,7 @@ body {
 
                 <defs>
                   <marker id="arrowHead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-                    <polygon points="0 0, 8 3, 0 6" fill="var(--brand)"/>
+                    <polygon points="0 0, 8 3, 0 6" fill="var(--brand)"></polygon>
                   </marker>
                 </defs>
 
@@ -635,7 +1351,7 @@ body {
                   <p class="hint" style="color:var(--muted);font-size:12.5px;margin:0 0 10px">
                     最近执行事件已落库为可回放事实源；点击任一条按事件流重建选中回放。
                   </p>
-                  <div id="runHistory"><p class="muted">暂无历史。</p></div>
+                  <div id="runHistory"><p class="muted">加载历史失败。</p></div>
                 </div>
               </div>
             </div>
@@ -647,7 +1363,7 @@ body {
               <div class="agent-header">
                 <span class="agent-name">ManagerAgent（编排者）</span>
                 <span class="style-badge style-balanced">平衡</span>
-                <span class="agent-status working" id="mgrStatus">调度中</span>
+                <span class="agent-status idle" id="mgrStatus">空闲</span>
               </div>
               <div class="agent-desc">递归闭环编排器：获取信息 → 制定计划 → 执行操作 → 循环评估。负责拆解目标、分波并行派发、信用分奖惩、选举管理者。自身不执行子任务，只分配与汇总。</div>
               <div style="margin-top:8px;font-size:12px;color:var(--muted);">
@@ -656,26 +1372,27 @@ body {
               </div>
             </div>
             <p class="loop-hint">4 个能力域 Agent：browser / general / data / history，各自角色风格固定，显示当前状态、信用分、任务统计</p>
-            <div class="agent-grid" id="agentGrid">
-              <p class="muted">加载中...</p>
-            </div>
+            <div class="agent-grid" id="agentGrid"><p class="muted">无法加载 Agent 状态</p></div>
           </section>
 
           <!-- =================== 数据标注（自 index.html） =================== -->
-          <section id="panel-anno" class="hidden space-y-5">
+          <section id="panel-anno" class="space-y-5">
             <div class="grid gap-5 lg:grid-cols-2">
               <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
                 <div class="mb-3 flex items-center gap-2">
-                  <i data-lucide="list-checks" class="h-4 w-4 text-primary"></i>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="list-checks" aria-hidden="true" class="lucide lucide-list-checks h-4 w-4 text-primary"><path d="M13 5h8"></path><path d="M13 12h8"></path><path d="M13 19h8"></path><path d="m3 17 2 2 4-4"></path><path d="m3 7 2 2 4-4"></path></svg>
                   <h2 class="text-sm font-semibold text-foreground">数据条目标注</h2>
                 </div>
                 <p class="mb-4 text-xs leading-relaxed text-muted-foreground">对已导入并清洗的数据逐条评价：<b>正确</b> / <b>错误</b>（可改字段值，纠错会沉淀为确定性规则）/ <b>不确定</b>。</p>
                 <div class="flex items-center gap-3">
                   <button id="loadItemsBtn" onclick="loadItems()" class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 transition-colors">
-                    <i data-lucide="download" class="h-3.5 w-3.5"></i>加载待标注数据
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="download" aria-hidden="true" class="lucide lucide-download h-3.5 w-3.5"><path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path></svg>加载待标注数据
                   </button>
                   <button id="refreshItemsBtn" onclick="loadItems()" title="刷新数据列表" class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-ring transition-colors">
-                    <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>刷新
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="refresh-cw" aria-hidden="true" class="lucide lucide-refresh-cw h-3.5 w-3.5"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg>刷新
+                  </button>
+                  <button id="clearItemsBtn" onclick="clearItems()" title="清空全部数据条目（不可恢复）" class="inline-flex items-center gap-1.5 rounded-lg border border-error/40 bg-background px-3 py-1.5 text-xs font-medium text-error hover:bg-error hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="trash-2" aria-hidden="true" class="lucide lucide-trash-2 h-3.5 w-3.5"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>清空
                   </button>
                   <span id="itemsStatus" class="text-xs text-muted-foreground"></span>
                 </div>
@@ -684,13 +1401,19 @@ body {
 
               <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
                 <div class="mb-3 flex items-center gap-2">
-                  <i data-lucide="gavel" class="h-4 w-4 text-primary"></i>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="gavel" aria-hidden="true" class="lucide lucide-gavel h-4 w-4 text-primary"><path d="m14 13-8.381 8.38a1 1 0 0 1-3.001-3l8.384-8.381"></path><path d="m16 16 6-6"></path><path d="m21.5 10.5-8-8"></path><path d="m8 8 6-6"></path><path d="m8.5 7.5 8 8"></path></svg>
                   <h2 class="text-sm font-semibold text-foreground">决策结果标注</h2>
                 </div>
                 <p class="mb-4 text-xs text-muted-foreground">对筛选任务产生的 PASS/REJECT 决策做对/错评价，写入知识图谱。</p>
                 <div class="flex items-center gap-3">
                   <button id="loadDecisionsBtn" onclick="loadDecisions()" class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 transition-colors">
-                    <i data-lucide="download" class="h-3.5 w-3.5"></i>加载最近决策
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="download" aria-hidden="true" class="lucide lucide-download h-3.5 w-3.5"><path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path></svg>加载最近决策
+                  </button>
+                  <button id="refreshDecisionsBtn" onclick="loadDecisions()" title="刷新决策列表" class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-ring transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="refresh-cw" aria-hidden="true" class="lucide lucide-refresh-cw h-3.5 w-3.5"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg>刷新
+                  </button>
+                  <button id="clearDecisionsBtn" onclick="clearDecisions()" title="清空全部决策结果（不可恢复）" class="inline-flex items-center gap-1.5 rounded-lg border border-error/40 bg-background px-3 py-1.5 text-xs font-medium text-error hover:bg-error hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="trash-2" aria-hidden="true" class="lucide lucide-trash-2 h-3.5 w-3.5"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>清空
                   </button>
                   <span id="decisionsStatus" class="text-xs text-muted-foreground"></span>
                 </div>
@@ -699,19 +1422,27 @@ body {
 
               <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
                 <div class="mb-3 flex items-center gap-2">
-                  <i data-lucide="book-marked" class="h-4 w-4 text-primary"></i>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="book-marked" aria-hidden="true" class="lucide lucide-book-marked h-4 w-4 text-primary"><path d="M10 2v8l3-3 3 3V2"></path><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"></path></svg>
                   <h2 class="text-sm font-semibold text-foreground">已沉淀的确定性规则</h2>
                 </div>
                 <p class="mb-4 text-xs text-muted-foreground">人工纠错沉淀出的「字段 + 原始值 → 纠正值」规则，作为规则兜底顶替 LLM。</p>
                 <button id="loadRulesBtn" onclick="loadRules()" class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors">
-                  <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>刷新规则
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="refresh-cw" aria-hidden="true" class="lucide lucide-refresh-cw h-3.5 w-3.5"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg>刷新规则
                 </button>
                 <div id="rules" class="mt-4"></div>
+                <div class="mt-4 border-t border-border pt-3">
+                  <p class="mb-2 text-xs font-medium text-foreground">沉淀回测：粘贴一条扁平 JSON，验证已沉淀规则是否兜底纠错</p>
+                  <textarea id="verifyInput" placeholder="例如 {&quot;city&quot;:&quot;beijing&quot;}" rows="2" class="mb-2 w-full rounded-xl border border-border bg-input px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring/30 transition-all"></textarea>
+                  <button id="verifyBtn" onclick="verifyKnowledge()" class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="flask-conical" aria-hidden="true" class="lucide lucide-flask-conical h-3.5 w-3.5"><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"></path><path d="M6.453 15h11.094"></path><path d="M8.5 2h7"></path></svg>回测
+                  </button>
+                  <div id="verifyResult" class="mt-3 space-y-2"></div>
+                </div>
               </div>
 
               <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
                 <div class="mb-3 flex items-center gap-2">
-                  <i data-lucide="pen-tool" class="h-4 w-4 text-primary"></i>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="pen-tool" aria-hidden="true" class="lucide lucide-pen-tool h-4 w-4 text-primary"><path d="M15.707 21.293a1 1 0 0 1-1.414 0l-1.586-1.586a1 1 0 0 1 0-1.414l5.586-5.586a1 1 0 0 1 1.414 0l1.586 1.586a1 1 0 0 1 0 1.414z"></path><path d="m18 13-1.375-6.874a1 1 0 0 0-.746-.776L3.235 2.028a1 1 0 0 0-1.207 1.207L5.35 15.879a1 1 0 0 0 .776.746L13 18"></path><path d="m2.3 2.3 7.286 7.286"></path><circle cx="11" cy="11" r="2"></circle></svg>
                   <h2 class="text-sm font-semibold text-foreground">操作级标注</h2>
                 </div>
                 <p class="mb-4 text-xs text-muted-foreground">告诉模型哪些操作“正确且富有成效”（正向）或“低效/有误”（负向）。写入知识图谱，供后续规划召回。</p>
@@ -726,7 +1457,7 @@ body {
                 <textarea id="annoComment" placeholder="补充说明该操作为什么有效或无效" class="mb-3 min-h-[64px] w-full resize-y rounded-xl border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 ring-ring/0 focus:ring-ring/30 transition-all"></textarea>
                 <div class="flex items-center gap-3">
                   <button id="annoBtn" onclick="submitAnnotate()" class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:opacity-90 transition-colors">
-                    <i data-lucide="send" class="h-3.5 w-3.5"></i>提交标注
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="send" aria-hidden="true" class="lucide lucide-send h-3.5 w-3.5"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"></path><path d="m21.854 2.147-10.94 10.939"></path></svg>提交标注
                   </button>
                   <span id="annoStatus" class="text-xs text-muted-foreground"></span>
                 </div>
@@ -740,11 +1471,11 @@ body {
             <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
               <div class="mb-4 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                  <i data-lucide="sparkles" class="h-4 w-4 text-primary"></i>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="sparkles" aria-hidden="true" class="lucide lucide-sparkles h-4 w-4 text-primary"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"></path><path d="M20 2v4"></path><path d="M22 4h-4"></path><circle cx="4" cy="20" r="2"></circle></svg>
                   <h2 class="text-sm font-semibold text-foreground">能力清单 · 信用分 · 当前管理者</h2>
                 </div>
                 <button onclick="loadInsight()" class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors">
-                  <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>刷新
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="refresh-cw" aria-hidden="true" class="lucide lucide-refresh-cw h-3.5 w-3.5"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg>刷新
                 </button>
               </div>
               <div id="insightStatus" class="mb-2 text-xs text-muted-foreground"></div>
@@ -754,23 +1485,23 @@ body {
 
             <div class="grid gap-5 lg:grid-cols-2">
               <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
-                <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground"><i data-lucide="vote" class="h-4 w-4 text-primary"></i>选举结果（最近）</h2>
+                <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="vote" aria-hidden="true" class="lucide lucide-vote h-4 w-4 text-primary"><path d="m9 12 2 2 4-4"></path><path d="M5 7c0-1.1.9-2 2-2h10a2 2 0 0 1 2 2v12H5V7Z"></path><path d="M22 19H2"></path></svg>选举结果（最近）</h2>
                 <div id="elections"></div>
               </div>
               <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
-                <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground"><i data-lucide="git-branch" class="h-4 w-4 text-primary"></i>分配记录（最近）</h2>
+                <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="git-branch" aria-hidden="true" class="lucide lucide-git-branch h-4 w-4 text-primary"><path d="M15 6a9 9 0 0 0-9 9V3"></path><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle></svg>分配记录（最近）</h2>
                 <div id="allocations"></div>
               </div>
             </div>
 
             <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
-              <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground"><i data-lucide="scroll-text" class="h-4 w-4 text-primary"></i>审计日志（数据更改操作）</h2>
+              <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="scroll-text" aria-hidden="true" class="lucide lucide-scroll-text h-4 w-4 text-primary"><path d="M15 12h-5"></path><path d="M15 8h-5"></path><path d="M19 17V5a2 2 0 0 0-2-2H4"></path><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"></path></svg>审计日志（数据更改操作）</h2>
               <div id="auditFilters" class="mb-3 flex flex-wrap gap-2"></div>
               <div id="audit"></div>
             </div>
 
             <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
-              <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground"><i data-lucide="table-properties" class="h-4 w-4 text-primary"></i>事件 Schema</h2>
+              <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="table-properties" aria-hidden="true" class="lucide lucide-table-properties h-4 w-4 text-primary"><path d="M15 3v18"></path><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M21 9H3"></path><path d="M21 15H3"></path></svg>事件 Schema</h2>
               <div id="eventsSchema"></div>
             </div>
           </section>
@@ -1617,6 +2348,20 @@ body {
           .finally(function () { btn.disabled = false; });
       }
 
+      function clearItems() {
+        if (!confirm('确定清空全部待标注数据条目？此操作不可恢复。')) { return; }
+        const st = document.getElementById('itemsStatus');
+        const cont = document.getElementById('items');
+        st.textContent = '清空中...';
+        fetch('/api/data', { method: 'DELETE' })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            cont.innerHTML = '<p class="text-xs text-muted-foreground">已清空 ' + (j.cleared || 0) + ' 条数据。</p>';
+            st.textContent = '已清空 ' + (j.cleared || 0) + ' 条';
+          })
+          .catch(function (e) { st.textContent = '清空失败：' + e; });
+      }
+
       function renderItem(item) {
         const raw = safeParse(item.content);
         const cleaned = safeParse(item.cleanedContent || item.content);
@@ -1732,10 +2477,27 @@ body {
           .finally(function () { btn.disabled = false; });
       }
 
+      function clearDecisions() {
+        if (!confirm('确定清空全部决策结果（PASS/REJECT 记录）？此操作不可恢复。')) { return; }
+        const st = document.getElementById('decisionsStatus');
+        const cont = document.getElementById('decisions');
+        st.textContent = '清空中...';
+        fetch('/api/agent/decisions', { method: 'DELETE' })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            cont.innerHTML = '<p class="text-xs text-muted-foreground">已清空 ' + (j.cleared || 0) + ' 条决策结果。</p>';
+            st.textContent = '已清空 ' + (j.cleared || 0) + ' 条';
+          })
+          .catch(function (e) { st.textContent = '清空失败：' + e; });
+      }
+
       function renderDecision(d) {
         const el = document.createElement('div');
         el.className = 'rounded-xl border border-border bg-background p-3';
         el.setAttribute('data-decision', d.id);
+        el.setAttribute('data-task', d.taskId || '');
+        el.setAttribute('data-item', d.itemId || '');
+        el.setAttribute('data-passed', d.passed ? 'true' : 'false');
         const content = safeParse(d.itemContent);
         let brief = '';
         if (Array.isArray(content)) brief = JSON.stringify(content).slice(0, 160);
@@ -1756,16 +2518,25 @@ body {
       }
 
       function submitDecision(id, correct) {
+        const el = document.querySelector('[data-decision="' + id + '"]');
+        if (!el) { return; }
+        const body = {
+          taskId: el.getAttribute('data-task') || null,
+          itemId: el.getAttribute('data-item') || null,
+          passed: el.getAttribute('data-passed') === 'true',
+          correct: correct,
+          comment: ''
+        };
         fetch('/api/agent/annotations/decision', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ taskId: null, itemId: null, passed: false, correct: correct, comment: '' })
+          body: JSON.stringify(body)
         })
           .then(function (r) { return r.json(); })
           .then(function () {
-            const el = document.querySelector('[data-decision="' + id + '"]');
             el.style.borderColor = 'var(--dsh-success)';
-            el.insertAdjacentHTML('beforeend', '<p class="mt-2 text-xs text-success">已提交</p>');
+            el.insertAdjacentHTML('beforeend', '<p class="mt-2 text-xs text-success">已标注：' + (correct ? '决策正确' : '决策错误') + '</p>');
+            el.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
           })
           .catch(function (e) { alert('提交失败：' + e); });
       }
@@ -1784,6 +2555,56 @@ body {
             cont.innerHTML = html;
           })
           .catch(function (e) { document.getElementById('rules').innerHTML = '<p class="text-xs text-error">加载失败：' + e + '</p>'; });
+      }
+
+      function verifyKnowledge() {
+        const input = document.getElementById('verifyInput');
+        const btn = document.getElementById('verifyBtn');
+        const res = document.getElementById('verifyResult');
+        const content = (input.value || '').trim();
+        if (!content) { alert('请先粘贴一段 JSON 数据'); return; }
+        btn.disabled = true; res.innerHTML = '<p class="text-xs text-muted-foreground">回测中...</p>';
+        fetch('/api/knowledge/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: content })
+        })
+          .then(function (r) {
+            if (!r.ok) { return r.json().then(function (j) { throw new Error(j.error || ('HTTP ' + r.status)); }); }
+            return r.json();
+          })
+          .then(function (j) {
+            const hit = j.ruleHitFields || [];
+            let html = '';
+            html += '<p class="text-xs">沉淀规则总数 <b>' + (j.annotationRulesTotal || 0) + '</b> · 图谱标注节点 <b>' + ((j.annotationNodes || []).length) + '</b></p>';
+            if (hit.length) {
+              html += '<p class="text-xs text-success">命中沉淀规则字段：' + hit.map(esc).join('、') + '</p>';
+            } else {
+              html += '<p class="text-xs text-muted-foreground">未命中任何沉淀规则（该数据无匹配的纠错规则）</p>';
+            }
+            const changes = j.changes || [];
+            if (changes.length) {
+              html += '<div class="overflow-x-auto"><table class="w-full border-collapse text-xs"><thead><tr class="border-b border-border"><th class="py-1 pr-2 text-left font-medium text-muted-foreground">字段</th><th class="py-1 pr-2 text-left font-medium text-muted-foreground">原值</th><th class="py-1 pr-2 text-left font-medium text-muted-foreground">纠正后</th><th class="py-1 pr-2 text-left font-medium text-muted-foreground">规则</th></tr></thead><tbody>';
+              changes.forEach(function (c) {
+                html += '<tr class="border-b border-border last:border-0"><td class="py-1 pr-2">' + esc(c.field) + '</td><td class="py-1 pr-2 text-muted-foreground">' + esc(String(c.before)) + '</td><td class="py-1 pr-2 text-success">' + esc(String(c.after)) + '</td><td class="py-1 pr-2 text-muted-foreground">' + esc(c.rule) + '</td></tr>';
+              });
+              html += '</tbody></table></div>';
+            } else {
+              html += '<p class="text-xs text-muted-foreground">清洗无字段变更</p>';
+            }
+            const nodes = j.annotationNodes || [];
+            if (nodes.length) {
+              html += '<p class="mt-2 text-xs font-medium text-foreground">知识图谱沉淀节点（ANNOTATION）</p>';
+              html += '<div class="max-h-44 space-y-1 overflow-y-auto">';
+              nodes.forEach(function (n) {
+                html += '<div class="rounded-lg border border-border bg-muted px-2 py-1"><span class="text-muted-foreground">[' + esc(n.type) + ']</span> <span class="text-foreground">' + esc(n.name) + '</span><div class="text-muted-foreground">' + esc((n.content || '').slice(0, 120)) + '</div></div>';
+              });
+              html += '</div>';
+            }
+            res.innerHTML = html;
+          })
+          .catch(function (e) { res.innerHTML = '<p class="text-xs text-error">回测失败：' + e + '</p>'; })
+          .finally(function () { btn.disabled = false; });
       }
 
       function submitAnnotate() {
@@ -2009,5 +2830,5 @@ body {
       startAgentPolling();
       setInterval(flowUpdateScores, 5000);
     </script>
-</body>
-</html>
+
+</body></html>

@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 /**
  * 工具守护策略配置：按工具名声明是否需要人工审批、单次调用超时。
  * <p>绑定 {@code sk-agent.tool-guard}；默认安全——只读工具放行，写/交互类工具需审批。
+ * <p>{@link #enabled} 为审批总开关：置 false 时所有工具直接放行，不再进入人工审批门。
  */
 @Component
 @ConfigurationProperties(prefix = "sk-agent.tool-guard")
@@ -49,6 +50,9 @@ public class ToolGuardConfig {
         }
     }
 
+    /** 审批总开关：false 时所有工具直接放行，不再进入人工审批门（无人工值守/追求速度场景）。 */
+    private boolean enabled = true;
+
     /** 默认单次工具调用超时（秒），与 LLM 读超时保持一致。 */
     private int defaultTimeoutSeconds = 180;
 
@@ -65,8 +69,12 @@ public class ToolGuardConfig {
 
     private volatile Map<String, Policy> index;
 
-    /** 按工具名取策略，命中则返回其配置，否则返回安全默认（放行、defaultTimeoutSeconds）。 */
+    /** 按工具名取策略：总开关关闭时一律放行；否则命中策略取策略配置，命中默认风险名单则需审批。 */
     public Policy policyFor(String toolName) {
+        // 审批总开关关闭：所有工具直接放行，不进入审批门
+        if (!enabled) {
+            return safetyDefault();
+        }
         if (toolName == null || toolName.isBlank()) {
             return safetyDefault();
         }
@@ -108,6 +116,14 @@ public class ToolGuardConfig {
             }
         }
         return local;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     public int getDefaultTimeoutSeconds() {
