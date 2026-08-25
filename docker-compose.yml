@@ -1,11 +1,11 @@
 services:
   mysql:
     image: mysql:8.0
+    restart: unless-stopped
     environment:
       MYSQL_DATABASE: sk_agent
       MYSQL_ROOT_PASSWORD: root
-    ports:
-      - "3306:3306"
+    # 数据持久化到命名卷，容器重建不丢数据
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
@@ -16,6 +16,7 @@ services:
 
   app:
     build: .
+    restart: unless-stopped
     depends_on:
       mysql:
         condition: service_healthy
@@ -23,9 +24,13 @@ services:
       DB_URL: jdbc:mysql://mysql:3306/sk_agent?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
       DB_USERNAME: root
       DB_PASSWORD: root
-      AI_BASE_URL: ${AI_BASE_URL:-https://api.openai.com}
+      AI_BASE_URL: ${AI_BASE_URL:-https://api.deepseek.com}
       AI_API_KEY: ${AI_API_KEY:-}
-      AI_MODEL: ${AI_MODEL:-gpt-4o-mini}
+      AI_MODEL: ${AI_MODEL:-deepseek-chat}
+      # 容器无显示/系统浏览器，浏览器自动化默认不可用；
+      # 如已为镜像装入 chromium+headless 显示，取消下面两行注释启用无头抓取：
+      # SK_AGENT_BROWSER_HEADLESS: "true"
+      # SK_AGENT_BROWSER_CHANNEL: ""
     ports:
       - "8080:8080"
 

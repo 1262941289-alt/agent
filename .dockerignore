@@ -1,0 +1,32 @@
+# 构建产物
+target/
+
+# 本地敏感配置（密钥文件绝不入镜像构建上下文）
+local/
+application-local.yml
+
+# 版本库 / CI
+.git/
+.gitignore
+
+# 日志、临时与诊断产物
+logs/
+*.log
+*.tmp
+_jstack.txt
+_run_agent.cjs
+_run_agent.log
+*.sse
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Python 向量服务
+__pycache__/
+*.pyc
+.venv/
