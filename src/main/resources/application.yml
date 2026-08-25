@@ -4,6 +4,10 @@ server:
 spring:
   application:
     name: sk-agent
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
   datasource:
     url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/sk_agent?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
     username: ${DB_USERNAME:root}
@@ -76,6 +80,14 @@ sk-agent:
     channel: msedge
     # 持久化用户数据目录：登录态（如 GitHub）跨启动保留
     profile-dir: ${user.dir}/target/playwright-profile
+  # 工具守护策略（临时）：让只读的截图不再触发人工审批，加快查询类任务；
+  # click/fill/pressKey 仍走审批门。恢复旧行为时删除本段即可。
+  tool-guard:
+    policies:
+      - names:
+          - screenshot
+        requires-approval: false
+        timeout-seconds: 180
 
 # 可观测：健康检查与基本信息端点
 management:

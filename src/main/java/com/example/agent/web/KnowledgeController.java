@@ -47,6 +47,15 @@ public class KnowledgeController {
         return graphService.search(q, k);
     }
 
+    /** 按类型查询节点（如 TASK / EXPERIENCE / ANNOTATION），验证沉淀结果 */
+    @GetMapping("/nodes")
+    public List<KnowledgeNodeEntity> nodes(@RequestParam(required = false) String type) {
+        if (type == null || type.isBlank()) {
+            return graphService.search("", Integer.MAX_VALUE);
+        }
+        return graphService.findByType(type);
+    }
+
     /** 组装 GraphRAG 上下文（命中节点 + 一跳邻居） */
     @GetMapping("/context")
     public Map<String, String> context(@RequestParam String q,

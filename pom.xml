@@ -69,6 +69,13 @@
             <version>5.3.0</version>
         </dependency>
 
+        <!-- PDF 解析 -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+
         <!-- Playwright 浏览器自动化：agent 抓网页 / 操作页面（走系统已装 Edge，免下 Chromium） -->
         <dependency>
             <groupId>com.microsoft.playwright</groupId>

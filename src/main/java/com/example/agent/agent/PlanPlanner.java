@@ -1,6 +1,7 @@
 package com.example.agent.agent;
 
 import com.example.agent.capability.CapabilityMeta;
+import com.example.agent.service.CreditScoreService;
 import com.example.agent.util.PromptRenderer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,10 +21,13 @@ import java.util.Map;
 public class PlanPlanner {
 
     private final ChatClient planningClient;
+    private final CreditScoreService creditScoreService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public PlanPlanner(@Qualifier("planningChatClient") ChatClient planningClient) {
+    public PlanPlanner(@Qualifier("planningChatClient") ChatClient planningClient,
+                       CreditScoreService creditScoreService) {
         this.planningClient = planningClient;
+        this.creditScoreService = creditScoreService;
     }
 
     /**
@@ -111,7 +115,11 @@ public class PlanPlanner {
     private String renderCapabilities(List<CapabilityMeta> capabilities) {
         StringBuilder sb = new StringBuilder();
         for (CapabilityMeta c : capabilities) {
-            sb.append("- ").append(c.label()).append(": ").append(c.description()).append("\n");
+            int score = creditScoreService.getOrInit(c.label());
+            sb.append("- ").append(c.label())
+              .append("（风格:").append(c.style().getDisplayName())
+              .append(", 信用:").append(score).append("）: ")
+              .append(c.description()).append("\n");
         }
         return sb.toString();
     }

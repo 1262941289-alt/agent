@@ -1,5 +1,6 @@
 package com.example.agent.agent;
 
+import com.example.agent.capability.AgentContext;
 import com.example.agent.capability.Capability;
 import com.example.agent.capability.CapabilityAgent;
 import org.springframework.ai.chat.client.ChatClient;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Component;
  * <p>记忆读权已收归 Manager，本 agent 只执行，不直接 recall。
  */
 @Component
-@Capability(label = "data", description = "数据处理助手：查询数据项、划分风险层(L1-L3)、抽取属性、提交筛选决策(通过/拒绝)")
+@Capability(label = "data", description = "数据处理助手：查询数据项、划分风险层(L1-L3)、抽取属性、提交筛选决策(通过/拒绝)", style = "CAUTIOUS")
 public class DataWorker implements CapabilityAgent {
 
     private static final String SYSTEM_PROMPT = """
@@ -36,5 +37,10 @@ public class DataWorker implements CapabilityAgent {
     @Override
     public AgentResult run(String goal) {
         return reflectionLoop.execute(goal, dataClient, SYSTEM_PROMPT);
+    }
+
+    @Override
+    public AgentResult run(String goal, AgentContext context) {
+        return reflectionLoop.execute(goal, dataClient, SYSTEM_PROMPT, context);
     }
 }

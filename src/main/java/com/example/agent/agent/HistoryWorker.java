@@ -1,5 +1,6 @@
 package com.example.agent.agent;
 
+import com.example.agent.capability.AgentContext;
 import com.example.agent.capability.Capability;
 import com.example.agent.capability.CapabilityAgent;
 import org.springframework.ai.chat.client.ChatClient;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Component;
  * <p>通过 historyChatClient 绑定经验召回/沉淀工具；不注入 Memory（读权保留给 Manager）。
  */
 @Component
-@Capability(label = "history", description = "经验/自学习助手：召回历史经验与人工标注，沉淀可复用的学习结论到知识图谱")
+@Capability(label = "history", description = "经验/自学习助手：召回历史经验与人工标注，沉淀可复用的学习结论到知识图谱", style = "BALANCED")
 public class HistoryWorker implements CapabilityAgent {
 
     private static final String SYSTEM_PROMPT = """
@@ -35,5 +36,10 @@ public class HistoryWorker implements CapabilityAgent {
     @Override
     public AgentResult run(String goal) {
         return reflectionLoop.execute(goal, historyClient, SYSTEM_PROMPT);
+    }
+
+    @Override
+    public AgentResult run(String goal, AgentContext context) {
+        return reflectionLoop.execute(goal, historyClient, SYSTEM_PROMPT, context);
     }
 }

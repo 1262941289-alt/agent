@@ -1,12 +1,18 @@
 package com.example.agent.agent;
 
+import com.example.agent.capability.AgentContext;
 import com.example.agent.capability.AgentRegistry;
 import com.example.agent.capability.CapabilityAgent;
+import com.example.agent.config.RunContext;
 import com.example.agent.entity.ElectionEntity;
 import com.example.agent.memory.Memory;
 import com.example.agent.service.AgentStatsService;
+import com.example.agent.service.AgentStatusService;
 import com.example.agent.service.CreditScoreService;
 import com.example.agent.service.ElectionService;
+import com.example.agent.service.FileContextService;
+import com.example.agent.service.RunControlService;
+import com.example.agent.service.RunEventService;
 import com.example.agent.util.PromptRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +55,10 @@ public class ManagerAgent {
     private final CreditScoreService creditScoreService;
     private final AgentStatsService agentStatsService;
     private final ElectionService electionService;
+    private final RunControlService runControl;
+    private final AgentStatusService statusService;
+    private final FileContextService fileContextService;
+    private final RunEventService runEventService;
 
     public ManagerAgent(PlanPlanner planPlanner,
                         @Qualifier("planningChatClient") ChatClient planningClient,
@@ -58,7 +68,11 @@ public class ManagerAgent {
                         ExperienceCollector experienceCollector,
                         CreditScoreService creditScoreService,
                         AgentStatsService agentStatsService,
-                        ElectionService electionService) {
+                        ElectionService electionService,
+                        RunControlService runControl,
+                        AgentStatusService statusService,
+                        FileContextService fileContextService,
+                        RunEventService runEventService) {
         this.planPlanner = planPlanner;
         this.planningClient = planningClient;
         this.registry = registry;
@@ -68,6 +82,10 @@ public class ManagerAgent {
         this.creditScoreService = creditScoreService;
         this.agentStatsService = agentStatsService;
         this.electionService = electionService;
+        this.runControl = runControl;
+        this.statusService = statusService;
+        this.fileContextService = fileContextService;
+        this.runEventService = runEventService;
     }
 
     /** 执行总体目标（无会话上下文）。 */
@@ -82,19 +100,21 @@ public class ManagerAgent {
 
     /** 携带会话上下文与 conversationId 执行（同步路径）。 */
     public AgentRunResult execute(String goal, String conversationContext, String conversationId) {
-        return execute(goal, conversationContext, conversationId, newRunId(), null);
+        return execute(goal, conversationContext, conversationId, newRunId(), null, null);
     }
 
     /**
      * 核心执行：同步 / SSE 共用。
      *
-     * @param streamSink 可空；非空时事件实时推送给该 sink（SSE）
+     * @param streamSink    可空；非空时事件实时推送给该 sink（SSE）
+     * @param fileContextId 可空；非空时从 FileContextService 取文件内容注入规划上下文
      */
     public AgentRunResult execute(String goal, String conversationContext, String conversationId,
-                                  String runId, AgentEventSink streamSink) {
+                                  String runId, AgentEventSink streamSink, String fileContextId) {
         List<AgentEvent> events = Collections.synchronizedList(new ArrayList<>());
         AgentRunResult result = new AgentRunResult();
         result.setGoal(goal);
+        runControl.register(runId);
         try {
             emit(events, streamSink, "run:started", runId,
                     Map.of("goal", nz(goal), "conversationId", nz(conversationId)));
@@ -104,6 +124,18 @@ public class ManagerAgent {
             String planningGoal = (conversationContext == null || conversationContext.isBlank())
                     ? goal
                     : conversationContext + "\n\n当前目标（需要完成的任务）：\n" + goal;
+            String fileContextContent = "";
+            if (fileContextId != null) {
+                FileContextService.FileContext fc = fileContextService.get(fileContextId);
+                if (fc != null) {
+                    fileContextContent = "文件名: " + fc.fileName()
+                            + "\n格式: " + fc.extension()
+                            + "\n内容:\n"
+                            + fc.content().substring(0, Math.min(8000, fc.content().length()))
+                            + (fc.content().length() > 8000 ? "\n...(内容已截断)" : "");
+                    planningGoal += "\n\n【上传文件上下文】\n" + fileContextContent;
+                }
+            }
             // 阶段三最小版：注入当选管理者身份，供规划器感知（管理者只分配不执行）
             planningGoal = "本轮管理者（负责拆解与分配，不直接执行）：" + managerRef + "\n" + planningGoal;
             String experience = memoryAsString(goal);
@@ -115,6 +147,10 @@ public class ManagerAgent {
             String termination;
             while (true) {
                 iterations++;
+                if (runControl.isCancelled(runId)) {
+                    termination = "CANCELLED";
+                    break;
+                }
                 List<AgentStep> batch;
                 if (iterations == 1) {
                     batch = planPlanner.plan(planningGoal, registry.metas(), experience);
@@ -152,7 +188,13 @@ public class ManagerAgent {
                     }
                 }
                 steps.addAll(batch);
-                executeSteps(batch, events, streamSink, runId, termRound, goal);
+                if (executeSteps(batch, events, streamSink, runId, termRound, goal,
+                        conversationContext, fileContextContent, steps)) {
+                    termination = "CANCELLED";
+                    break;
+                }
+                // 每轮结束后自动评估操作价值（History 角色：记录当前轮信息价值）
+                assessRoundValue(batch, termRound, goal, events, streamSink, runId);
                 if (iterations >= MAX_ITERATIONS) {
                     termination = "MAX_ITERATIONS";
                     break;
@@ -170,6 +212,9 @@ public class ManagerAgent {
                             goal + "\n\n（递归循环终止状态：" + termination + "，共 " + iterations + " 轮）", steps));
             result.setSteps(steps);
             result.setFinalAnswer(finalAnswer);
+            result.setTermination(termination);
+            result.setIterations(iterations);
+            result.setEvents(events);
             emit(events, streamSink, "run:synthesis", runId, Map.of("finalAnswer", finalAnswer));
             Map<String, Object> completed = new HashMap<>();
             completed.put("finalAnswer", finalAnswer);
@@ -178,13 +223,18 @@ public class ManagerAgent {
             completed.put("iterations", iterations);
             completed.put("termination", termination);
             emit(events, streamSink, "run:completed", runId, completed);
-            memory.remember("TASK", goal, finalAnswer);
+            try {
+                memory.remember("TASK", goal, finalAnswer);
+            } catch (Exception me) {
+                log.warn("知识图谱沉淀失败 runId={}: {}", runId, me.getMessage());
+            }
         } catch (Exception e) {
             String error = errorMessage(e);
             log.error("Agent 执行失败 runId={}: {}", runId, error, e);
             result.setFinalAnswer("执行失败：" + error);
             emit(events, streamSink, "run:failed", runId, Map.of("error", error));
         } finally {
+            runControl.unregister(runId);
             triggerExperienceAsync(runId, goal, events, result);
         }
         return result;
@@ -252,6 +302,8 @@ public class ManagerAgent {
                       Map<String, Object> data) {
         AgentEvent event = new AgentEvent(type, runId, data);
         events.add(event);
+        // 可回放事实源：内存 + SSE 与持久化共用同一出口（DB 失败只记日志，不阻断执行）
+        runEventService.append(runId, type, data);
         if (sink != null) {
             sink.emit(event);
         }
@@ -260,9 +312,12 @@ public class ManagerAgent {
     /**
      * 按依赖关系调度执行：无依赖的步骤在同波次并行执行；
      * 依赖步骤需等其前置步骤"已定"（SUCCESS/FAILED）后才执行，前置失败则标记 SKIPPED。
+     *
+     * @return true 表示收到取消信号（当前波跑完后不再开新波），剩余步骤标记 CANCELLED
      */
-    private void executeSteps(List<AgentStep> steps, List<AgentEvent> events, AgentEventSink sink, String runId,
-                              int termRound, String goal) {
+    private boolean executeSteps(List<AgentStep> steps, List<AgentEvent> events, AgentEventSink sink, String runId,
+                                 int termRound, String goal, String conversationContext,
+                                 String fileContextContent, List<AgentStep> allSteps) {
         Map<Integer, AgentStep> byNumber = new HashMap<>();
         for (AgentStep s : steps) {
             byNumber.put(s.getStep(), s);
@@ -298,11 +353,29 @@ public class ManagerAgent {
                     s.setResult("存在循环依赖或缺失依赖，无法调度");
                     blocked.add(s);
                 }
+            } else if (runControl.isCancelled(runId)) {
+                // 协作式取消：不再开新波，剩余步骤标记取消
+                for (AgentStep s : ready) {
+                    s.setStatus("CANCELLED");
+                    s.setResult("人工停止");
+                    blocked.add(s);
+                }
+                for (AgentStep s : ready) {
+                    pending.remove(s.getStep());
+                    settled.add(s.getStep());
+                }
+                for (AgentStep s : blocked) {
+                    emit(events, sink, "step:status", runId, stepStatus(s, "", 0));
+                    pending.remove(s.getStep());
+                    settled.add(s.getStep());
+                }
+                return true;
             } else {
                 wave++;
                 List<Integer> stepNums = ready.stream().map(AgentStep::getStep).toList();
                 emit(events, sink, "wave:started", runId, Map.of("wave", wave, "stepNums", stepNums));
-                runInParallel(ready, events, sink, runId, termRound, goal);
+                runInParallel(ready, events, sink, runId, termRound, goal,
+                        conversationContext, fileContextContent, allSteps);
                 emit(events, sink, "wave:completed", runId, Map.of("wave", wave, "stepNums", stepNums));
             }
             for (AgentStep s : ready) {
@@ -315,6 +388,7 @@ public class ManagerAgent {
                 settled.add(s.getStep());
             }
         }
+        return runControl.isCancelled(runId);
     }
 
     private boolean isBlocked(AgentStep s) {
@@ -322,54 +396,66 @@ public class ManagerAgent {
     }
 
     private void runInParallel(List<AgentStep> ready, List<AgentEvent> events, AgentEventSink sink, String runId,
-                               int termRound, String goal) {
+                               int termRound, String goal, String conversationHistory,
+                               String fileContext, List<AgentStep> allSteps) {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (AgentStep step : ready) {
-            futures.add(CompletableFuture.runAsync(() -> runStep(step, events, sink, runId, termRound, goal), executor));
+            futures.add(CompletableFuture.runAsync(() -> runStep(step, events, sink, runId,
+                    termRound, goal, conversationHistory, fileContext, allSteps), executor));
         }
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
     private void runStep(AgentStep step, List<AgentEvent> events, AgentEventSink sink, String runId,
-                         int termRound, String goal) {
+                         int termRound, String goal, String conversationHistory,
+                         String fileContext, List<AgentStep> allSteps) {
         String label = (step.getWorker() == null || step.getWorker().isBlank())
                 ? "general" : step.getWorker();
         CapabilityAgent agent = registry.resolve(label);
         step.setStatus("RUNNING");
+        statusService.markWorking(label, clip(step.getGoal()));
         emit(events, sink, "run:allocation", runId, Map.of(
                 "round", termRound, "step", step.getStep(), "worker", label,
                 "goal", nz(step.getGoal())));
         emit(events, sink, "step:status", runId, Map.of(
                 "step", step.getStep(), "status", "RUNNING", "worker", label));
 
+        AgentContext ctx = new ManagerAgentContext(goal, conversationHistory,
+                fileContext, allSteps, memory);
+
         long start = System.currentTimeMillis();
         AgentResult r = null;
+        // 在 worker 线程注入当前 RunContext：让被守护的工具回调（审批门/事件推送）能拿到
+        // runId 与 sink，否则 tool:approval-request 永远不会推送到控制台，click/fill 会静默阻塞到审批超时。
+        RunContext.set(new RunContext(runId, events, sink, runEventService));
         try {
-            r = agent.run(step.getGoal());
+            r = agent.run(step.getGoal(), ctx);
             step.setStatus(r.isSuccess() ? "SUCCESS" : "FAILED");
             step.setResult(r.getOutput());
             step.setReflections(r.getReflections());
         } catch (Exception e) {
             step.setStatus("FAILED");
             step.setResult("执行异常: " + errorMessage(e));
+        } finally {
+            RunContext.clear();
         }
         long durationMs = System.currentTimeMillis() - start;
-
-        recordAllocation(runId, termRound, step, goal, label, durationMs);
+        statusService.markIdle(label);
 
         int reflections = r == null ? 0 : r.getReflections();
         List<Reflection> trail = r == null ? List.of() : r.getReflectionTrail();
+        recordAllocation(runId, termRound, step, goal, label, durationMs, reflections);
         emitReflections(step, trail, events, sink, runId);
         emit(events, sink, "step:status", runId, stepStatus(step, label, reflections));
     }
 
-    /** 落分配记录 + 按执行结果更新信用分（成功+奖、失败−罚，逼近100触发过热反噬）。 */
+    /** 落分配记录 + 按执行结果更新信用分（v2：难度加权 + 努力分 + 干多不罚）。 */
     private void recordAllocation(String runId, int termRound, AgentStep step, String goal,
-                                  String label, long durationMs) {
+                                  String label, long durationMs, int reflections) {
         try {
             agentStatsService.record(runId, termRound, step.getStep(), goal, step.getGoal(),
                     label, nz(step.getStatus()), durationMs);
-            creditScoreService.applyOutcome(label, "SUCCESS".equals(step.getStatus()));
+            creditScoreService.applyOutcome(label, "SUCCESS".equals(step.getStatus()), reflections);
         } catch (Exception e) {
             log.warn("分配记录/信用分更新失败 runId={} step={}: {}", runId, step.getStep(), e.getMessage());
         }
@@ -453,7 +539,120 @@ public class ManagerAgent {
         return e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
     }
 
+    /**
+     * 每轮结束后自动评估操作价值（History 角色的自动职责）。
+     * <p>评估维度：成功率、信息产出量、反思次数、步骤覆盖度
+     * <p>记录到知识图谱（ROUND_VALUE 类型），供后续召回
+     */
+    private void assessRoundValue(List<AgentStep> batch, int round, String goal,
+                                   List<AgentEvent> events, AgentEventSink sink, String runId) {
+        int success = 0, failed = 0, total = batch.size();
+        int infoChars = 0;
+        int reflections = 0;
+        Set<String> workers = new HashSet<>();
+
+        for (AgentStep s : batch) {
+            if ("SUCCESS".equals(s.getStatus())) success++;
+            else if ("FAILED".equals(s.getStatus())) failed++;
+            if (s.getResult() != null) infoChars += s.getResult().length();
+            reflections += s.getReflections();
+            if (s.getWorker() != null) workers.add(s.getWorker());
+        }
+
+        double successRate = total == 0 ? 0 : (double) success / total;
+        double infoScore = Math.min(infoChars / 1000.0, 10.0);
+        double reflectionPenalty = Math.min(reflections * 0.5, 5.0);
+        int valueScore = Math.max(0, Math.min(100,
+                (int) (successRate * 50 + infoScore * 3 + workers.size() * 5 - reflectionPenalty)));
+
+        String summary = String.format(
+                "轮次%d价值评估: 成功%d/%d(%.0f%%) | 信息产出%d字符 | 反思%d次 | 参与Agent:%s | 价值分:%d/100",
+                round, success, total, successRate * 100, infoChars, reflections,
+                String.join(",", workers), valueScore);
+
+        String memKey = "轮次" + round + "价值评估:" + goal.substring(0, Math.min(50, goal.length()));
+        try {
+            memory.remember("ROUND_VALUE", memKey, summary);
+        } catch (Exception e) {
+            log.warn("轮次价值评估存储失败: {}", e.getMessage());
+        }
+
+        emit(events, sink, "round:value", runId, Map.of(
+                "round", round, "success", success, "total", total,
+                "successRate", Math.round(successRate * 100),
+                "infoChars", infoChars, "reflections", reflections,
+                "workers", workers, "valueScore", valueScore,
+                "summary", summary));
+    }
+
     private static String newRunId() {
         return UUID.randomUUID().toString().replace("-", "");
+    }
+
+    /**
+     * ManagerAgent 下发给 Worker 的运行时上下文实现。
+     * Worker 通过此对象获取会话历史、文件内容、经验记忆、其他步骤结果等公共信息。
+     */
+    private static class ManagerAgentContext implements AgentContext {
+        private final String goal;
+        private final String conversationHistory;
+        private final String fileContext;
+        private final List<AgentStep> stepResults;
+        private final Memory memory;
+
+        ManagerAgentContext(String goal, String conversationHistory,
+                            String fileContext, List<AgentStep> stepResults, Memory memory) {
+            this.goal = goal;
+            this.conversationHistory = conversationHistory;
+            this.fileContext = fileContext;
+            this.stepResults = stepResults;
+            this.memory = memory;
+        }
+
+        @Override
+        public String requestInfo(String query) {
+            StringBuilder sb = new StringBuilder();
+            if (conversationHistory != null && !conversationHistory.isBlank()) {
+                sb.append(conversationHistory).append("\n");
+            }
+            if (fileContext != null && !fileContext.isBlank()) {
+                sb.append(fileContext).append("\n");
+            }
+            String mem = recallMemory(query);
+            if (mem != null && !mem.isBlank()) {
+                sb.append(mem);
+            }
+            return sb.toString().trim();
+        }
+
+        @Override
+        public String getConversationHistory() {
+            return conversationHistory == null ? "" : conversationHistory;
+        }
+
+        @Override
+        public String getFileContext() {
+            return fileContext == null ? "" : fileContext;
+        }
+
+        @Override
+        public String recallMemory(String query) {
+            try {
+                List<String> results = memory.recall(query, 3);
+                return (results == null || results.isEmpty()) ? "" : String.join("\n", results);
+            } catch (Exception e) {
+                return "";
+            }
+        }
+
+        @Override
+        public List<AgentStep> getStepResults() {
+            return stepResults == null ? List.of() : stepResults;
+        }
+
+        @Override
+        public String getGoal() {
+            return goal == null ? "" : goal;
+        }
     }
 }

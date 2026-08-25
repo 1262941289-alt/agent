@@ -1,16 +1,22 @@
 package com.example.agent.config;
 
+import com.example.agent.service.ToolExecutionService;
 import com.example.agent.tools.AttributeRecordTools;
 import com.example.agent.tools.BrowserTools;
 import com.example.agent.tools.DataQueryTools;
 import com.example.agent.tools.DecisionTools;
+import com.example.agent.tools.GuardedToolCallback;
 import com.example.agent.tools.HistoryTools;
 import com.example.agent.tools.LayerRecordTools;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.Arrays;
 
 /**
  * Spring AI ChatClient 配置。
@@ -24,9 +30,10 @@ public class AgentConfig {
     public ChatClient layeringChatClient(
             OpenAiChatModel chatModel,
             DataQueryTools queryTools,
-            LayerRecordTools layerTools) {
+            LayerRecordTools layerTools,
+            ToolExecutionService toolExecutionService) {
         return ChatClient.builder(chatModel)
-                .defaultTools(queryTools, layerTools)
+                .defaultToolCallbacks(guarded(toolExecutionService, queryTools, layerTools))
                 .build();
     }
 
@@ -34,9 +41,10 @@ public class AgentConfig {
     public ChatClient attributeChatClient(
             OpenAiChatModel chatModel,
             DataQueryTools queryTools,
-            AttributeRecordTools attrTools) {
+            AttributeRecordTools attrTools,
+            ToolExecutionService toolExecutionService) {
         return ChatClient.builder(chatModel)
-                .defaultTools(queryTools, attrTools)
+                .defaultToolCallbacks(guarded(toolExecutionService, queryTools, attrTools))
                 .build();
     }
 
@@ -44,10 +52,11 @@ public class AgentConfig {
     public ChatClient filterChatClient(
             OpenAiChatModel chatModel,
             DataQueryTools queryTools,
-            DecisionTools decisionTools) {
+            DecisionTools decisionTools,
+            ToolExecutionService toolExecutionService) {
         return ChatClient.builder(chatModel)
                 .defaultAdvisors(new SimpleLoggerAdvisor())
-                .defaultTools(queryTools, decisionTools)
+                .defaultToolCallbacks(guarded(toolExecutionService, queryTools, decisionTools))
                 .build();
     }
 
@@ -59,9 +68,10 @@ public class AgentConfig {
     @Bean
     public ChatClient browserChatClient(
             OpenAiChatModel chatModel,
-            BrowserTools browserTools) {
+            BrowserTools browserTools,
+            ToolExecutionService toolExecutionService) {
         return ChatClient.builder(chatModel)
-                .defaultTools(browserTools)
+                .defaultToolCallbacks(guarded(toolExecutionService, browserTools))
                 .build();
     }
 
@@ -71,18 +81,28 @@ public class AgentConfig {
             DataQueryTools queryTools,
             LayerRecordTools layerTools,
             AttributeRecordTools attrTools,
-            DecisionTools decisionTools) {
+            DecisionTools decisionTools,
+            ToolExecutionService toolExecutionService) {
         return ChatClient.builder(chatModel)
-                .defaultTools(queryTools, layerTools, attrTools, decisionTools)
+                .defaultToolCallbacks(guarded(toolExecutionService, queryTools, layerTools, attrTools, decisionTools))
                 .build();
     }
 
     @Bean
     public ChatClient historyChatClient(
             OpenAiChatModel chatModel,
-            HistoryTools historyTools) {
+            HistoryTools historyTools,
+            ToolExecutionService toolExecutionService) {
         return ChatClient.builder(chatModel)
-                .defaultTools(historyTools)
+                .defaultToolCallbacks(guarded(toolExecutionService, historyTools))
                 .build();
+    }
+
+    /** 把原生工具 POJO 语义渲染成 ToolCallback 后逐个包上 {@link GuardedToolCallback}，统一走守护管线。 */
+    private ToolCallback[] guarded(ToolExecutionService svc, Object... tools) {
+        ToolCallback[] raw = ToolCallbacks.from(tools);
+        return Arrays.stream(raw)
+                .map(cb -> new GuardedToolCallback(cb, svc))
+                .toArray(ToolCallback[]::new);
     }
 }

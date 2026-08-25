@@ -1,5 +1,6 @@
 package com.example.agent.agent;
 
+import com.example.agent.capability.AgentContext;
 import com.example.agent.capability.Capability;
 import com.example.agent.capability.CapabilityAgent;
 import org.springframework.ai.chat.client.ChatClient;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component;
  * <p>记忆读权已收归 Manager，本 agent 只执行，不直接 recall。
  */
 @Component
-@Capability(label = "general", description = "通用办公助手：处理没有专用工具的通用任务（写作、总结、规划、问答等）")
+@Capability(label = "general", description = "通用办公助手：处理没有专用工具的通用任务（写作、总结、规划、问答等）", style = "EFFICIENT")
 public class GeneralWorker implements CapabilityAgent {
 
     private static final String SYSTEM_PROMPT =
@@ -29,5 +30,10 @@ public class GeneralWorker implements CapabilityAgent {
     @Override
     public AgentResult run(String goal) {
         return reflectionLoop.execute(goal, workerClient, SYSTEM_PROMPT);
+    }
+
+    @Override
+    public AgentResult run(String goal, AgentContext context) {
+        return reflectionLoop.execute(goal, workerClient, SYSTEM_PROMPT, context);
     }
 }

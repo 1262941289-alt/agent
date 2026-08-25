@@ -24,16 +24,20 @@ public class AgentRegistry {
             if (cap == null) {
                 continue;
             }
-            register(cap.label(), cap.description(), agent);
+            AgentStyle style;
+            try {
+                style = AgentStyle.valueOf(cap.style().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                style = AgentStyle.BALANCED;
+            }
+            register(cap.label(), cap.description(), style, agent);
         }
     }
 
-    /** 能力清单（label + description + executor），供 Manager 规划时选择。 */
     public List<CapabilityMeta> metas() {
         return metas;
     }
 
-    /** 按能力标签解析执行器；未知标签回退 general，再回退通用失败执行器。 */
     public CapabilityAgent resolve(String label) {
         if (label != null) {
             CapabilityAgent agent = byLabel.get(label.toLowerCase());
@@ -42,17 +46,16 @@ public class AgentRegistry {
             }
         }
         CapabilityAgent general = byLabel.get("general");
-        return general != null ? general : goal -> AgentResult.fail("无可用能力执行器");
+        return general != null ? general : (goal, ctx) -> AgentResult.fail("无可用能力执行器");
     }
 
-    /** 动态挂载能力（预留：阶段二/三热插拔）。 */
-    public void dynamicMount(String label, String description, CapabilityAgent agent) {
-        register(label, description, agent);
+    public void dynamicMount(String label, String description, AgentStyle style, CapabilityAgent agent) {
+        register(label, description, style, agent);
     }
 
-    private void register(String label, String description, CapabilityAgent agent) {
+    private void register(String label, String description, AgentStyle style, CapabilityAgent agent) {
         String key = label.toLowerCase();
         byLabel.put(key, agent);
-        metas.add(new CapabilityMeta(key, description, agent));
+        metas.add(new CapabilityMeta(key, description, style, agent));
     }
 }

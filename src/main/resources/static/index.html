@@ -1,723 +1,2010 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="light">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>通用办公 Agent 控制台</title>
-  <style>
-    :root {
-      --bg: #f5f6f8;
-      --card: #ffffff;
-      --border: #e3e6ea;
-      --text: #1f2329;
-      --muted: #7a8089;
-      --brand: #2f6bff;
-      --brand-dark: #2454cc;
-      --ok: #1f9d55;
-      --bad: #d94444;
-      --warn: #c78a00;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 14px;
-      line-height: 1.6;
-    }
-    .wrap { max-width: 1000px; margin: 0 auto; padding: 24px 16px 64px; }
-    h1 { font-size: 20px; margin: 0 0 4px; }
-    .sub { color: var(--muted); margin: 0 0 20px; }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 18px;
-      margin-bottom: 16px;
-    }
-    .card h2 { font-size: 15px; margin: 0 0 12px; }
-    label { display: block; color: var(--muted); margin-bottom: 6px; font-size: 13px; }
-    input[type=text], textarea {
-      width: 100%;
-      padding: 9px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      font-family: inherit;
-    }
-    textarea { min-height: 64px; resize: vertical; }
-    button {
-      background: var(--brand);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 9px 16px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    button:hover { background: var(--brand-dark); }
-    button:disabled { background: #a9b4c9; cursor: not-allowed; }
-    .row { display: flex; gap: 10px; align-items: center; }
-    .row input[type=text] { flex: 1; }
-    .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-    .seg button { background: #fff; color: var(--muted); border: none; border-radius: 0; padding: 8px 16px; font-size: 13px; }
-    .seg.small button { padding: 4px 12px; font-size: 12.5px; }
-    .seg button.active-pos { background: var(--ok); color: #fff; }
-    .seg button.active-neg { background: var(--bad); color: #fff; }
-    .seg button.active-ok { background: var(--ok); color: #fff; }
-    .seg button.active-bad { background: var(--bad); color: #fff; }
-    .seg button.active-warn { background: var(--warn); color: #fff; }
-    .status { font-size: 13px; color: var(--muted); }
-    .status.running::before {
-      content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-      background: var(--brand); margin-right: 6px; animation: pulse 1s infinite;
-    }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
-    #timeline { max-height: 360px; overflow-y: auto; padding: 4px; }
-    .evt {
-      border-left: 3px solid var(--border); padding: 6px 10px 6px 12px; margin-bottom: 6px;
-      background: #fafbfc; border-radius: 0 8px 8px 0;
-      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; word-break: break-all;
-    }
-    .evt .t { font-weight: 600; color: var(--brand); }
-    .evt.run-completed { border-left-color: var(--ok); }
-    .evt.run-failed { border-left-color: var(--bad); }
-    .evt.step-reflection { border-left-color: var(--warn); }
-    .evt .meta { color: var(--muted); }
-    .toast { margin-top: 8px; font-size: 13px; color: var(--ok); min-height: 18px; }
-    .toast.err { color: var(--bad); }
-    .hint { color: var(--muted); font-size: 12.5px; margin-top: 6px; }
-    .muted { color: var(--muted); }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通用办公 Agent 控制台 · 一体化</title>
+    <style id="theme-vars">
+:root {
+  --dsh-background: rgb(245, 246, 247);
+  --dsh-foreground: rgb(15, 17, 21);
+  --dsh-card: rgb(255, 255, 255);
+  --dsh-card-foreground: rgb(15, 17, 21);
+  --dsh-popover: rgb(255, 255, 255);
+  --dsh-popover-foreground: rgb(15, 17, 21);
+  --dsh-primary: rgb(65, 118, 230);
+  --dsh-primary-foreground: rgb(255, 255, 255);
+  --dsh-muted: rgb(241, 243, 245);
+  --dsh-muted-foreground: rgb(97, 102, 107);
+  --dsh-border: rgba(0, 0, 0, 0.1);
+  --dsh-input: rgb(255, 255, 255);
+  --dsh-ring: rgb(65, 118, 230);
+  --dsh-radius-sm: 6px;
+  --dsh-radius-md: 10px;
+  --dsh-radius-lg: 14px;
 
-    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-    .tab { background: #fff; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 8px 18px; font-size: 14px; cursor: pointer; }
-    .tab.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+  --dsh-success: rgb(34, 197, 94);
+  --dsh-success-bg: rgb(230, 250, 237);
+  --dsh-error: rgb(236, 19, 19);
+  --dsh-error-bg: rgb(254, 226, 226);
+  --dsh-warn: rgb(245, 158, 11);
+  --dsh-warn-bg: rgb(254, 245, 231);
+  --dsh-info-bg: rgb(237, 243, 254);
 
-    .item { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fff; }
-    .item h3 { margin: 0 0 8px; font-size: 14px; }
-    .item .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
-    table.fields { width: 100%; border-collapse: collapse; font-size: 13px; }
-    table.fields th, table.fields td { border: 1px solid var(--border); padding: 5px 8px; text-align: left; vertical-align: top; word-break: break-all; }
-    table.fields th { background: #fafbfc; color: var(--muted); font-weight: 600; }
-    input.corr { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; font-size: 13px; font-family: inherit; }
-    input.corr:disabled { background: #f5f6f8; color: var(--muted); }
-    .badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 12px; }
-    .badge.pass { background: #e6f7ee; color: var(--ok); }
-    .badge.reject { background: #fdeaea; color: var(--bad); }
-    .badge.changed { background: #fff4e0; color: var(--warn); }
-    .badge.derived { background: #eef2ff; color: var(--brand); }
-    .decision { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; background: #fff; }
-    .decision .dhead { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
-    .chip { display: inline-block; border: 1px solid var(--border); border-radius: 14px; padding: 2px 10px; font-size: 12px; color: var(--muted); cursor: pointer; background: #fff; margin-right: 6px; }
-    .chip.active { background: var(--brand); color: #fff; border-color: var(--brand); }
-    .badge.ingest { background: #eef2ff; color: var(--brand); }
-    .badge.clean { background: #e6f7ee; color: var(--ok); }
-    .badge.decision { background: #fff4e0; color: var(--warn); }
-    .badge.annotation { background: #f3e8ff; color: #7c3aed; }
-    .log { border-left: 3px solid var(--border); padding: 7px 10px; margin-bottom: 6px; background: #fafbfc; border-radius: 0 8px 8px 0; font-size: 13px; }
-    .log .lhead { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .kv { color: var(--muted); font-size: 12.5px; font-family: ui-monospace, Menlo, Consolas, monospace; word-break: break-all; }
-  </style>
+  --dsh-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --dsh-font-mono: 'SF Mono', 'JetBrains Mono', 'Fira Code', Consolas, 'Liberation Mono', Menlo, Courier, 'PingFang SC', 'Microsoft YaHei';
+}
+
+html.dark {
+  --dsh-background: rgb(21, 21, 23);
+  --dsh-foreground: rgb(249, 250, 251);
+  --dsh-card: rgb(35, 35, 37);
+  --dsh-card-foreground: rgb(249, 250, 251);
+  --dsh-popover: rgb(44, 44, 46);
+  --dsh-popover-foreground: rgb(249, 250, 251);
+  --dsh-primary: rgb(86, 134, 254);
+  --dsh-primary-foreground: rgb(15, 17, 21);
+  --dsh-muted: rgb(44, 44, 46);
+  --dsh-muted-foreground: rgb(151, 157, 166);
+  --dsh-border: rgba(255, 255, 255, 0.12);
+  --dsh-input: rgb(35, 35, 37);
+  --dsh-ring: rgb(86, 134, 254);
+  --dsh-success-bg: rgb(35, 60, 44);
+  --dsh-error-bg: rgb(87, 12, 12);
+  --dsh-warn-bg: rgb(39, 36, 31);
+  --dsh-info-bg: rgb(40, 49, 66);
+}
+
+body {
+  font-family: var(--dsh-font-family);
+  background: var(--dsh-background);
+  color: var(--dsh-foreground);
+}
+
+/* ===== 流式执行视图：将 run.html 的调色板映射到 dsh 主题，随明/暗切换 ===== */
+:root {
+  --bg: var(--dsh-background);
+  --card: var(--dsh-card);
+  --border: var(--dsh-border);
+  --text: var(--dsh-foreground);
+  --muted: var(--dsh-muted-foreground);
+  --brand: var(--dsh-primary);
+  --brand-dark: var(--dsh-primary);
+  --ok: #1f9d55;
+  --bad: #d94444;
+  --warn: #c78a00;
+}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--dsh-background);
+    --color-foreground: var(--dsh-foreground);
+    --color-card: var(--dsh-card);
+    --color-card-foreground: var(--dsh-card-foreground);
+    --color-popover: var(--dsh-popover);
+    --color-popover-foreground: var(--dsh-popover-foreground);
+    --color-primary: var(--dsh-primary);
+    --color-primary-foreground: var(--dsh-primary-foreground);
+    --color-muted: var(--dsh-muted);
+    --color-muted-foreground: var(--dsh-muted-foreground);
+    --color-border: var(--dsh-border);
+    --color-input: var(--dsh-input);
+    --color-ring: var(--dsh-ring);
+    --radius-sm: var(--dsh-radius-sm);
+    --radius-md: var(--dsh-radius-md);
+    --radius-lg: var(--dsh-radius-lg);
+  }
+  @layer base {
+    body { background: var(--dsh-background); color: var(--dsh-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--dsh-background); }
+      .text-background { color: var(--dsh-background); }
+      .border-background { border-color: var(--dsh-background); }
+      .ring-background { --tw-ring-color: var(--dsh-background); }
+      .bg-foreground { background-color: var(--dsh-foreground); }
+      .text-foreground { color: var(--dsh-foreground); }
+      .border-foreground { border-color: var(--dsh-foreground); }
+      .ring-foreground { --tw-ring-color: var(--dsh-foreground); }
+      .bg-card { background-color: var(--dsh-card); }
+      .text-card { color: var(--dsh-card); }
+      .border-card { border-color: var(--dsh-card); }
+      .ring-card { --tw-ring-color: var(--dsh-card); }
+      .bg-card-foreground { background-color: var(--dsh-card-foreground); }
+      .text-card-foreground { color: var(--dsh-card-foreground); }
+      .border-card-foreground { border-color: var(--dsh-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--dsh-card-foreground); }
+      .bg-popover { background-color: var(--dsh-popover); }
+      .text-popover { color: var(--dsh-popover); }
+      .border-popover { border-color: var(--dsh-popover); }
+      .ring-popover { --tw-ring-color: var(--dsh-popover); }
+      .bg-popover-foreground { background-color: var(--dsh-popover-foreground); }
+      .text-popover-foreground { color: var(--dsh-popover-foreground); }
+      .border-popover-foreground { border-color: var(--dsh-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--dsh-popover-foreground); }
+      .bg-primary { background-color: var(--dsh-primary); }
+      .text-primary { color: var(--dsh-primary); }
+      .border-primary { border-color: var(--dsh-primary); }
+      .ring-primary { --tw-ring-color: var(--dsh-primary); }
+      .bg-primary-foreground { background-color: var(--dsh-primary-foreground); }
+      .text-primary-foreground { color: var(--dsh-primary-foreground); }
+      .border-primary-foreground { border-color: var(--dsh-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--dsh-primary-foreground); }
+      .bg-muted { background-color: var(--dsh-muted); }
+      .text-muted { color: var(--dsh-muted); }
+      .border-muted { border-color: var(--dsh-muted); }
+      .ring-muted { --tw-ring-color: var(--dsh-muted); }
+      .bg-muted-foreground { background-color: var(--dsh-muted-foreground); }
+      .text-muted-foreground { color: var(--dsh-muted-foreground); }
+      .border-muted-foreground { border-color: var(--dsh-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--dsh-muted-foreground); }
+      .bg-border { background-color: var(--dsh-border); }
+      .text-border { color: var(--dsh-border); }
+      .border-border { border-color: var(--dsh-border); }
+      .ring-border { --tw-ring-color: var(--dsh-border); }
+      .bg-input { background-color: var(--dsh-input); }
+      .text-input { color: var(--dsh-input); }
+      .border-input { border-color: var(--dsh-input); }
+      .ring-input { --tw-ring-color: var(--dsh-input); }
+      .bg-ring { background-color: var(--dsh-ring); }
+      .text-ring { color: var(--dsh-ring); }
+      .border-ring { border-color: var(--dsh-ring); }
+      .ring-ring { --tw-ring-color: var(--dsh-ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+      .dsh-mono { font-family: var(--dsh-font-mono); }
+      .dsh-tab-active { background: var(--dsh-primary); color: var(--dsh-primary-foreground); border-color: var(--dsh-primary); }
+      @keyframes dsh-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+      .dsh-running-dot { animation: dsh-pulse 1.2s infinite; }
+
+      /* ===== 流式执行视图样式（run.html）===== */
+      * { box-sizing: border-box; }
+      .ev-wrap { line-height: 1.6; }
+      .ev-wrap h2 { font-size: 16px; margin: 24px 0 12px; color: var(--brand); }
+      .ev-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px 18px;
+        margin-bottom: 14px;
+      }
+      .ev-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+      .ev-row input[type=text] { flex: 1; min-width: 220px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; background: var(--dsh-input); color: var(--dsh-foreground); }
+      .ev-wrap button {
+        background: var(--brand); color: #fff; border: none; border-radius: 8px;
+        padding: 9px 16px; font-size: 14px; cursor: pointer; white-space: nowrap;
+      }
+      .ev-wrap button:hover { background: var(--brand-dark); }
+      .ev-wrap button:disabled { background: #a9b4c9; cursor: not-allowed; }
+      .ev-wrap button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+      .ev-wrap button.ghost:hover { color: var(--text); background: var(--dsh-muted); }
+      .ev-wrap button.ok-btn { background: var(--ok); }
+      .ev-wrap button.ok-btn:hover { background: #177a42; }
+      .ev-wrap button.bad-btn { background: var(--bad); }
+      .ev-wrap button.bad-btn:hover { background: #b53535; }
+      .ev-status { font-size: 13px; color: var(--muted); }
+      .ev-status.running::before {
+        content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+        background: var(--brand); margin-right: 6px; animation: ev-pulse 1s infinite;
+      }
+      .ev-status.app-ok { color: var(--ok); white-space: nowrap; }
+      .ev-status.app-ok::before {
+        content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+        background: var(--ok); margin-right: 6px;
+      }
+      .ev-status.app-bad { color: var(--bad); white-space: nowrap; }
+      .ev-status.app-bad::before {
+        content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+        background: var(--bad); margin-right: 6px;
+      }
+      .ev-status.checking { color: var(--brand); white-space: nowrap; }
+      .ev-status.checking::before {
+        content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+        background: var(--brand); margin-right: 6px; animation: ev-pulse 1s infinite;
+      }
+      @keyframes ev-pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+
+      /* 循环阶段指示 */
+      .loop-strip { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+      .phase {
+        border: 1px solid var(--border); border-radius: 18px; padding: 5px 14px;
+        font-size: 13px; color: var(--muted); background: var(--card); display: flex; align-items: center; gap: 6px;
+        transition: all .25s;
+      }
+      .phase .num {
+        width: 18px; height: 18px; border-radius: 50%; background: #eef0f3; color: var(--muted);
+        display: inline-flex; align-items: center; justify-content: center; font-size: 11.5px;
+      }
+      .phase.active { border-color: var(--brand); color: var(--brand); box-shadow: 0 0 0 3px rgba(47,107,255,.1); }
+      .phase.active .num { background: var(--brand); color: #fff; }
+      .phase.done { border-color: var(--ok); color: var(--ok); }
+      .phase.done .num { background: var(--ok); color: #fff; }
+      .arrow { color: var(--muted); font-size: 13px; }
+      .loop-hint { color: var(--muted); font-size: 12.5px; margin: 2px 0 14px; }
+
+      .cols { display: flex; gap: 14px; align-items: flex-start; }
+      .col-main { flex: 1; min-width: 0; }
+      .col-side { width: 340px; flex-shrink: 0; }
+      @media (max-width: 900px) { .cols { flex-direction: column; } .col-side { width: 100%; } }
+
+      /* 事件流卡片 */
+      #timeline { display: flex; flex-direction: column; gap: 8px; }
+      .evt-card {
+        background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+        padding: 12px 14px; animation: slidein .3s ease;
+      }
+      @keyframes slidein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+      .evt-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+      .evt-title { font-weight: 600; font-size: 13.5px; }
+      .evt-tag { display: inline-block; padding: 1px 9px; border-radius: 10px; font-size: 12px; background: #eef2ff; color: var(--brand); }
+      .evt-tag.ok { background: #e6f7ee; color: var(--ok); }
+      .evt-tag.bad { background: #fdeaea; color: var(--bad); }
+      .evt-tag.warn { background: #fff4e0; color: var(--warn); }
+      .evt-tag.mut { background: var(--dsh-muted); color: var(--muted); }
+      .evt-time { color: var(--muted); font-size: 12px; margin-left: auto; }
+      .evt-body { font-size: 13.5px; word-break: break-word; white-space: pre-wrap; color: var(--text); }
+      .out-box {
+        margin-top: 6px; background: var(--dsh-muted); border: 1px solid var(--border); border-radius: 8px;
+        padding: 8px 10px; font-size: 12.5px; max-height: 170px; overflow-y: auto; white-space: pre-wrap;
+        word-break: break-word; font-family: inherit; color: var(--text);
+      }
+      .out-box.open { max-height: none; }
+      .more-btn { background: none; border: none; color: var(--brand); font-size: 12px; padding: 2px 0; cursor: pointer; }
+      .step-list { margin: 4px 0 0; padding-left: 0; list-style: none; }
+      .step-list li { padding: 3px 0; border-bottom: 1px dashed var(--border); font-size: 13px; }
+      .step-list li:last-child { border-bottom: none; }
+      .step-no { color: var(--brand); font-weight: 600; margin-right: 6px; }
+      .wave-divider {
+        display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12.5px;
+        margin: 4px 0; animation: slidein .3s ease;
+      }
+      .wave-divider::before, .wave-divider::after { content: ""; flex: 1; border-top: 1px dashed var(--border); }
+      .final-answer { background: #f0f6ff; border-color: #c7d9ff; }
+
+      /* Agent 状态面板 */
+      .agent-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 12px; }
+      .agent-card {
+        background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+        padding: 14px 16px; transition: all 0.2s;
+      }
+      .agent-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+      .agent-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+      .agent-name { font-weight: 600; font-size: 14px; }
+      .agent-status { font-size: 11.5px; padding: 2px 8px; border-radius: 10px; }
+      .agent-status.working { background: #e6f7ee; color: var(--ok); }
+      .agent-status.idle { background: #fff4e0; color: var(--warn); }
+      .agent-status.error { background: #fdeaea; color: var(--bad); }
+      .agent-credit { font-size: 12px; color: var(--muted); margin-left: auto; }
+      .agent-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+      .agent-stat { text-align: center; }
+      .agent-stat-value { font-size: 18px; font-weight: 700; color: var(--brand); }
+      .agent-stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+      .agent-desc { font-size: 12.5px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+      .agent-task { font-size: 12px; color: var(--brand); margin-top: 6px; padding: 4px 8px; background: #f0f6ff; border-radius: 6px; line-height: 1.4; }
+      .style-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; margin-left: 4px; }
+      .style-cautious { background: #e8f5e9; color: #2e7d32; }
+      .style-aggressive { background: #fbe9e7; color: #c62828; }
+      .style-balanced { background: #e3f2fd; color: #1565c0; }
+      .style-efficient { background: #fff3e0; color: #e65100; }
+      .reset-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 12px; padding: 4px 12px; border-radius: 6px; cursor: pointer; }
+      .reset-btn:hover { background: var(--dsh-muted); color: var(--bad); }
+      .credit-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11.5px; font-weight: 600; }
+      .credit-sss { background: linear-gradient(135deg, #ffd700, #ffed4e); color: #333; }
+      .credit-ss { background: linear-gradient(135deg, #c0c0c0, #e8e8e8); color: #333; }
+      .credit-s { background: linear-gradient(135deg, #cd7f32, #daa520); color: #fff; }
+      .credit-a { background: #4a90d9; color: #fff; }
+      .credit-b { background: #5cb85c; color: #fff; }
+      .credit-c { background: #f0ad4e; color: #fff; }
+      .credit-d { background: #d9534f; color: #fff; }
+
+      /* 经验面板 */
+      .exp-item { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; background: var(--card); color: var(--text); }
+      .exp-item.quality { border-color: var(--ok); background: #f4fcf7; }
+      .exp-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+      .exp-name { font-weight: 600; font-size: 13px; word-break: break-all; }
+      .exp-content { font-size: 12.5px; color: var(--muted); max-height: 120px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
+      .exp-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+      .exp-actions { display: flex; gap: 6px; margin-left: auto; }
+      .exp-actions button { padding: 3px 10px; font-size: 12px; border-radius: 6px; }
+      .muted { color: var(--muted); }
+      .cnt { font-size: 12px; color: var(--muted); }
+
+      /* 文件上传区域 */
+      .upload-zone {
+        border: 2px dashed var(--border); border-radius: 10px; padding: 20px 16px;
+        text-align: center; cursor: pointer; transition: all .25s; background: var(--dsh-muted);
+      }
+      .upload-zone:hover, .upload-zone.dragover {
+        border-color: var(--brand); background: var(--dsh-info-bg, #f0f6ff);
+      }
+      .upload-zone .upload-icon { font-size: 28px; margin-bottom: 6px; }
+      .upload-zone .upload-hint { font-size: 13px; color: var(--muted); }
+      .upload-zone .upload-hint b { color: var(--brand); }
+      .upload-zone input[type=file] { display: none; }
+      .file-info { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+      .file-badge {
+        display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px;
+        border-radius: 8px; font-size: 13px; background: var(--dsh-info-bg); color: var(--brand);
+        border: 1px solid var(--brand);
+      }
+      .file-badge .remove { cursor: pointer; color: var(--bad); font-weight: 700; }
+      .file-preview {
+        margin-top: 10px; background: var(--dsh-muted); border: 1px solid var(--border);
+        border-radius: 8px; padding: 10px 12px; font-size: 12.5px; max-height: 200px;
+        overflow-y: auto; white-space: pre-wrap; word-break: break-word; display: none; color: var(--text);
+      }
+      .file-preview.show { display: block; }
+      .file-meta { font-size: 12px; color: var(--muted); margin-top: 6px; display: flex; gap: 12px; flex-wrap: wrap; }
+
+      /* ===== 动画流转图 ===== */
+      .flow-canvas {
+        background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+        padding: 16px; margin-bottom: 14px; position: relative; overflow: hidden;
+      }
+      .flow-canvas svg { display: block; margin: 0 auto; }
+      .flow-node { transition: all .3s ease; }
+      .flow-node.active circle { filter: drop-shadow(0 0 6px var(--brand)); }
+      .flow-node.active rect { filter: drop-shadow(0 0 6px var(--brand)); }
+      .flow-node.idle { opacity: .45; }
+      .flow-label { font-size: 11px; fill: var(--muted); text-anchor: middle; }
+      .flow-label.active { fill: var(--brand); font-weight: 600; }
+      @keyframes dash-flow { to { stroke-dashoffset: -20; } }
+      .flow-path { stroke-dasharray: 6 4; animation: dash-flow 1s linear infinite; }
+      .flow-path.inactive { animation: none; stroke-dashoffset: 0; opacity: .2; }
+      @keyframes pulse-ring {
+        0% { r: 22; opacity: .6; }
+        100% { r: 36; opacity: 0; }
+      }
+      .pulse-ring { fill: none; stroke: var(--brand); stroke-width: 2; animation: pulse-ring 1.5s ease-out infinite; }
+      @keyframes orbit-glow {
+        0%,100% { opacity: .3; }
+        50% { opacity: .7; }
+      }
+      .orbit-ring { animation: orbit-glow 3s ease-in-out infinite; }
+      @keyframes badge-bounce {
+        0% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-3px) scale(1.05); }
+        100% { transform: translateY(0) scale(1); }
+      }
+      .flow-badge-active { animation: badge-bounce .6s ease; transform-origin: center; }
+
+      /* 选举动画 */
+      @keyframes vote-bar { from { width: 0; } }
+      .vote-bar { transition: width .8s cubic-bezier(.22,.61,.36,1); }
+      @keyframes crown-drop {
+        0% { transform: translateY(-30px) scale(0); opacity: 0; }
+        60% { transform: translateY(4px) scale(1.2); opacity: 1; }
+        100% { transform: translateY(0) scale(1); opacity: 1; }
+      }
+      .crown-anim { animation: crown-drop .8s ease-out; transform-origin: center; }
+      @keyframes confetti-fall {
+        0% { transform: translateY(-20px) rotate(0); opacity: 1; }
+        100% { transform: translateY(60px) rotate(360deg); opacity: 0; }
+      }
+      .confetti { animation: confetti-fall 1.2s ease-in; }
+      @keyframes winner-glow {
+        0%,100% { filter: drop-shadow(0 0 4px var(--brand)); }
+        50% { filter: drop-shadow(0 0 12px var(--brand)); }
+      }
+      .winner-glow { animation: winner-glow 2s ease-in-out infinite; }
+      @keyframes vote-pulse {
+        0% { r: 20; opacity: .5; }
+        100% { r: 34; opacity: 0; }
+      }
+      .vote-ring { fill: none; stroke: var(--warn); stroke-width: 2; animation: vote-pulse 1s ease-out; }
+      .election-hidden { opacity: 0; transition: opacity .3s; }
+      .election-visible { opacity: 1; transition: opacity .3s; }
+    </style>
 </head>
-<body>
-  <div class="wrap">
-    <h1>通用办公 Agent 控制台</h1>
-    <p class="sub">HLA 自主编排 + 反思增强 + GraphRAG 自学习 + 数据预处理/后处理人工标注 · <a href="run.html" style="color:var(--brand)">执行过程流式呈现页 →</a></p>
+<body class="min-h-screen font-sans antialiased">
+    <main>
+      <div class="min-h-screen bg-background">
+        <header class="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur">
+          <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+            <div class="flex items-center gap-3">
+              <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <i data-lucide="bot" class="h-5 w-5"></i>
+              </div>
+              <div>
+                <h1 class="text-lg font-semibold tracking-tight text-foreground">通用办公 Agent 控制台</h1>
+                <p class="text-xs text-muted-foreground">HLA 自主编排 · 反思增强 · GraphRAG 自学习 · 人工标注 · 工具审批</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="themeToggle" onclick="toggleTheme()" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:bg-muted transition-colors" aria-label="切换主题">
+                <i data-lucide="moon" class="h-4 w-4"></i>
+              </button>
+            </div>
+          </div>
+        </header>
 
-    <div class="tabs">
-      <button id="tabRunBtn" class="tab active" onclick="switchTab('run')">执行监控</button>
-      <button id="tabAnnoBtn" class="tab" onclick="switchTab('anno')">数据标注</button>
-      <button id="tabInsightBtn" class="tab" onclick="switchTab('insight')">系统洞察</button>
-    </div>
+        <div class="mx-auto max-w-6xl px-6 py-6">
+          <nav class="mb-6 inline-flex gap-1 rounded-xl border border-border bg-card p-1 shadow-sm">
+            <button id="tab-run" data-dom-id="tab-run" onclick="switchTab('run')" class="dsh-tab-active inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all">
+              <i data-lucide="play-circle" class="h-4 w-4"></i>
+              执行监控
+            </button>
+            <button id="tab-anno" data-dom-id="tab-anno" onclick="switchTab('anno')" class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all">
+              <i data-lucide="tags" class="h-4 w-4"></i>
+              数据标注
+            </button>
+            <button id="tab-insight" data-dom-id="tab-insight" onclick="switchTab('insight')" class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all">
+              <i data-lucide="bar-chart-2" class="h-4 w-4"></i>
+              系统洞察
+            </button>
+          </nav>
 
-    <!-- ============ 执行监控 ============ -->
-    <section id="tab-run">
-      <div class="card">
-        <h2>执行目标</h2>
-        <div class="row">
-          <input type="text" id="goal" placeholder="例如：整理本周会议纪要并生成周报摘要">
-          <button id="runBtn" onclick="startRun()">运行</button>
+          <!-- =================== 执行监控（整合自 run.html） =================== -->
+          <section id="panel-run" class="space-y-5 ev-wrap">
+            <div class="ev-card">
+              <div class="ev-row">
+                <input type="text" id="goal" placeholder="输入总体目标，如：在用友U9 ERP中抓取料品列表数据并汇报">
+                <button id="runBtn" onclick="startRun()">开始执行</button>
+                <button class="bad-btn" id="stopBtn" onclick="stopRun()" disabled>停止执行</button>
+                <select id="exportFormat" style="padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--dsh-input);color:var(--text)">
+                  <option value="txt">TXT</option>
+                  <option value="md">Markdown</option>
+                  <option value="json">JSON</option>
+                  <option value="csv">CSV</option>
+                </select>
+                <button class="ghost" id="exportBtn" onclick="exportResult()" disabled>导出结果</button>
+                <button class="ghost" onclick="loadExperiences()">刷新经验</button>
+                <button class="ghost" id="appBtn" onclick="startBackendApp()">启动后端应用</button>
+                <span class="ev-status" id="appStatus">后端未检测</span>
+                <span class="ev-status" id="status">空闲</span>
+              </div>
+            </div>
+
+            <div class="ev-card">
+              <h2 style="font-size:15px;margin:0 0 8px">文件上传与解析</h2>
+              <p class="hint" style="color:var(--muted);font-size:12.5px;margin:0 0 10px">
+                支持 PDF / Word / Excel / CSV / TXT / JSON + 图片识别(PNG/JPG)，解析后可将内容作为 Agent 任务上下文
+              </p>
+              <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📄</div>
+                <div class="upload-hint">点击或拖拽文件到此处 · <b>支持 PDF / DOCX / XLSX / CSV / TXT / JSON / 图片</b></div>
+                <input type="file" id="fileInput" accept=".pdf,.docx,.xlsx,.csv,.tsv,.txt,.md,.json,.xml,.yaml,.yml,.log,.html,.htm,.sql,.png,.jpg,.jpeg,.gif,.bmp,.webp">
+              </div>
+              <div class="file-info" id="fileInfo"></div>
+              <div class="file-preview" id="filePreview"></div>
+              <div class="file-meta" id="fileMeta"></div>
+            </div>
+
+            <div class="loop-strip" id="loopStrip">
+              <div class="phase" data-p="0"><span class="num">1</span>获取信息</div>
+              <span class="arrow">→</span>
+              <div class="phase" data-p="1"><span class="num">2</span>制定计划</div>
+              <span class="arrow">→</span>
+              <div class="phase" data-p="2"><span class="num">3</span>执行操作</div>
+              <span class="arrow">→</span>
+              <div class="phase" data-p="3"><span class="num">4</span>循环评估</div>
+              <span class="arrow">↺</span>
+            </div>
+            <p class="loop-hint">蓝色 = 当前阶段；执行轨迹按事件流实时渲染，终止状态见结尾汇总卡片</p>
+
+            <!-- 动画流转图 -->
+            <div class="flow-canvas">
+              <svg viewBox="0 0 600 560" width="100%" style="max-width:600px">
+                <g id="flowMgr" class="flow-node idle" transform="translate(300,40)">
+                  <circle r="22" fill="var(--brand)" opacity="0.12" class="orbit-ring"/>
+                  <circle r="22" fill="#fff" stroke="var(--brand)" stroke-width="2"/>
+                  <text class="flow-label" y="5" style="font-weight:600;fill:var(--brand)">Mgr</text>
+                </g>
+
+                <path id="path-browser" class="flow-path inactive" d="M300,62 C220,100 160,130 100,170" stroke="var(--brand)" stroke-width="2" fill="none"/>
+                <path id="path-data" class="flow-path inactive" d="M300,62 C260,100 220,130 180,170" stroke="var(--brand)" stroke-width="2" fill="none"/>
+                <path id="path-general" class="flow-path inactive" d="M300,62 C340,100 380,130 420,170" stroke="var(--brand)" stroke-width="2" fill="none"/>
+                <path id="path-history" class="flow-path inactive" d="M300,62 C380,100 440,130 500,170" stroke="var(--brand)" stroke-width="2" fill="none"/>
+
+                <g id="flow-browser" class="flow-node idle" transform="translate(100,190)">
+                  <circle r="20" fill="#fff" stroke="var(--border)" stroke-width="2"/>
+                  <text class="flow-label" y="-2">browser</text>
+                  <text class="flow-label" y="10" style="font-size:9px">激进</text>
+                  <text class="flow-label" y="32" id="flow-score-browser" style="font-size:10px">50</text>
+                </g>
+                <g id="flow-data" class="flow-node idle" transform="translate(180,190)">
+                  <circle r="20" fill="#fff" stroke="var(--border)" stroke-width="2"/>
+                  <text class="flow-label" y="-2">data</text>
+                  <text class="flow-label" y="10" style="font-size:9px">谨慎</text>
+                  <text class="flow-label" y="32" id="flow-score-data" style="font-size:10px">50</text>
+                </g>
+                <g id="flow-general" class="flow-node idle" transform="translate(420,190)">
+                  <circle r="20" fill="#fff" stroke="var(--border)" stroke-width="2"/>
+                  <text class="flow-label" y="-2">general</text>
+                  <text class="flow-label" y="10" style="font-size:9px">高效</text>
+                  <text class="flow-label" y="32" id="flow-score-general" style="font-size:10px">50</text>
+                </g>
+                <g id="flow-history" class="flow-node idle" transform="translate(500,190)">
+                  <circle r="20" fill="#fff" stroke="var(--border)" stroke-width="2"/>
+                  <text class="flow-label" y="-2">history</text>
+                  <text class="flow-label" y="10" style="font-size:9px">平衡</text>
+                  <text class="flow-label" y="32" id="flow-score-history" style="font-size:10px">50</text>
+                </g>
+
+                <path id="path-back-browser" class="flow-path inactive" d="M100,210 C140,240 220,260 280,280 Q300,290 300,62" stroke="var(--ok)" stroke-width="1.5" fill="none" opacity="0.3"/>
+                <path id="path-back-data" class="flow-path inactive" d="M180,210 C200,240 240,260 280,280 Q300,290 300,62" stroke="var(--ok)" stroke-width="1.5" fill="none" opacity="0.3"/>
+                <path id="path-back-general" class="flow-path inactive" d="M420,210 C400,240 360,260 320,280 Q300,290 300,62" stroke="var(--ok)" stroke-width="1.5" fill="none" opacity="0.3"/>
+                <path id="path-back-history" class="flow-path inactive" d="M500,210 C460,240 380,260 320,280 Q300,290 300,62" stroke="var(--ok)" stroke-width="1.5" fill="none" opacity="0.3"/>
+
+                <g transform="translate(300,280)">
+                  <text class="flow-label" y="14" id="flowPhaseLabel" style="font-size:11px;fill:var(--muted)">等待开始</text>
+                </g>
+
+                <line x1="40" y1="310" x2="560" y2="310" stroke="var(--border)" stroke-width="1" stroke-dasharray="4 4"/>
+
+                <g id="electionArea" class="election-hidden" transform="translate(0,320)">
+                  <text x="300" y="20" class="flow-label" style="font-size:13px;font-weight:600;fill:var(--text)">管理者选举</text>
+                  <text x="300" y="38" class="flow-label" id="electionSubLabel" style="font-size:11px;fill:var(--muted)">投票进行中...</text>
+
+                  <g id="vote-browser" transform="translate(80,60)">
+                    <text x="0" y="0" class="flow-label" style="text-anchor:start;font-size:11px">browser</text>
+                    <text x="60" y="0" class="flow-label" style="font-size:9px;fill:var(--muted)">激进</text>
+                    <rect x="0" y="6" width="200" height="10" rx="5" fill="var(--bg)" stroke="var(--border)" stroke-width="0.5"/>
+                    <rect x="0" y="6" width="0" height="10" rx="5" class="vote-bar" id="voteBar-browser" fill="var(--brand)" opacity="0.7"/>
+                    <text x="210" y="14" class="flow-label" id="voteScore-browser" style="text-anchor:start;font-size:10px">-</text>
+                    <circle cx="0" cy="2" r="3" id="voteDot-browser" fill="var(--muted)"/>
+                  </g>
+                  <g id="vote-data" transform="translate(80,95)">
+                    <text x="0" y="0" class="flow-label" style="text-anchor:start;font-size:11px">data</text>
+                    <text x="60" y="0" class="flow-label" style="font-size:9px;fill:var(--muted)">谨慎</text>
+                    <rect x="0" y="6" width="200" height="10" rx="5" fill="var(--bg)" stroke="var(--border)" stroke-width="0.5"/>
+                    <rect x="0" y="6" width="0" height="10" rx="5" class="vote-bar" id="voteBar-data" fill="var(--brand)" opacity="0.7"/>
+                    <text x="210" y="14" class="flow-label" id="voteScore-data" style="text-anchor:start;font-size:10px">-</text>
+                    <circle cx="0" cy="2" r="3" id="voteDot-data" fill="var(--muted)"/>
+                  </g>
+                  <g id="vote-general" transform="translate(80,130)">
+                    <text x="0" y="0" class="flow-label" style="text-anchor:start;font-size:11px">general</text>
+                    <text x="60" y="0" class="flow-label" style="font-size:9px;fill:var(--muted)">高效</text>
+                    <rect x="0" y="6" width="200" height="10" rx="5" fill="var(--bg)" stroke="var(--border)" stroke-width="0.5"/>
+                    <rect x="0" y="6" width="0" height="10" rx="5" class="vote-bar" id="voteBar-general" fill="var(--brand)" opacity="0.7"/>
+                    <text x="210" y="14" class="flow-label" id="voteScore-general" style="text-anchor:start;font-size:10px">-</text>
+                    <circle cx="0" cy="2" r="3" id="voteDot-general" fill="var(--muted)"/>
+                  </g>
+                  <g id="vote-history" transform="translate(80,165)">
+                    <text x="0" y="0" class="flow-label" style="text-anchor:start;font-size:11px">history</text>
+                    <text x="60" y="0" class="flow-label" style="font-size:9px;fill:var(--muted)">平衡</text>
+                    <rect x="0" y="6" width="200" height="10" rx="5" fill="var(--bg)" stroke="var(--border)" stroke-width="0.5"/>
+                    <rect x="0" y="6" width="0" height="10" rx="5" class="vote-bar" id="voteBar-history" fill="var(--brand)" opacity="0.7"/>
+                    <text x="210" y="14" class="flow-label" id="voteScore-history" style="text-anchor:start;font-size:10px">-</text>
+                    <circle cx="0" cy="2" r="3" id="voteDot-history" fill="var(--muted)"/>
+                  </g>
+
+                  <g transform="translate(340,60)">
+                    <text x="0" y="0" class="flow-label" style="text-anchor:start;font-size:10px;fill:var(--muted)">综合分 =</text>
+                    <text x="0" y="16" class="flow-label" style="text-anchor:start;font-size:9px">成功率 40%</text>
+                    <text x="0" y="30" class="flow-label" style="text-anchor:start;font-size:9px">信用分 30%</text>
+                    <text x="0" y="44" class="flow-label" style="text-anchor:start;font-size:9px">时效分 20%</text>
+                    <text x="0" y="58" class="flow-label" style="text-anchor:start;font-size:9px">均衡分 10%</text>
+                  </g>
+
+                  <g id="electionHandover" transform="translate(300,200)" class="election-hidden">
+                    <text x="0" y="0" class="flow-label" id="handoverPrev" style="font-size:11px;fill:var(--muted)">上轮: -</text>
+                    <path d="M0,6 L60,6" stroke="var(--brand)" stroke-width="2" fill="none" marker-end="url(#arrowHead)" class="flow-path"/>
+                    <text x="70" y="0" class="flow-label" id="handoverNew" style="font-size:11px;font-weight:600;fill:var(--brand)">新任: -</text>
+                  </g>
+
+                  <g id="crownContainer" transform="translate(300,225)"></g>
+                  <g id="confettiContainer" transform="translate(0,200)"></g>
+                </g>
+
+                <defs>
+                  <marker id="arrowHead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="var(--brand)"/>
+                  </marker>
+                </defs>
+
+                <g id="pulseContainer"></g>
+              </svg>
+            </div>
+
+            <div class="cols">
+              <div class="col-main">
+                <div id="timeline"></div>
+              </div>
+              <div class="col-side">
+                <div class="ev-card">
+                  <h2 style="font-size:15px;margin:0 0 4px">经验沉淀</h2>
+                  <p class="hint" style="color:var(--muted);font-size:12.5px;margin:0 0 10px">
+                    自动收集的执行经验先为候选；<b>重复出现 ≥2 次</b>且<b>经人工认可</b>后升级为优质经验，才会注入 Planner 参与后续规划
+                  </p>
+                  <div id="expList"><p class="muted">暂无经验，完成一次执行后自动收集。</p></div>
+                </div>
+                <div class="ev-card">
+                  <h2 style="font-size:15px;margin:0 0 4px">历史回放
+                    <button class="ghost" style="float:right;margin-top:-2px" onclick="loadRunHistory()">刷新</button>
+                  </h2>
+                  <p class="hint" style="color:var(--muted);font-size:12.5px;margin:0 0 10px">
+                    最近执行事件已落库为可回放事实源；点击任一条按事件流重建选中回放。
+                  </p>
+                  <div id="runHistory"><p class="muted">暂无历史。</p></div>
+                </div>
+              </div>
+            </div>
+
+            <h2>Agent 状态总览
+              <button class="reset-btn" onclick="resetCreditScores()" style="float:right;margin-top:-2px;">重置信用分</button>
+            </h2>
+            <div class="ev-card" style="margin-bottom:12px;border-left:3px solid var(--brand);">
+              <div class="agent-header">
+                <span class="agent-name">ManagerAgent（编排者）</span>
+                <span class="style-badge style-balanced">平衡</span>
+                <span class="agent-status working" id="mgrStatus">调度中</span>
+              </div>
+              <div class="agent-desc">递归闭环编排器：获取信息 → 制定计划 → 执行操作 → 循环评估。负责拆解目标、分波并行派发、信用分奖惩、选举管理者。自身不执行子任务，只分配与汇总。</div>
+              <div style="margin-top:8px;font-size:12px;color:var(--muted);">
+                当前管理者身份: <span id="mgrRef" style="font-weight:600;color:var(--brand);">-</span>
+                ｜ 规划器已感知各 Agent 风格与信用分，按风格匹配度和信用表现动态分配任务
+              </div>
+            </div>
+            <p class="loop-hint">4 个能力域 Agent：browser / general / data / history，各自角色风格固定，显示当前状态、信用分、任务统计</p>
+            <div class="agent-grid" id="agentGrid">
+              <p class="muted">加载中...</p>
+            </div>
+          </section>
+
+          <!-- =================== 数据标注（自 index.html） =================== -->
+          <section id="panel-anno" class="hidden space-y-5">
+            <div class="grid gap-5 lg:grid-cols-2">
+              <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                <div class="mb-3 flex items-center gap-2">
+                  <i data-lucide="list-checks" class="h-4 w-4 text-primary"></i>
+                  <h2 class="text-sm font-semibold text-foreground">数据条目标注</h2>
+                </div>
+                <p class="mb-4 text-xs leading-relaxed text-muted-foreground">对已导入并清洗的数据逐条评价：<b>正确</b> / <b>错误</b>（可改字段值，纠错会沉淀为确定性规则）/ <b>不确定</b>。</p>
+                <div class="flex items-center gap-3">
+                  <button id="loadItemsBtn" onclick="loadItems()" class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 transition-colors">
+                    <i data-lucide="download" class="h-3.5 w-3.5"></i>加载待标注数据
+                  </button>
+                  <span id="itemsStatus" class="text-xs text-muted-foreground"></span>
+                </div>
+                <div id="items" class="mt-4 space-y-3"></div>
+              </div>
+
+              <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                <div class="mb-3 flex items-center gap-2">
+                  <i data-lucide="gavel" class="h-4 w-4 text-primary"></i>
+                  <h2 class="text-sm font-semibold text-foreground">决策结果标注</h2>
+                </div>
+                <p class="mb-4 text-xs text-muted-foreground">对筛选任务产生的 PASS/REJECT 决策做对/错评价，写入知识图谱。</p>
+                <div class="flex items-center gap-3">
+                  <button id="loadDecisionsBtn" onclick="loadDecisions()" class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 transition-colors">
+                    <i data-lucide="download" class="h-3.5 w-3.5"></i>加载最近决策
+                  </button>
+                  <span id="decisionsStatus" class="text-xs text-muted-foreground"></span>
+                </div>
+                <div id="decisions" class="mt-4 space-y-3"></div>
+              </div>
+
+              <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                <div class="mb-3 flex items-center gap-2">
+                  <i data-lucide="book-marked" class="h-4 w-4 text-primary"></i>
+                  <h2 class="text-sm font-semibold text-foreground">已沉淀的确定性规则</h2>
+                </div>
+                <p class="mb-4 text-xs text-muted-foreground">人工纠错沉淀出的「字段 + 原始值 → 纠正值」规则，作为规则兜底顶替 LLM。</p>
+                <button id="loadRulesBtn" onclick="loadRules()" class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors">
+                  <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>刷新规则
+                </button>
+                <div id="rules" class="mt-4"></div>
+              </div>
+
+              <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                <div class="mb-3 flex items-center gap-2">
+                  <i data-lucide="pen-tool" class="h-4 w-4 text-primary"></i>
+                  <h2 class="text-sm font-semibold text-foreground">操作级标注</h2>
+                </div>
+                <p class="mb-4 text-xs text-muted-foreground">告诉模型哪些操作“正确且富有成效”（正向）或“低效/有误”（负向）。写入知识图谱，供后续规划召回。</p>
+                <label class="mb-1.5 block text-xs font-medium text-foreground">操作 / 目标描述</label>
+                <input type="text" id="annoGoal" placeholder="描述这次操作或目标" class="mb-3 w-full rounded-xl border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 ring-ring/0 focus:ring-ring/30 transition-all">
+                <label class="mb-1.5 block text-xs font-medium text-foreground">标注类型</label>
+                <div class="mb-3 inline-flex rounded-xl border border-border bg-muted p-1">
+                  <button id="segPos" onclick="setPolarity(true)" class="rounded-lg bg-success px-3 py-1.5 text-xs font-medium text-white">正向</button>
+                  <button id="segNeg" onclick="setPolarity(false)" class="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground">负向</button>
+                </div>
+                <label class="mb-1.5 block text-xs font-medium text-foreground">备注（可选）</label>
+                <textarea id="annoComment" placeholder="补充说明该操作为什么有效或无效" class="mb-3 min-h-[64px] w-full resize-y rounded-xl border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 ring-ring/0 focus:ring-ring/30 transition-all"></textarea>
+                <div class="flex items-center gap-3">
+                  <button id="annoBtn" onclick="submitAnnotate()" class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:opacity-90 transition-colors">
+                    <i data-lucide="send" class="h-3.5 w-3.5"></i>提交标注
+                  </button>
+                  <span id="annoStatus" class="text-xs text-muted-foreground"></span>
+                </div>
+                <div id="annoToast" class="mt-2 min-h-[18px] text-xs text-success"></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- =================== 系统洞察（自 index.html） =================== -->
+          <section id="panel-insight" class="hidden space-y-5">
+            <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+              <div class="mb-4 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="sparkles" class="h-4 w-4 text-primary"></i>
+                  <h2 class="text-sm font-semibold text-foreground">能力清单 · 信用分 · 当前管理者</h2>
+                </div>
+                <button onclick="loadInsight()" class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors">
+                  <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>刷新
+                </button>
+              </div>
+              <div id="insightStatus" class="mb-2 text-xs text-muted-foreground"></div>
+              <div id="manager" class="mb-4"></div>
+              <div id="capabilities"></div>
+            </div>
+
+            <div class="grid gap-5 lg:grid-cols-2">
+              <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground"><i data-lucide="vote" class="h-4 w-4 text-primary"></i>选举结果（最近）</h2>
+                <div id="elections"></div>
+              </div>
+              <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground"><i data-lucide="git-branch" class="h-4 w-4 text-primary"></i>分配记录（最近）</h2>
+                <div id="allocations"></div>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+              <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground"><i data-lucide="scroll-text" class="h-4 w-4 text-primary"></i>审计日志（数据更改操作）</h2>
+              <div id="auditFilters" class="mb-3 flex flex-wrap gap-2"></div>
+              <div id="audit"></div>
+            </div>
+
+            <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+              <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground"><i data-lucide="table-properties" class="h-4 w-4 text-primary"></i>事件 Schema</h2>
+              <div id="eventsSchema"></div>
+            </div>
+          </section>
         </div>
-        <div class="status" id="status">就绪</div>
-        <div id="timeline"></div>
       </div>
-    </section>
-
-    <!-- ============ 数据标注 ============ -->
-    <section id="tab-anno" style="display:none">
-
-      <div class="card">
-        <h2>数据条目标注（三态 + 字段纠错）</h2>
-        <p class="sub" style="margin-top:-4px">
-          对已导入并清洗的数据逐条评价：<b>正确</b> / <b>错误</b>（可改字段值，纠错会沉淀为确定性规则，下次直接套用）/ <b>不确定</b>。
-        </p>
-        <div class="row">
-          <button id="loadItemsBtn" onclick="loadItems()">加载待标注数据</button>
-          <span class="status" id="itemsStatus"></span>
-        </div>
-        <div id="items" style="margin-top:12px"></div>
-      </div>
-
-      <div class="card">
-        <h2>决策结果标注</h2>
-        <p class="sub" style="margin-top:-4px">对筛选任务产生的 PASS/REJECT 决策做对/错评价，写入知识图谱。</p>
-        <div class="row">
-          <button id="loadDecisionsBtn" onclick="loadDecisions()">加载最近决策</button>
-          <span class="status" id="decisionsStatus"></span>
-        </div>
-        <div id="decisions" style="margin-top:12px"></div>
-      </div>
-
-      <div class="card">
-        <h2>已沉淀的确定性规则</h2>
-        <p class="sub" style="margin-top:-4px">人工纠错沉淀出的「字段 + 原始值 → 纠正值」规则，作为规则兜底顶替 LLM。</p>
-        <div class="row">
-          <button id="loadRulesBtn" onclick="loadRules()">刷新规则</button>
-        </div>
-        <div id="rules" style="margin-top:12px"></div>
-      </div>
-
-      <div class="card">
-        <h2>操作级标注</h2>
-        <p class="sub" style="margin-top:-4px">告诉模型哪些操作“正确且富有成效”（正向）或“低效/有误”（负向）。写入知识图谱，供后续规划召回。</p>
-        <label>操作 / 目标描述</label>
-        <input type="text" id="annoGoal" placeholder="描述这次操作或目标，例如：用 L1 层规则过滤高风险数据">
-        <label style="margin-top:12px">标注类型</label>
-        <div class="seg">
-          <button id="segPos" class="active-pos" onclick="setPolarity(true)">正向（正确且富有成效）</button>
-          <button id="segNeg" onclick="setPolarity(false)">负向（低效或有误）</button>
-        </div>
-        <label style="margin-top:12px">备注（可选）</label>
-        <textarea id="annoComment" placeholder="补充说明该操作为什么有效或无效"></textarea>
-        <div class="row" style="margin-top:12px">
-          <button id="annoBtn" onclick="submitAnnotate()">提交标注</button>
-          <span class="status" id="annoStatus"></span>
-        </div>
-        <div class="toast" id="annoToast"></div>
-      </div>
-    </section>
-
-    <!-- ============ 系统洞察 ============ -->
-    <section id="tab-insight" style="display:none">
-      <div class="card">
-        <h2>能力清单 · 信用分 · 当前管理者</h2>
-        <div class="row">
-          <button onclick="loadInsight()">刷新</button>
-          <span class="status" id="insightStatus"></span>
-        </div>
-        <div id="manager" style="margin-top:10px"></div>
-        <div id="capabilities" style="margin-top:10px"></div>
-      </div>
-
-      <div class="card">
-        <h2>选举结果（最近）</h2>
-        <div id="elections"></div>
-      </div>
-
-      <div class="card">
-        <h2>分配记录（最近）</h2>
-        <div id="allocations"></div>
-      </div>
-
-      <div class="card">
-        <h2>审计日志（数据更改操作）</h2>
-        <div id="auditFilters" style="margin-bottom:10px"></div>
-        <div id="audit"></div>
-      </div>
-
-      <div class="card">
-        <h2>事件 Schema</h2>
-        <div id="eventsSchema"></div>
-      </div>
-    </section>
-  </div>
-
-  <script>
-    // ---------- 通用 ----------
-    function esc(s) {
-      return String(s == null ? '' : s)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-    function safeParse(s) {
-      if (typeof s !== 'string' || !s) return {};
-      try { return JSON.parse(s); } catch (e) { return {}; }
-    }
-    function switchTab(name) {
-      document.getElementById('tab-run').style.display = name === 'run' ? '' : 'none';
-      document.getElementById('tab-anno').style.display = name === 'anno' ? '' : 'none';
-      document.getElementById('tab-insight').style.display = name === 'insight' ? '' : 'none';
-      document.getElementById('tabRunBtn').className = 'tab' + (name === 'run' ? ' active' : '');
-      document.getElementById('tabAnnoBtn').className = 'tab' + (name === 'anno' ? ' active' : '');
-      document.getElementById('tabInsightBtn').className = 'tab' + (name === 'insight' ? ' active' : '');
-      if (name === 'insight') refreshInsight();
-    }
-
-    // ---------- 执行监控 ----------
-    const EVENT_TYPES = [
-      'run:started', 'run:plan', 'run:iteration', 'wave:started', 'wave:completed',
-      'step:status', 'step:reflection', 'run:synthesis', 'run:completed', 'run:failed'
-    ];
-    let polarity = true;
-
-    function setPolarity(p) {
-      polarity = p;
-      document.getElementById('segPos').className = p ? 'active-pos' : '';
-      document.getElementById('segNeg').className = p ? '' : 'active-neg';
-    }
-
-    function startRun() {
-      const goal = document.getElementById('goal').value.trim();
-      if (!goal) return;
-      const statusEl = document.getElementById('status');
-      const timeline = document.getElementById('timeline');
-      const runBtn = document.getElementById('runBtn');
-      timeline.innerHTML = '';
-      statusEl.textContent = '运行中';
-      statusEl.className = 'status running';
-      runBtn.disabled = true;
-      const es = new EventSource('/api/agent/run/stream?goal=' + encodeURIComponent(goal));
-      EVENT_TYPES.forEach(function (t) { es.addEventListener(t, function (e) { renderEvent(t, e.data); }); });
-      es.onclose = function () {
-        statusEl.textContent = '已结束'; statusEl.className = 'status'; runBtn.disabled = false; es.close();
-      };
-      es.onerror = function () {
-        statusEl.textContent = '连接中断'; statusEl.className = 'status'; runBtn.disabled = false; es.close();
-      };
-    }
-
-    function renderEvent(type, data) {
-      const timeline = document.getElementById('timeline');
-      const div = document.createElement('div');
-      let payload;
-      try { payload = JSON.parse(data); } catch (err) { payload = { raw: data }; }
-      div.className = 'evt ' + type.replace(':', '-');
-      const time = payload.ts ? new Date(payload.ts).toLocaleTimeString() : '';
-      div.innerHTML = '<span class="t">' + type + '</span> <span class="meta">' + time + '</span><div>' + formatPayload(payload) + '</div>';
-      timeline.appendChild(div);
-      timeline.scrollTop = timeline.scrollHeight;
-    }
-
-    function formatPayload(p) {
-      const parts = [];
-      for (const key of Object.keys(p)) {
-        if (key === 'runId' || key === 'ts') continue;
-        let v = p[key];
-        if (typeof v === 'object') v = JSON.stringify(v);
-        parts.push(key + '=' + v);
+    </main>
+    <script>
+      /* ============ 主题（index.html） ============ */
+      function toggleTheme() {
+        const html = document.documentElement;
+        html.classList.toggle('dark');
+        localStorage.setItem('dsh-theme', html.classList.contains('dark') ? 'dark' : 'light');
       }
-      return parts.join(' &nbsp; ');
-    }
+      if (localStorage.getItem('dsh-theme') === 'dark') document.documentElement.classList.add('dark');
 
-    // ---------- 数据条目标注 ----------
-    function loadItems() {
-      const btn = document.getElementById('loadItemsBtn');
-      const st = document.getElementById('itemsStatus');
-      const cont = document.getElementById('items');
-      btn.disabled = true; st.textContent = '加载中...';
-      fetch('/api/data?limit=50')
-        .then(function (r) { return r.json(); })
-        .then(function (list) {
-          cont.innerHTML = '';
-          if (!list.length) { cont.innerHTML = '<p class="muted">暂无数据，先通过「POST /api/data/file」导入。</p>'; return; }
-          list.forEach(renderItem);
-          st.textContent = '共 ' + list.length + ' 条';
-        })
-        .catch(function (e) { st.textContent = '加载失败：' + e; })
-        .finally(function () { btn.disabled = false; });
-    }
+      function esc(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+      function safeParse(s) {
+        if (typeof s !== 'string' || !s) return {};
+        try { return JSON.parse(s); } catch (e) { return {}; }
+      }
 
-    function renderItem(item) {
-      const raw = safeParse(item.content);
-      const cleaned = safeParse(item.cleanedContent || item.content);
-      const log = Array.isArray(safeParse(item.cleaningLog)) ? safeParse(item.cleaningLog) : [];
-      const changeByField = {};
-      log.forEach(function (c) { changeByField[c.field] = c; });
+      /* ============ Tab 切换 ============ */
+      function switchTab(name) {
+        ['run','anno','insight'].forEach(function (n) {
+          document.getElementById('panel-' + n).classList.toggle('hidden', n !== name);
+          const btn = document.getElementById('tab-' + n);
+          if (n === name) {
+            btn.classList.add('dsh-tab-active');
+            btn.classList.remove('text-muted-foreground', 'hover:bg-muted', 'hover:text-foreground');
+          } else {
+            btn.classList.remove('dsh-tab-active');
+            btn.classList.add('text-muted-foreground', 'hover:bg-muted', 'hover:text-foreground');
+          }
+        });
+        lucide.createIcons();
+        if (name === 'insight') refreshInsight();
+      }
 
-      const el = document.createElement('div');
-      el.className = 'item';
-      el.setAttribute('data-item', item.id);
+      /* ============ 执行监控（整合自 run.html / index.html） ============ */
+      const EVENT_TYPES = [
+        'run:started', 'run:plan', 'run:iteration', 'wave:started', 'wave:completed',
+        'step:status', 'step:reflection', 'run:synthesis', 'round:value', 'run:elected', 'run:completed', 'run:failed',
+        'tool:call', 'tool:approval-request', 'tool:decision', 'tool:result'
+      ];
+      let stepCards = {};
+      let waveIdx = 0;
+      let agentPollTimer = null;
+      let currentRunId = null;
+      let lastResult = null;
+      let lastGoal = '';
+      let polarity = true;
 
-      const sheet = cleaned._sheet || '';
-      const row = cleaned._row || '';
-      let head = '<h3>数据项 #<span class="muted">' + esc(item.id).slice(0, 8) + '</span>';
-      if (sheet) head += ' · 工作表 <b>' + esc(sheet) + '</b>';
-      if (row) head += ' · 行 <b>' + esc(row) + '</b>';
-      head += ' <span class="muted">(' + esc(item.sourceType || '') + ')</span></h3>';
-
-      let html = head + '<div class="toolbar">'
-        + '<span class="muted">评价：</span>'
-        + '<div class="seg small">'
-        + '  <button data-v="CORRECT" onclick="setItemVerdict(\'' + item.id + '\',\'CORRECT\')">正确</button>'
-        + '  <button data-v="WRONG" onclick="setItemVerdict(\'' + item.id + '\',\'WRONG\')">错误</button>'
-        + '  <button data-v="UNCERTAIN" onclick="setItemVerdict(\'' + item.id + '\',\'UNCERTAIN\')">不确定</button>'
-        + '</div>'
-        + '<input type="text" class="anno-comment" placeholder="备注（可选）" style="flex:1">'
-        + '<button onclick="submitItemAnnotation(\'' + item.id + '\')">提交标注</button>'
-        + '</div>';
-
-      html += '<table class="fields"><tr><th style="width:22%">字段</th><th style="width:30%">原始值</th><th style="width:34%">清洗后 / 纠正</th><th style="width:14%">变更</th></tr>';
-      for (const k of Object.keys(cleaned)) {
-        const isMeta = k === '_sheet' || k === '_row';
-        const isDerived = !(k in raw);
-        const rawVal = raw[k] !== undefined ? raw[k] : '';
-        const cleanedVal = cleaned[k] == null ? '' : cleaned[k];
-        const changed = !isDerived && rawVal !== cleanedVal;
-        const ch = changeByField[k];
-        let changeCell = '';
-        if (isDerived) changeCell = '<span class="badge derived">派生</span>';
-        else if (changed) changeCell = '<span class="badge changed">' + esc(ch ? ch.rule : '改') + '</span>';
-        let valCell;
-        if (isMeta || isDerived) {
-          valCell = esc(cleanedVal);
-        } else {
-          valCell = '<input class="corr" data-field="' + esc(k) + '" data-raw="' + esc(rawVal) + '" data-cleaned="' + esc(cleanedVal) + '" value="' + esc(cleanedVal) + '" disabled>';
+      function startRun() {
+        const goal = document.getElementById('goal').value.trim();
+        if (!goal) return;
+        lastGoal = goal;
+        const timeline = document.getElementById('timeline');
+        timeline.innerHTML = '';
+        stepCards = {};
+        waveIdx = 0;
+        currentRunId = null;
+        setStatus('运行中', true);
+        document.getElementById('runBtn').disabled = true;
+        document.getElementById('stopBtn').disabled = false;
+        setPhase(-1);
+        let sseUrl = '/api/agent/run/stream?goal=' + encodeURIComponent(goal)
+          + '&conversationId=' + encodeURIComponent(window.conversationId || (window.conversationId = 'conv-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)));
+        if (window.pendingFileContextId) {
+          sseUrl += '&fileContextId=' + encodeURIComponent(window.pendingFileContextId);
+          window.pendingFileContextId = null;
         }
-        const rawCell = isDerived ? '<span class="muted">—</span>' : esc(rawVal);
-        html += '<tr><td>' + esc(k) + (isDerived ? ' <span class="muted">(派生)</span>' : '') + '</td>'
-          + '<td>' + rawCell + '</td><td>' + valCell + '</td><td>' + changeCell + '</td></tr>';
+        const es = new EventSource(sseUrl);
+        EVENT_TYPES.forEach(t => es.addEventListener(t, e => handleEvent(t, JSON.parse(e.data))));
+        const finish = (text) => {
+          setStatus(text, false);
+          document.getElementById('runBtn').disabled = false;
+          document.getElementById('stopBtn').disabled = true;
+          currentRunId = null;
+          es.close();
+        };
+        es.addEventListener('run:completed', (e) => {
+          try { lastResult = JSON.parse(e.data); } catch(_) {}
+          finish('已结束');
+        });
+        es.addEventListener('run:failed', () => finish('已结束'));
+        es.onclose = () => finish('已结束');
+        es.onerror = () => finish('连接中断');
       }
-      html += '</table>';
-      el.innerHTML = html;
-      document.getElementById('items').appendChild(el);
-    }
 
-    function setItemVerdict(itemId, verdict) {
-      const card = document.querySelector('[data-item="' + itemId + '"]');
-      card.querySelectorAll('.seg button').forEach(function (b) {
-        const v = b.getAttribute('data-v');
-        b.className = (v === verdict) ? ('active-' + (v === 'CORRECT' ? 'ok' : v === 'WRONG' ? 'bad' : 'warn')) : '';
-      });
-      card.setAttribute('data-verdict', verdict);
-      const editable = verdict === 'WRONG';
-      card.querySelectorAll('input.corr').forEach(function (i) { i.disabled = !editable; });
-    }
+      function stopRun() {
+        const btn = document.getElementById('stopBtn');
+        btn.disabled = true;
+        setStatus('停止中…', true);
+        const url = '/api/agent/stop' + (currentRunId ? '?runId=' + encodeURIComponent(currentRunId) : '');
+        fetch(url, { method: 'POST' })
+          .then(r => r.json())
+          .then(j => { if (!j.stopped) setStatus('运行中', true); })
+          .catch(() => setStatus('运行中', true));
+      }
 
-    function submitItemAnnotation(itemId) {
-      const card = document.querySelector('[data-item="' + itemId + '"]');
-      const verdict = card.getAttribute('data-verdict') || 'UNCERTAIN';
-      if (!card.getAttribute('data-verdict')) { alert('请先选择评价（正确/错误/不确定）'); return; }
-      let corrections = [];
-      if (verdict === 'WRONG') {
-        card.querySelectorAll('input.corr').forEach(function (i) {
-          const corrected = i.value;
-          const original = i.getAttribute('data-cleaned') || '';
-          if (corrected !== original) {
-            corrections.push({ field: i.getAttribute('data-field'), raw: i.getAttribute('data-raw') || '', corrected: corrected });
+      function setStatus(text, running) {
+        const el = document.getElementById('status');
+        el.textContent = text;
+        el.className = 'ev-status' + (running ? ' running' : '');
+        document.getElementById('exportBtn').disabled = running || !lastResult;
+      }
+
+      function handleEvent(type, p) {
+        if (type === 'run:started') { currentRunId = p.runId; setPhase(0); flowStart(); addCard(goalCard(p)); }
+        else if (type === 'run:plan') { setPhase(1); flowPhase('制定计划'); addCard(planCard(p)); }
+        else if (type === 'run:iteration') { setPhase(1, 0); flowPhase('观察决策'); addCard(iterationCard(p)); }
+        else if (type === 'wave:started') { setPhase(2, 1); flowWave(p); addWave(p); }
+        else if (type === 'wave:completed') { markWaveDone(p); flowWaveEnd(); }
+        else if (type === 'step:status') { handleStep(p); flowStep(p); }
+        else if (type === 'step:reflection') { addCard(reflectionCard(p), true); }
+        else if (type === 'run:synthesis') { flowPhase('汇总合成'); addCard(synthesisCard(p)); }
+        else if (type === 'round:value') { addCard(roundValueCard(p)); }
+        else if (type === 'run:elected') { addCard(electionCard(p)); flowElection(p); }
+        else if (type === 'run:completed') { setPhase(3, 3); flowFinish(); addCard(completedCard(p)); setTimeout(loadExperiences, 1500); }
+        else if (type === 'run:failed') { flowFinish(); addCard(failedCard(p)); setTimeout(loadExperiences, 1500); }
+        else if (type === 'tool:call') { addCard(toolCallCard(p)); }
+        else if (type === 'tool:approval-request') { addCard(approvalCard(p)); }
+        else if (type === 'tool:decision') { addCard(toolDecisionCard(p)); }
+        else if (type === 'tool:result') { addCard(toolResultCard(p)); }
+      }
+
+      /* ---- 动画流转图 ---- */
+      function flowNode(name, active) {
+        const node = document.getElementById('flow-' + name);
+        const path = document.getElementById('path-' + name);
+        const backPath = document.getElementById('path-back-' + name);
+        if (node) node.setAttribute('class', 'flow-node ' + (active ? 'active' : 'idle'));
+        if (path) path.setAttribute('class', 'flow-path ' + (active ? '' : 'inactive'));
+        if (!active && backPath) backPath.setAttribute('class', 'flow-path ');
+        if (active && backPath) backPath.setAttribute('class', 'flow-path inactive');
+      }
+
+      function flowStart() {
+        const mgr = document.getElementById('flowMgr');
+        if (mgr) mgr.setAttribute('class', 'flow-node active');
+        flowPhase('获取信息');
+        ['browser','data','general','history'].forEach(n => flowNode(n, false));
+        const area = document.getElementById('electionArea');
+        if (area) area.setAttribute('class', 'election-hidden');
+        const handover = document.getElementById('electionHandover');
+        if (handover) handover.setAttribute('class', 'election-hidden');
+        ['browser','data','general','history'].forEach(l => {
+          const bar = document.getElementById('voteBar-' + l);
+          if (bar) bar.setAttribute('width', '0');
+          const score = document.getElementById('voteScore-' + l);
+          if (score) score.textContent = '-';
+          const dot = document.getElementById('voteDot-' + l);
+          if (dot) dot.setAttribute('fill', 'var(--muted)');
+        });
+        const crown = document.getElementById('crownContainer');
+        if (crown) crown.innerHTML = '';
+        const confetti = document.getElementById('confettiContainer');
+        if (confetti) confetti.innerHTML = '';
+      }
+
+      function flowPhase(label) {
+        const el = document.getElementById('flowPhaseLabel');
+        if (el) el.textContent = label;
+      }
+
+      function flowWave(p) {
+        flowPhase('执行操作 · 并行派发');
+        const steps = p.steps || [];
+        steps.forEach(s => { if (s.worker) flowNode(s.worker, true); });
+        if (steps.length === 0) ['browser','data','general','history'].forEach(n => flowNode(n, true));
+      }
+
+      function flowWaveEnd() {
+        ['browser','data','general','history'].forEach(n => flowNode(n, false));
+        flowPhase('循环评估');
+      }
+
+      function flowStep(p) {
+        if (!p.worker) return;
+        if (p.status === 'RUNNING') {
+          flowNode(p.worker, true);
+          flowPhase(p.worker + ' 执行中...');
+        } else if (p.status === 'SUCCESS' || p.status === 'FAILED' || p.status === 'CANCELLED') {
+          flowNode(p.worker, false);
+        }
+      }
+
+      function flowElection(p) {
+        if (!p) return;
+        const winner = p.winner || '-';
+        const prev = p.previousManager || '-';
+        flowPhase('选举: ' + winner + ' 当选');
+        const area = document.getElementById('electionArea');
+        if (area) area.setAttribute('class', 'election-visible');
+        let candidates = [];
+        try { candidates = typeof p.candidates === 'string' ? JSON.parse(p.candidates) : (p.candidates || []); } catch(_) {}
+        let maxScore = 0;
+        candidates.forEach(c => { if (c.composite > maxScore) maxScore = c.composite; });
+        if (maxScore === 0) maxScore = 1;
+        const labels = ['browser','data','general','history'];
+        labels.forEach(l => {
+          const dot = document.getElementById('voteDot-' + l);
+          if (dot) dot.setAttribute('fill', 'var(--warn)');
+          const bar = document.getElementById('voteBar-' + l);
+          if (bar) bar.setAttribute('width', '0');
+          const score = document.getElementById('voteScore-' + l);
+          if (score) score.textContent = '-';
+        });
+        candidates.forEach((c, i) => {
+          setTimeout(() => {
+            const label = c.candidate;
+            const barWidth = (c.composite / maxScore * 200).toFixed(1);
+            const bar = document.getElementById('voteBar-' + label);
+            if (bar) {
+              bar.setAttribute('width', barWidth);
+              bar.setAttribute('fill', label === winner ? 'var(--brand)' : 'var(--muted)');
+              bar.style.opacity = label === winner ? '0.9' : '0.5';
+            }
+            const score = document.getElementById('voteScore-' + label);
+            if (score) {
+              score.textContent = c.composite.toFixed(3);
+              score.style.fontWeight = label === winner ? '600' : '400';
+              score.style.fill = label === winner ? 'var(--brand)' : 'var(--muted)';
+            }
+            const dot = document.getElementById('voteDot-' + label);
+            if (dot) dot.setAttribute('fill', label === winner ? 'var(--ok)' : 'var(--muted)');
+            if (dot) {
+              const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+              ring.setAttribute('cx', dot.getAttribute('cx'));
+              ring.setAttribute('cy', dot.getAttribute('cy'));
+              ring.setAttribute('class', 'vote-ring');
+              dot.parentNode.appendChild(ring);
+              setTimeout(() => ring.remove(), 1000);
+            }
+          }, i * 300 + 200);
+        });
+        setTimeout(() => {
+          const sub = document.getElementById('electionSubLabel');
+          if (sub) sub.textContent = winner + ' 当选管理者';
+          const handover = document.getElementById('electionHandover');
+          if (handover) {
+            handover.setAttribute('class', 'election-visible');
+            const prevEl = document.getElementById('handoverPrev');
+            const newEl = document.getElementById('handoverNew');
+            if (prevEl) prevEl.textContent = '上轮: ' + prev;
+            if (newEl) newEl.textContent = '新任: ' + winner;
+          }
+          const crown = document.getElementById('crownContainer');
+          if (crown) {
+            crown.innerHTML = '';
+            const crownEl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            crownEl.setAttribute('class', 'crown-anim');
+            crownEl.innerHTML = `
+              <path d="M-12,0 L-8,-10 L-4,-4 L0,-14 L4,-4 L8,-10 L12,0 Z"
+                    fill="var(--warn)" stroke="var(--brand)" stroke-width="1"/>
+              <circle cx="0" cy="-14" r="2" fill="var(--brand)"/>
+              <circle cx="-8" cy="-10" r="1.5" fill="var(--brand)"/>
+              <circle cx="8" cy="-10" r="1.5" fill="var(--brand)"/>
+            `;
+            crown.appendChild(crownEl);
+          }
+          const confetti = document.getElementById('confettiContainer');
+          if (confetti) {
+            confetti.innerHTML = '';
+            const colors = ['var(--brand)', 'var(--ok)', 'var(--warn)', 'var(--bad)'];
+            for (let j = 0; j < 12; j++) {
+              const c = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+              c.setAttribute('x', (300 + (Math.random() - 0.5) * 80).toFixed(0));
+              c.setAttribute('y', '0');
+              c.setAttribute('width', '4');
+              c.setAttribute('height', '8');
+              c.setAttribute('fill', colors[j % 4]);
+              c.setAttribute('class', 'confetti');
+              c.style.animationDelay = (j * 0.08) + 's';
+              confetti.appendChild(c);
+            }
+            setTimeout(() => { if (confetti) confetti.innerHTML = ''; }, 2000);
+          }
+          const winnerNode = document.getElementById('flow-' + winner);
+          if (winnerNode) {
+            winnerNode.setAttribute('class', 'flow-node active winner-glow');
+            setTimeout(() => winnerNode.setAttribute('class', 'flow-node idle'), 5000);
+          }
+        }, candidates.length * 300 + 600);
+      }
+
+      function flowFinish() {
+        const mgr = document.getElementById('flowMgr');
+        if (mgr) mgr.setAttribute('class', 'flow-node idle');
+        ['browser','data','general','history'].forEach(n => flowNode(n, false));
+        flowPhase('已结束');
+      }
+
+      function flowUpdateScores() {
+        fetch('/api/agents/stats').then(r => r.json()).then(data => {
+          (data.agents || []).forEach(a => {
+            const el = document.getElementById('flow-score-' + a.label);
+            if (el) el.textContent = a.creditScore;
+          });
+        }).catch(() => {});
+      }
+
+      function setPhase(active, doneUpTo) {
+        document.querySelectorAll('#loopStrip .phase').forEach((p, i) => {
+          p.classList.remove('active', 'done');
+          if (doneUpTo !== undefined && i <= doneUpTo) p.classList.add('done');
+          else if (i === active) p.classList.add('active');
+        });
+      }
+
+      /* ---- 导出 ---- */
+      function exportResult() {
+        if (!lastResult) return;
+        const format = document.getElementById('exportFormat').value;
+        const url = '/api/export/preview?format=' + format
+          + '&goal=' + encodeURIComponent(lastGoal)
+          + '&result=' + encodeURIComponent(lastResult.finalAnswer || lastResult)
+          + '&termination=' + encodeURIComponent(lastResult.termination || 'DONE');
+        window.open(url, '_blank');
+      }
+
+      /* ---- 后端应用启动（幂等确保运行） ---- */
+      let appPollTimer = null;
+      function startBackendApp() {
+        const btn = document.getElementById('appBtn');
+        const el = document.getElementById('appStatus');
+        if (appPollTimer) { clearInterval(appPollTimer); appPollTimer = null; }
+        btn.disabled = true;
+        el.textContent = '检测后端应用…';
+        el.className = 'ev-status checking';
+        fetch('/api/app/start', { method: 'POST' })
+          .then(r => r.json())
+          .then(j => { showAppOk(j); btn.disabled = false; })
+          .catch(() => {
+            let waited = 0;
+            el.className = 'ev-status app-bad';
+            el.textContent = '后端未运行，等待看门狗拉起…（已等 0s，也可手动双击 start-agent.bat）';
+            appPollTimer = setInterval(() => {
+              waited += 3;
+              fetch('/api/app/status')
+                .then(r => r.json())
+                .then(j => { clearInterval(appPollTimer); appPollTimer = null; showAppOk(j); btn.disabled = false; })
+                .catch(() => {
+                  el.textContent = `后端未运行，等待看门狗拉起…（已等 ${waited}s，也可手动双击 start-agent.bat）`;
+                  if (waited >= 180) {
+                    clearInterval(appPollTimer); appPollTimer = null;
+                    el.textContent = '等待超时（3 分钟）：请手动双击项目目录 start-agent.bat 启动';
+                    btn.disabled = false;
+                  }
+                });
+            }, 3000);
+          });
+      }
+
+      function showAppOk(j) {
+        const el = document.getElementById('appStatus');
+        const mins = j.uptimeMs != null ? Math.max(1, Math.round(j.uptimeMs / 60000)) : '?';
+        el.textContent = `后端应用运行中 · PID ${j.pid} · 端口 ${j.port} · 已运行约 ${mins} 分钟`;
+        el.className = 'ev-status app-ok';
+      }
+
+      /* ---- 卡片构造 ---- */
+      function goalCard(p) {
+        return baseCard('总体目标', '<span class="evt-tag">开始</span>', `
+          <div class="evt-body">${esc(p.goal || '')}</div>
+          <div class="cnt" style="margin-top:4px">runId: ${esc(p.runId || '')}</div>`, p.ts);
+      }
+
+      function planCard(p) {
+        const steps = (p.steps || []).map(s =>
+          `<li><span class="step-no">#${s.step}</span>${esc(s.goal)} <span class="evt-tag mut">${esc(s.worker || '自动分派')}</span></li>`).join('');
+        return baseCard('首轮计划', '<span class="evt-tag">规划</span>', `<ul class="step-list">${steps}</ul>`, p.ts);
+      }
+
+      function iterationCard(p) {
+        const d = p.decision || 'CONTINUE';
+        const cls = d === 'DONE' ? 'ok' : (d === 'ABORT' ? 'bad' : '');
+        const next = (p.nextSteps || []).map(s =>
+          `<li><span class="step-no">#${s.step}</span>${esc(s.goal)} <span class="evt-tag mut">${esc(s.worker || '自动分派')}</span></li>`).join('');
+        let body = `<div class="evt-body"><b>判定理由：</b>${esc(p.reason || '')}</div>`;
+        if (next) body += `<div style="margin-top:6px"><b style="font-size:13px">下一批步骤：</b><ul class="step-list">${next}</ul></div>`;
+        return baseCard(`第 ${p.iteration} 轮 · 观察与决策`, `<span class="evt-tag ${cls}">${d}</span>`, body, p.ts);
+      }
+
+      function handleStep(p) {
+        const key = 's' + p.step;
+        let card = stepCards[key];
+        const status = p.status || '';
+        const cls = status === 'SUCCESS' ? 'ok' : (status === 'FAILED' ? 'bad' : '');
+        const body = `
+          <div class="evt-body"><b>步骤 #${p.step}</b> · 执行者 <span class="evt-tag mut">${esc(p.worker || '')}</span></div>
+          ${p.output ? `<div class="out-box" id="out-${key}">${esc(p.output)}</div>
+            <button class="more-btn" onclick="toggleOut('out-${key}', this)">展开全部 ▾</button>` : ''}
+          ${p.reflections ? `<div class="cnt" style="margin-top:4px">反思增强 ${p.reflections} 次</div>` : ''}`;
+        if (card) {
+          card.innerHTML = cardInner(`执行步骤 #${p.step}`, `<span class="evt-tag ${cls}">${status}</span>`, body, p.ts);
+        } else {
+          card = addCard(baseCard(`执行步骤 #${p.step}`, `<span class="evt-tag ${cls}">${status}</span>`, body, p.ts));
+          stepCards[key] = card;
+        }
+      }
+
+      function reflectionCard(p) {
+        return baseCard('步骤反思', '<span class="evt-tag warn">反思</span>', `
+          <div class="evt-body"><b>批评：</b>${esc(p.critique || '')}</div>
+          <div class="evt-body" style="margin-top:4px"><b>下一步：</b>${esc(p.nextAction || '')}</div>`, p.ts);
+      }
+
+      function synthesisCard(p) {
+        return baseCard('最终汇总', '<span class="evt-tag">汇总</span>',
+          `<div class="out-box open">${esc(p.finalAnswer || '')}</div>`, p.ts, 'final-answer');
+      }
+
+      function roundValueCard(p) {
+        const score = p.valueScore || 0;
+        const scoreColor = score >= 70 ? 'var(--ok)' : score >= 40 ? 'var(--warn)' : 'var(--bad)';
+        const workers = Array.isArray(p.workers) ? p.workers.join(', ') : (p.workers || '');
+        return baseCard('轮次价值评估', `<span class="evt-tag" style="background:${scoreColor};color:#fff">价值 ${score}/100</span>`,
+          `<div class="evt-body">
+            <div>${esc(p.summary || '')}</div>
+            <div style="margin-top:6px;font-size:12px;color:var(--muted)">参与Agent: ${esc(workers)} | 成功率: ${p.successRate || 0}% | 信息产出: ${p.infoChars || 0}字符 | 反思: ${p.reflections || 0}次</div>
+           </div>`, p.ts, 'round-value');
+      }
+
+      function electionCard(p) {
+        const winner = p.winner || '-';
+        const prevManager = p.previousManager || '-';
+        const round = p.round || 0;
+        let candidates = [];
+        try { candidates = typeof p.candidates === 'string' ? JSON.parse(p.candidates) : (p.candidates || []); } catch(_) {}
+        const styleMap = { browser: '激进', data: '谨慎', general: '高效', history: '平衡' };
+        let rows = '';
+        if (Array.isArray(candidates) && candidates.length > 0) {
+          rows = candidates.map(c => {
+            const isWinner = c.candidate === winner;
+            const bg = isWinner ? 'background:rgba(47,107,255,0.1);font-weight:600' : '';
+            const crown = isWinner ? ' <span style="color:var(--brand)">当选</span>' : '';
+            const style = styleMap[c.candidate] || '';
+            return `<tr style="${bg}">
+              <td style="padding:4px 8px">${esc(c.candidate)}${crown}<span style="font-size:11px;color:var(--muted);margin-left:4px">${style}</span></td>
+              <td style="padding:4px 8px;text-align:center">${c.composite || 0}</td>
+              <td style="padding:4px 8px;text-align:center">${c.creditScore || 0}</td>
+              <td style="padding:4px 8px;text-align:center">${c.successRate != null ? (c.successRate * 100).toFixed(0) + '%' : '-'}</td>
+              <td style="padding:4px 8px;text-align:center">${c.timeScore != null ? c.timeScore.toFixed(2) : '-'}</td>
+              <td style="padding:4px 8px;text-align:center">${c.balanceScore != null ? c.balanceScore.toFixed(2) : '-'}</td>
+            </tr>`;
+          }).join('');
+        } else {
+          rows = '<tr><td colspan="6" style="padding:8px;text-align:center;color:var(--muted)">无候选人数据</td></tr>';
+        }
+        return baseCard(
+          `第${round}轮管理者选举`,
+          `<span class="evt-tag" style="background:var(--brand);color:#fff">${esc(winner)} 当选</span>`,
+          `<div class="evt-body" style="margin-bottom:8px">
+            上轮管理者: <b>${esc(prevManager)}</b> → 新任管理者: <b style="color:var(--brand)">${esc(winner)}</b>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+            <thead>
+              <tr style="background:var(--bg);color:var(--muted);text-align:left">
+                <th style="padding:6px 8px">候选人</th>
+                <th style="padding:6px 8px;text-align:center">综合分</th>
+                <th style="padding:6px 8px;text-align:center">信用分</th>
+                <th style="padding:6px 8px;text-align:center">成功率</th>
+                <th style="padding:6px 8px;text-align:center">时效分</th>
+                <th style="padding:6px 8px;text-align:center">均衡分</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>`,
+          p.ts, 'election'
+        );
+      }
+
+      function completedCard(p) {
+        const st = p.stats || {};
+        const term = { DONE: '目标达成', ABORT: '目标无法达成（中止）', MAX_ITERATIONS: '达到轮数上限', CANCELLED: '人工停止', DECISION_ERROR: '决策调用失败', PLAN_EMPTY: '无法拆解目标' }[p.termination] || p.termination;
+        const el = (p.election || {});
+        return baseCard('运行完成', '<span class="evt-tag ok">完成</span>', `
+          <div class="evt-body">
+            递归循环 <b>${p.iterations || '-'}</b> 轮 · 终止状态 <b>${esc(term)}</b><br>
+            步骤统计：成功 ${st.success ?? '-'} / 失败 ${st.failed ?? '-'} / 反思 ${st.reflections ?? '-'}<br>
+            本轮管理者当选：<b>${esc(el.winner || '-')}</b>
+          </div>`, p.ts);
+      }
+
+      function failedCard(p) {
+        return baseCard('运行失败', '<span class="evt-tag bad">失败</span>',
+          `<div class="evt-body">${esc(p.error || '')}</div>`, p.ts);
+      }
+
+      function addWave(p) {
+        waveIdx++;
+        const div = document.createElement('div');
+        div.className = 'wave-divider';
+        div.id = 'wave-' + (p.wave ?? waveIdx);
+        div.innerHTML = `<span>第 ${p.wave ?? waveIdx} 波执行 · 步骤 ${(p.stepNums || []).join(', ') || ''}</span>`;
+        document.getElementById('timeline').appendChild(div);
+        return div;
+      }
+
+      function markWaveDone(p) {
+        const el = document.getElementById('wave-' + (p.wave ?? ''));
+        if (el) el.innerHTML = `<span style="color:var(--ok)">✓ 第 ${p.wave} 波完成</span>`;
+      }
+
+      function cardInner(title, tagHtml, bodyHtml, ts, extraCls) {
+        return `<div class="evt-head"><span class="evt-title">${title}</span>${tagHtml}
+          <span class="evt-time">${fmtTime(ts)}</span></div>${bodyHtml}`;
+      }
+
+      function baseCard(title, tagHtml, bodyHtml, ts, extraCls) {
+        const div = document.createElement('div');
+        div.className = 'evt-card' + (extraCls ? ' ' + extraCls : '');
+        div.innerHTML = cardInner(title, tagHtml, bodyHtml, ts);
+        document.getElementById('timeline').appendChild(div);
+        return div;
+      }
+
+      function addCard(card, scroll) {
+        if (scroll) document.getElementById('timeline').appendChild(card);
+        return card;
+      }
+
+      function toggleOut(id, btn) {
+        const el = document.getElementById(id);
+        if (el.classList.toggle('open')) btn.textContent = '收起 ▴';
+        else btn.textContent = '展开全部 ▾';
+      }
+
+      /* ---- 工具守护卡片 ---- */
+      function toolCallCard(p) {
+        const reqTag = p.requiresApproval ? '<span class="evt-tag warn">需审批</span>' : '<span class="evt-tag ok">放行</span>';
+        return baseCard('工具调用', reqTag, `<div class="evt-body">
+          <b>${esc(p.tool)}</b> <span class="evt-tag mut">${esc(p.args || '')}</span></div>`, p.ts);
+      }
+
+      function approvalCard(p) {
+        const rid = esc(p.requestId);
+        const body = `<div class="evt-body"><b style="color:var(--bad)">⚠️ 人工审批</b>
+          工具 <b>${esc(p.tool)}</b> 正在等待您的裁决，执行将阻塞直至通过。</div>
+          <div class="cnt" style="margin:4px 0">入参：${esc(p.args || '')}</div>
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <button class="ok-btn" onclick="decideApproval('${rid}', true)">✓ 批准执行</button>
+            <button class="bad-btn" onclick="decideApproval('${rid}', false)">✕ 拒绝</button>
+          </div>`;
+        return baseCard('工具审批', '<span class="evt-tag bad">待裁决</span>', body, p.ts);
+      }
+
+      function toolDecisionCard(p) {
+        const ok = p.granted;
+        return baseCard('审批结果', `<span class="evt-tag ${ok ? 'ok' : 'bad'}">${ok ? '已批准' : '已拒绝'}</span>`,
+          `<div class="evt-body">工具 <b>${esc(p.tool)}</b>：${ok ? '已放行，继续执行。' : '已被拒绝，本次调用终止。'}</div>`, p.ts);
+      }
+
+      function toolResultCard(p) {
+        const cls = p.status === 'SUCCESS' ? 'ok' : (p.status === 'TIMEOUT' || p.status === 'ERROR' ? 'bad' : '');
+        return baseCard('工具结果', `<span class="evt-tag ${cls}">${esc(p.status || '')}</span>`,
+          `<div class="out-box">${esc(p.output || '(无输出)')}</div>`, p.ts);
+      }
+
+      function decideApproval(rid, approve) {
+        fetch('/api/approvals/' + encodeURIComponent(rid) + (approve ? '/approve' : '/reject'), { method: 'POST' })
+          .then(r => r.json())
+          .then(j => { if (!j.applied) setStatus('该请求已超时或已裁决', false); });
+      }
+
+      function fmtTime(ts) { return ts ? new Date(ts).toLocaleTimeString() : ''; }
+      function fmtMs(ms) {
+        const n = Number(ms) || 0;
+        return n >= 1000 ? (n / 1000).toFixed(1) + 's' : n + 'ms';
+      }
+
+      /* ---- 经验沉淀 ---- */
+      function loadExperiences() {
+        fetch('/api/experiences')
+          .then(r => r.json())
+          .then(list => renderExperiences(list || []))
+          .catch(() => {});
+      }
+
+      function renderExperiences(list) {
+        const box = document.getElementById('expList');
+        const visible = list.filter(e => e.approved !== 'REJECTED');
+        if (!visible.length) { box.innerHTML = '<p class="muted">暂无经验，完成一次执行后自动收集。</p>'; return; }
+        box.innerHTML = visible.map(e => {
+          const typeName = e.type === 'PITFALL' ? '教训' : '经验';
+          let state;
+          if (e.quality) state = '<span class="evt-tag ok">优质经验</span>';
+          else if (e.approved === 'APPROVED') state = `<span class="evt-tag">已认可 · 待重复（${e.repeatCount}/2）</span>`;
+          else if (e.approved === 'REJECTED') state = '<span class="evt-tag bad">已否决</span>';
+          else if (e.repeatCount >= 2) state = '<span class="evt-tag warn">重复达标 · 待认可</span>';
+          else state = `<span class="evt-tag mut">候选（${e.repeatCount}/2）</span>`;
+          const actions = e.approved === 'REJECTED' ? '' :
+            `<div class="exp-actions">
+               <button class="ok-btn" onclick="approveExp('${e.id}')">认可</button>
+               <button class="bad-btn" onclick="rejectExp('${e.id}')">否决</button>
+             </div>`;
+          return `<div class="exp-item${e.quality ? ' quality' : ''}">
+            <div class="exp-head"><span class="evt-tag mut">${typeName}</span>${state}
+              <span class="cnt">重复 ${e.repeatCount} 次</span></div>
+            <div class="exp-name">${esc(e.name || '')}</div>
+            <div class="exp-content">${esc(e.content || '')}</div>
+            <div class="exp-meta">${actions}</div>
+          </div>`;
+        }).join('');
+      }
+
+      function approveExp(id) {
+        fetch('/api/experiences/' + id + '/approve', { method: 'POST' })
+          .then(() => loadExperiences()).catch(() => {});
+      }
+      function rejectExp(id) {
+        fetch('/api/experiences/' + id + '/reject', { method: 'POST' })
+          .then(() => loadExperiences()).catch(() => {});
+      }
+
+      /* ---- Agent 状态面板 ---- */
+      function loadAgentStatus() {
+        Promise.all([
+          fetch('/api/agents/capabilities').then(r => r.json()).catch(() => []),
+          fetch('/api/agents/stats').then(r => r.json()).catch(() => ({})),
+          fetch('/api/agents/manager').then(r => r.json()).catch(() => ({}))
+        ]).then(([caps, stats, mgr]) => {
+          renderAgentStatus(caps, stats);
+          const mgrEl = document.getElementById('mgrRef');
+          if (mgrEl) mgrEl.textContent = mgr.currentManager || '-';
+          const mgrStatus = document.getElementById('mgrStatus');
+          if (mgrStatus) {
+            const anyWorking = Object.values(stats).some(s => s && s.status === 'working');
+            mgrStatus.className = 'agent-status ' + (anyWorking ? 'working' : 'idle');
+            mgrStatus.textContent = anyWorking ? '调度中' : '空闲';
           }
         });
       }
-      const comment = (card.querySelector('.anno-comment') || {}).value || '';
-      fetch('/api/agent/annotations/item', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemId: itemId, verdict: verdict, corrections: corrections, comment: comment })
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (j) {
-          card.style.borderColor = 'var(--ok)';
-          card.insertAdjacentHTML('beforeend', '<p class="toast">已提交' + (j.rulesCreated && j.rulesCreated.length ? '，沉淀规则「' + j.rulesCreated.join(', ') + '」' : '') + '</p>');
-        })
-        .catch(function (e) { alert('提交失败：' + e); });
-    }
 
-    // ---------- 决策结果标注 ----------
-    function loadDecisions() {
-      const btn = document.getElementById('loadDecisionsBtn');
-      const st = document.getElementById('decisionsStatus');
-      const cont = document.getElementById('decisions');
-      btn.disabled = true; st.textContent = '加载中...';
-      fetch('/api/agent/decisions/recent?limit=30')
-        .then(function (r) { return r.json(); })
-        .then(function (list) {
-          cont.innerHTML = '';
-          if (!list.length) { cont.innerHTML = '<p class="muted">暂无决策，先运行一次筛选任务（POST /api/filter/tasks/run）。</p>'; return; }
-          list.forEach(renderDecision);
-          st.textContent = '共 ' + list.length + ' 条';
-        })
-        .catch(function (e) { st.textContent = '加载失败：' + e; })
-        .finally(function () { btn.disabled = false; });
-    }
-
-    function renderDecision(d) {
-      const el = document.createElement('div');
-      el.className = 'decision';
-      el.setAttribute('data-decision', d.id);
-      const content = safeParse(d.itemContent);
-      let brief = '';
-      if (Array.isArray(content)) brief = JSON.stringify(content).slice(0, 160);
-      else if (typeof content === 'object') brief = JSON.stringify(content).slice(0, 160);
-      else brief = String(content || '').slice(0, 160);
-      el.innerHTML = '<div class="dhead">'
-        + '<span class="badge ' + (d.passed ? 'pass' : 'reject') + '">' + (d.passed ? 'PASS' : 'REJECT') + '</span>'
-        + '<span class="muted">决策#' + d.id + '</span>'
-        + '<span class="muted">任务 ' + esc(d.taskId || '').slice(0, 8) + '</span>'
-        + '<span class="muted">数据 ' + esc(d.itemId || '').slice(0, 8) + '</span>'
-        + '</div>'
-        + '<div class="muted" style="font-size:12.5px;margin-bottom:6px">' + esc(brief) + '</div>'
-        + '<div class="seg small">'
-        + '<button onclick="submitDecision(' + d.id + ',true)">决策正确</button>'
-        + '<button onclick="submitDecision(' + d.id + ',false)">决策错误</button>'
-        + '</div>';
-      document.getElementById('decisions').appendChild(el);
-    }
-
-    function submitDecision(id, correct) {
-      const d = JSON.parse(document.querySelector('[data-decision="' + id + '"]').getAttribute('data-d') || 'null');
-      fetch('/api/agent/annotations/decision', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taskId: null, itemId: null, passed: false, correct: correct, comment: '' })
-      })
-        .then(function (r) { return r.json(); })
-        .then(function () {
-          const el = document.querySelector('[data-decision="' + id + '"]');
-          el.style.borderColor = 'var(--ok)';
-          el.insertAdjacentHTML('beforeend', '<p class="toast">已提交</p>');
-        })
-        .catch(function (e) { alert('提交失败：' + e); });
-    }
-
-    // ---------- 规则查看 ----------
-    function loadRules() {
-      fetch('/api/agent/annotations/rules')
-        .then(function (r) { return r.json(); })
-        .then(function (list) {
-          const cont = document.getElementById('rules');
-          if (!list.length) { cont.innerHTML = '<p class="muted">尚无沉淀规则，先对条目做「错误」标注并纠错。</p>'; return; }
-          let html = '<table class="fields"><tr><th>字段</th><th>原始值</th><th>纠正值</th><th>来源数据</th></tr>';
-          list.forEach(function (r) {
-            html += '<tr><td>' + esc(r.fieldName) + '</td><td>' + esc(r.rawValue) + '</td><td><b>' + esc(r.correctedValue) + '</b></td><td class="muted">' + esc(r.sourceItemId || '').slice(0, 8) + '</td></tr>';
-          });
-          html += '</table>';
-          cont.innerHTML = html;
-        })
-        .catch(function (e) { document.getElementById('rules').innerHTML = '<p class="toast err">加载失败：' + e + '</p>'; });
-    }
-
-    // ---------- 操作级标注 ----------
-    function submitAnnotate() {
-      const goal = document.getElementById('annoGoal').value.trim();
-      const comment = document.getElementById('annoComment').value.trim();
-      const toast = document.getElementById('annoToast');
-      const annoBtn = document.getElementById('annoBtn');
-      const statusEl = document.getElementById('annoStatus');
-      if (!goal) { toast.className = 'toast err'; toast.textContent = '请填写操作 / 目标描述'; return; }
-      annoBtn.disabled = true; statusEl.textContent = '提交中...';
-      fetch('/api/agent/annotations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goal: goal, positive: polarity, comment: comment })
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (j) {
-          toast.className = 'toast'; toast.textContent = '标注已写入知识图谱'; statusEl.textContent = '';
-          document.getElementById('annoGoal').value = ''; document.getElementById('annoComment').value = '';
-        })
-        .catch(function (err) {
-          toast.className = 'toast err'; toast.textContent = '标注提交失败：' + err; statusEl.textContent = '';
-        })
-        .finally(function () { annoBtn.disabled = false; });
-    }
-
-    // ---------- 系统洞察 ----------
-    function fmtMs(ms) {
-      const n = Number(ms) || 0;
-      return n >= 1000 ? (n / 1000).toFixed(1) + 's' : n + 'ms';
-    }
-
-    function refreshInsight() {
-      loadInsight();
-      loadElections();
-      loadAllocations();
-      loadAuditLogs('');
-      renderEventsSchema();
-    }
-
-    function loadInsight() {
-      const st = document.getElementById('insightStatus');
-      st.textContent = '加载中...';
-      Promise.all([
-        fetch('/api/agents/capabilities').then(function (r) { return r.json(); }),
-        fetch('/api/agents/credit-scores').then(function (r) { return r.json(); }),
-        fetch('/api/agents/stats').then(function (r) { return r.json(); }),
-        fetch('/api/agents/manager').then(function (r) { return r.json(); })
-      ]).then(function (res) {
-        const capabilities = res[0], scores = res[1], stats = res[2], manager = res[3];
-        renderManager(manager);
-        renderCapabilities(capabilities, scores, stats);
-        st.textContent = '已加载 ' + capabilities.length + ' 个能力';
-      }).catch(function (e) { st.textContent = '加载失败：' + e; });
-    }
-
-    function lookup(obj, key) {
-      if (obj[key] !== undefined) return obj[key];
-      const lk = String(key).toLowerCase();
-      for (const k of Object.keys(obj)) { if (String(k).toLowerCase() === lk) return obj[k]; }
-      return undefined;
-    }
-
-    function renderManager(manager) {
-      document.getElementById('manager').innerHTML =
-        '<div class="kv">当前管理者（下一轮）：<b style="color:var(--brand)">' + esc(manager.currentManager) + '</b></div>';
-    }
-
-    function renderCapabilities(capabilities, scores, stats) {
-      const cont = document.getElementById('capabilities');
-      if (!capabilities.length) { cont.innerHTML = '<p class="muted">无已注册能力</p>'; return; }
-      let html = '<table class="fields"><tr><th>能力</th><th>描述</th><th>信用分</th><th>分配次数</th><th>成功率</th><th>平均耗时</th></tr>';
-      capabilities.forEach(function (c) {
-        const label = c.label;
-        const s = lookup(stats, label) || {};
-        const score = lookup(scores, label);
-        html += '<tr>'
-          + '<td><b>' + esc(label) + '</b></td>'
-          + '<td class="muted">' + esc(c.description || '') + '</td>'
-          + '<td>' + (score !== undefined ? score : 50) + '</td>'
-          + '<td>' + (s.allocationCount !== undefined ? s.allocationCount : 0) + '</td>'
-          + '<td>' + (s.successRate !== undefined ? Math.round(s.successRate * 100) + '%' : '—') + '</td>'
-          + '<td>' + (s.avgDurationMs !== undefined ? esc(fmtMs(s.avgDurationMs)) : '—') + '</td>'
-          + '</tr>';
-      });
-      html += '</table>';
-      cont.innerHTML = html;
-    }
-
-    function loadElections() {
-      fetch('/api/agents/elections?limit=20')
-        .then(function (r) { return r.json(); })
-        .then(function (list) {
-          const cont = document.getElementById('elections');
-          if (!list.length) { cont.innerHTML = '<p class="muted">暂无选举记录，运行一次任务后自动产生。</p>'; return; }
-          let html = '';
-          list.forEach(function (e) {
-            const candArr = Array.isArray(safeParse(e.candidates)) ? safeParse(e.candidates) : [];
-            html += '<div class="log">'
-              + '<div class="lhead">'
-              + '<b>第 ' + esc(e.round) + ' 轮</b>'
-              + '<span class="badge ingest">' + esc(e.winner || '—') + ' 当选</span>'
-              + '<span class="muted">本轮管理者：' + esc(e.managerRef || '—') + '</span>'
-              + '<span class="muted">' + esc(e.createdAt || '') + '</span>'
-              + '</div>';
-            if (candArr.length) {
-              html += '<div style="margin-top:6px">';
-              candArr.forEach(function (v) {
-                const win = v.candidate === e.winner;
-                html += '<span class="chip' + (win ? ' active' : '') + '" title="信用分=' + v.creditScore + ' · 成功率=' + v.successRate + ' · 耗时=' + v.timeScore + ' · 均衡=' + v.balanceScore + ' · term=' + v.scoreTerm + '">'
-                  + esc(v.candidate) + ' ' + esc(v.composite) + '</span>';
-              });
-              html += '</div>';
-            }
-            html += '</div>';
-          });
-          cont.innerHTML = html;
-        })
-        .catch(function (e) { document.getElementById('elections').innerHTML = '<p class="toast err">加载失败：' + e + '</p>'; });
-    }
-
-    function loadAllocations() {
-      fetch('/api/agents/allocations?limit=20')
-        .then(function (r) { return r.json(); })
-        .then(function (list) {
-          const cont = document.getElementById('allocations');
-          if (!list.length) { cont.innerHTML = '<p class="muted">暂无分配记录。</p>'; return; }
-          let html = '';
-          list.forEach(function (a) {
-            const ok = a.status === 'SUCCESS';
-            html += '<div class="log">'
-              + '<div class="lhead">'
-              + '<span class="badge ' + (ok ? 'clean' : 'decision') + '">' + esc(a.status || '') + '</span>'
-              + '<b>' + esc(a.capability || '') + '</b>'
-              + '<span class="muted">第 ' + esc(a.round) + ' 轮 / 步 ' + esc(a.stepNo) + '</span>'
-              + '<span class="muted">' + esc(fmtMs(a.durationMs)) + '</span>'
-              + '</div>'
-              + '<div class="kv">' + esc(a.subtaskGoal || '') + '</div>'
-              + '</div>';
-          });
-          cont.innerHTML = html;
-        })
-        .catch(function (e) { document.getElementById('allocations').innerHTML = '<p class="toast err">加载失败：' + e + '</p>'; });
-    }
-
-    const AUDIT_CATEGORIES = [
-      { key: '', label: '全部' },
-      { key: 'INGEST', label: '接入' },
-      { key: 'CLEAN', label: '清洗' },
-      { key: 'DECISION', label: '决策' },
-      { key: 'ANNOTATION', label: '标注' }
-    ];
-
-    function renderAuditFilters(active) {
-      let html = '';
-      AUDIT_CATEGORIES.forEach(function (c) {
-        html += '<span class="chip' + (c.key === active ? ' active' : '') + '" onclick="loadAuditLogs(\'' + c.key + '\')">' + c.label + '</span>';
-      });
-      document.getElementById('auditFilters').innerHTML = html;
-    }
-
-    function loadAuditLogs(category) {
-      const cat = category === undefined ? '' : category;
-      renderAuditFilters(cat);
-      const url = '/api/audit?limit=100' + (cat ? '&category=' + encodeURIComponent(cat) : '');
-      fetch(url)
-        .then(function (r) { return r.json(); })
-        .then(function (list) {
-          const cont = document.getElementById('audit');
-          if (!list.length) { cont.innerHTML = '<p class="muted">暂无审计日志。</p>'; return; }
-          let html = '';
-          list.forEach(function (l) {
-            html += '<div class="log">'
-              + '<div class="lhead">'
-              + '<span class="badge ' + esc(String(l.category || '').toLowerCase()) + '">' + esc(l.category || '') + '</span>'
-              + '<b>' + esc(l.action || '') + '</b>'
-              + '<span class="muted">' + esc(l.entityType || '') + '#' + esc(String(l.entityId || '').slice(0, 8)) + '</span>'
-              + '<span class="muted">' + esc(l.actor || '') + '</span>'
-              + '<span class="muted">' + esc(l.createdAt || '') + '</span>'
-              + '</div>'
-              + '<div>' + esc(l.summary || '') + '</div>'
-              + (l.detail ? '<div class="kv">' + esc(safeJsonSummary(l.detail)) + '</div>' : '')
-              + '</div>';
-          });
-          cont.innerHTML = html;
-        })
-        .catch(function (e) { document.getElementById('audit').innerHTML = '<p class="toast err">加载失败：' + e + '</p>'; });
-    }
-
-    function safeJsonSummary(s) {
-      let d;
-      try { d = JSON.parse(typeof s === 'string' ? s : JSON.stringify(s)); } catch (e) { return s; }
-      if (typeof d !== 'object' || d === null) return String(d);
-      const items = [];
-      for (const k of Object.keys(d)) {
-        let v = d[k];
-        if (typeof v === 'object') v = JSON.stringify(v);
-        items.push(k + '=' + v);
+      function renderAgentStatus(caps, stats) {
+        const grid = document.getElementById('agentGrid');
+        if (!caps || caps.length === 0) {
+          grid.innerHTML = '<p class="muted">无法加载 Agent 状态</p>';
+          return;
+        }
+        grid.innerHTML = caps.map(c => {
+          const s = stats[c.label] || {};
+          const successRate = s.successRate != null ? (s.successRate * 100).toFixed(0) : '-';
+          const avgDuration = s.avgDurationMs != null ? (s.avgDurationMs / 1000).toFixed(1) : '-';
+          const creditScore = s.creditScore != null ? s.creditScore : 50;
+          const creditGrade = getCreditGrade(creditScore);
+          const status = s.status || 'idle';
+          const statusClass = status === 'working' ? 'working' : status === 'error' ? 'error' : 'idle';
+          const statusText = status === 'working' ? '工作中' : status === 'error' ? '错误' : '空闲';
+          const taskInfo = s.currentTask ? `<div class="agent-task">📋 ${esc(s.currentTask.substring(0, 60))}</div>` : '';
+          const styleKey = (c.styleKey || 'BALANCED').toLowerCase();
+          const styleName = c.style || '平衡';
+          return `<div class="agent-card">
+            <div class="agent-header">
+              <span class="agent-name">${esc(c.label)}</span>
+              <span class="style-badge style-${styleKey}">${styleName}</span>
+              <span class="agent-status ${statusClass}">${statusText}</span>
+              <span class="agent-credit">
+                <span class="credit-badge credit-${creditGrade.toLowerCase()}">${creditGrade}</span>
+                ${creditScore}
+              </span>
+            </div>
+            <div class="agent-desc">${esc(c.description || '')}</div>
+            ${taskInfo}
+            <div class="agent-stats">
+              <div class="agent-stat">
+                <div class="agent-stat-value">${successRate}%</div>
+                <div class="agent-stat-label">成功率</div>
+              </div>
+              <div class="agent-stat">
+                <div class="agent-stat-value">${avgDuration}s</div>
+                <div class="agent-stat-label">平均耗时</div>
+              </div>
+              <div class="agent-stat">
+                <div class="agent-stat-value">${s.allocationCount || 0}</div>
+                <div class="agent-stat-label">分配次数</div>
+              </div>
+            </div>
+          </div>`;
+        }).join('');
       }
-      return items.join('  ');
-    }
 
-    function renderEventsSchema() {
-      const schema = [
-        ['run:started', '一次运行开始，含 runId 与目标'],
-        ['run:plan', '首轮：管理者完成目标拆解，产出执行计划'],
-        ['run:iteration', '递归主循环第2轮起的观察与决策（DONE/CONTINUE/ABORT + 下一批步骤）'],
-        ['wave:started', '一波（轮）任务开始'],
-        ['wave:completed', '一波任务结束'],
-        ['step:status', '单个分配步骤的状态（能力路由/结果）'],
-        ['step:reflection', '步骤反思增强'],
-        ['run:synthesis', '汇总各步骤产出'],
-        ['run:elected', '本轮结束完成选举，产出当选管理者'],
-        ['run:completed', '运行成功结束'],
-        ['run:failed', '运行失败']
+      function getCreditGrade(score) {
+        if (score >= 950) return 'SSS';
+        if (score >= 850) return 'SS';
+        if (score >= 700) return 'S';
+        if (score >= 550) return 'A';
+        if (score >= 400) return 'B';
+        if (score >= 200) return 'C';
+        return 'D';
+      }
+
+      function startAgentPolling() {
+        if (agentPollTimer) clearInterval(agentPollTimer);
+        loadAgentStatus();
+        agentPollTimer = setInterval(loadAgentStatus, 5000);
+      }
+
+      function resetCreditScores() {
+        if (!confirm('确认重置所有 Agent 信用分到初始值 50？')) return;
+        fetch('/api/agents/credit-scores/reset', { method: 'POST' })
+          .then(r => r.json())
+          .then(() => loadAgentStatus())
+          .catch(() => alert('重置失败'));
+      }
+
+      /* ---- 文件上传与解析 ---- */
+      let parsedFile = null;
+
+      (function initUpload() {
+        const zone = document.getElementById('uploadZone');
+        const input = document.getElementById('fileInput');
+        input.addEventListener('change', e => { if (e.target.files.length) uploadFile(e.target.files[0]); });
+        zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+        zone.addEventListener('drop', e => {
+          e.preventDefault();
+          zone.classList.remove('dragover');
+          if (e.dataTransfer.files.length) uploadFile(e.dataTransfer.files[0]);
+        });
+      })();
+
+      function uploadFile(file) {
+        const info = document.getElementById('fileInfo');
+        const preview = document.getElementById('filePreview');
+        const meta = document.getElementById('fileMeta');
+        info.innerHTML = `<span class="file-badge">⏳ 解析中: ${esc(file.name)} …</span>`;
+        preview.className = 'file-preview';
+        preview.innerHTML = '';
+        meta.innerHTML = '';
+        const formData = new FormData();
+        formData.append('file', file);
+        fetch('/api/files/upload', { method: 'POST', body: formData })
+          .then(r => r.ok ? r.json() : r.json().then(j => { throw new Error(j.error || JSON.stringify(j)); }))
+          .then(j => {
+            parsedFile = j;
+            info.innerHTML = `<span class="file-badge">✅ ${esc(j.fileName)}
+              <span class="remove" onclick="removeFile()">✕</span></span>
+              <button onclick="sendFileToAgent()" style="background:var(--ok)">发送给 Agent</button>`;
+            preview.textContent = j.content;
+            preview.className = 'file-preview show';
+            const sizeKb = (j.fileSize / 1024).toFixed(1);
+            meta.innerHTML = `格式: <b>${esc(j.extension || '')}</b> · 解析器: ${esc(j.parser || '')} · 文件: ${sizeKb}KB · 提取文本: ${j.textLength} 字符`;
+          })
+          .catch(err => {
+            info.innerHTML = `<span class="file-badge" style="background:#fdeaea;color:var(--bad);border-color:#f5cccc">❌ 解析失败</span>`;
+            preview.textContent = err.message || '解析失败';
+            preview.className = 'file-preview show';
+            meta.innerHTML = '';
+          });
+      }
+
+      function removeFile() {
+        parsedFile = null;
+        document.getElementById('fileInfo').innerHTML = '';
+        document.getElementById('filePreview').className = 'file-preview';
+        document.getElementById('filePreview').innerHTML = '';
+        document.getElementById('fileMeta').innerHTML = '';
+        document.getElementById('fileInput').value = '';
+      }
+
+      function sendFileToAgent() {
+        if (!parsedFile) return;
+        const goalInput = document.getElementById('goal');
+        goalInput.value = '请分析上传的文件「' + parsedFile.fileName + '」的内容，' +
+          '总结关键信息并给出结构化摘要。data agent 负责解析数据内容，general agent 负责汇总输出。';
+        window.pendingFileContextId = parsedFile.fileContextId;
+        removeFile();
+        startRun();
+      }
+
+      /* ---- 历史回放 ---- */
+      function loadRunHistory() {
+        fetch('/api/agent/run/history?limit=20').then(r => r.json()).then(list => {
+          const box = document.getElementById('runHistory');
+          if (!Array.isArray(list) || !list.length) {
+            box.innerHTML = '<p class="muted">暂无历史。</p>';
+            return;
+          }
+          box.innerHTML = list.map(it => {
+            const term = it.termination || '';
+            const cls = term === 'DONE' ? 'ok' : (term && term !== 'FAILED' ? 'mut' : 'bad');
+            const ts = it.ts ? new Date(it.ts).toLocaleString() : '';
+            return `<div class="exp-item" style="cursor:pointer" onclick="playRunReplay('${esc(it.runId)}')">
+              <div class="exp-head">
+                <span class="exp-name">${term}</span>
+                <span class="evt-tag ${cls}">${term || '未知'}</span>
+              </div>
+              <div class="exp-content">${esc(it.goal || '')}</div>
+              <div class="exp-meta"><span class="cnt">${esc(ts)} · ${esc(String(it.runId).slice(0, 8))}</span></div>
+            </div>`;
+          }).join('');
+        }).catch(() => { document.getElementById('runHistory').innerHTML = '<p class="muted">加载历史失败。</p>'; });
+      }
+
+      function playRunReplay(runId) {
+        if (!runId) return;
+        setStatus('回放中', true);
+        currentRunId = runId;
+        document.getElementById('timeline').innerHTML = '';
+        stepCards = {};
+        waveIdx = 0;
+        fetch('/api/agent/run/replay/' + encodeURIComponent(runId)).then(r => r.json()).then(events => {
+          if (!Array.isArray(events)) return;
+          events.forEach(e => { const t = e.type; handleEvent(t, e); });
+          const last = events.filter(e => e.type === 'run:completed' || e.type === 'run:failed').pop();
+          if (!last) setStatus('已结束');
+        }).catch(() => setStatus('回放失败'));
+      }
+
+      /* ============ 数据标注（index.html） ============ */
+      function setPolarity(p) {
+        polarity = p;
+        const pos = document.getElementById('segPos');
+        const neg = document.getElementById('segNeg');
+        if (p) {
+          pos.className = 'rounded-lg bg-success px-3 py-1.5 text-xs font-medium text-white';
+          neg.className = 'rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground';
+        } else {
+          pos.className = 'rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground';
+          neg.className = 'rounded-lg bg-error px-3 py-1.5 text-xs font-medium text-white';
+        }
+      }
+
+      function loadItems() {
+        const btn = document.getElementById('loadItemsBtn');
+        const st = document.getElementById('itemsStatus');
+        const cont = document.getElementById('items');
+        btn.disabled = true; st.textContent = '加载中...';
+        fetch('/api/data?limit=50')
+          .then(function (r) { return r.json(); })
+          .then(function (list) {
+            cont.innerHTML = '';
+            if (!list.length) { cont.innerHTML = '<p class="text-xs text-muted-foreground">暂无数据，先通过「POST /api/data/file」导入。</p>'; return; }
+            list.forEach(renderItem);
+            st.textContent = '共 ' + list.length + ' 条';
+          })
+          .catch(function (e) { st.textContent = '加载失败：' + e; })
+          .finally(function () { btn.disabled = false; });
+      }
+
+      function renderItem(item) {
+        const raw = safeParse(item.content);
+        const cleaned = safeParse(item.cleanedContent || item.content);
+        const log = Array.isArray(safeParse(item.cleaningLog)) ? safeParse(item.cleaningLog) : [];
+        const changeByField = {};
+        log.forEach(function (c) { changeByField[c.field] = c; });
+
+        const el = document.createElement('div');
+        el.className = 'rounded-xl border border-border bg-background p-3';
+        el.setAttribute('data-item', item.id);
+
+        const sheet = cleaned._sheet || '';
+        const row = cleaned._row || '';
+        let head = '<div class="mb-2 flex flex-wrap items-center gap-2 text-sm font-medium text-foreground"><span>#' + esc(item.id).slice(0, 8) + '</span>';
+        if (sheet) head += '<span class="rounded-md bg-info-bg px-1.5 py-0.5 text-xs text-primary">' + esc(sheet) + '</span>';
+        if (row) head += '<span class="text-xs text-muted-foreground">行 ' + esc(row) + '</span>';
+        head += '<span class="text-xs text-muted-foreground">' + esc(item.sourceType || '') + '</span></div>';
+
+        let html = head + '<div class="mb-3 flex flex-wrap items-center gap-2">'
+          + '<span class="text-xs text-muted-foreground">评价：</span>'
+          + '<div class="inline-flex rounded-lg border border-border bg-muted p-0.5">'
+          + '  <button data-v="CORRECT" onclick="setItemVerdict(\'' + item.id + '\',\'CORRECT\')" class="rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">正确</button>'
+          + '  <button data-v="WRONG" onclick="setItemVerdict(\'' + item.id + '\',\'WRONG\')" class="rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">错误</button>'
+          + '  <button data-v="UNCERTAIN" onclick="setItemVerdict(\'' + item.id + '\',\'UNCERTAIN\')" class="rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">不确定</button>'
+          + '</div>'
+          + '<input type="text" class="anno-comment flex-1 min-w-[120px] rounded-lg border border-border bg-input px-2.5 py-1 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-ring" placeholder="备注（可选）">'
+          + '<button onclick="submitItemAnnotation(\'' + item.id + '\')" class="rounded-lg bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:opacity-90">提交</button>'
+          + '</div>';
+
+        html += '<div class="overflow-x-auto"><table class="w-full border-collapse text-xs"><thead><tr class="border-b border-border"><th class="py-1.5 pr-2 text-left font-medium text-muted-foreground" style="width:22%">字段</th><th class="py-1.5 pr-2 text-left font-medium text-muted-foreground" style="width:30%">原始值</th><th class="py-1.5 pr-2 text-left font-medium text-muted-foreground" style="width:34%">清洗后 / 纠正</th><th class="py-1.5 pr-2 text-left font-medium text-muted-foreground" style="width:14%">变更</th></tr></thead><tbody>';
+        for (const k of Object.keys(cleaned)) {
+          const isMeta = k === '_sheet' || k === '_row';
+          const isDerived = !(k in raw);
+          const rawVal = raw[k] !== undefined ? raw[k] : '';
+          const cleanedVal = cleaned[k] == null ? '' : cleaned[k];
+          const changed = !isDerived && rawVal !== cleanedVal;
+          const ch = changeByField[k];
+          let changeCell = '';
+          if (isDerived) changeCell = '<span class="inline-flex rounded-full bg-info-bg px-2 py-0.5 text-[10px] font-medium text-primary">派生</span>';
+          else if (changed) changeCell = '<span class="inline-flex rounded-full bg-warn-bg px-2 py-0.5 text-[10px] font-medium text-warn">' + esc(ch ? ch.rule : '改') + '</span>';
+          let valCell;
+          if (isMeta || isDerived) {
+            valCell = esc(cleanedVal);
+          } else {
+            valCell = '<input class="corr w-full rounded-md border border-border bg-input px-1.5 py-1 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring" data-field="' + esc(k) + '" data-raw="' + esc(rawVal) + '" data-cleaned="' + esc(cleanedVal) + '" value="' + esc(cleanedVal) + '" disabled>';
+          }
+          const rawCell = isDerived ? '<span class="text-muted-foreground">—</span>' : esc(rawVal);
+          html += '<tr class="border-b border-border last:border-0"><td class="py-1.5 pr-2 align-top">' + esc(k) + (isDerived ? ' <span class="text-muted-foreground">(派生)</span>' : '') + '</td>'
+            + '<td class="py-1.5 pr-2 align-top text-muted-foreground">' + rawCell + '</td><td class="py-1.5 pr-2 align-top">' + valCell + '</td><td class="py-1.5 pr-2 align-top">' + changeCell + '</td></tr>';
+        }
+        html += '</tbody></table></div>';
+        el.innerHTML = html;
+        document.getElementById('items').appendChild(el);
+      }
+
+      function setItemVerdict(itemId, verdict) {
+        const card = document.querySelector('[data-item="' + itemId + '"]');
+        card.querySelectorAll('[data-v]').forEach(function (b) {
+          const v = b.getAttribute('data-v');
+          if (v === verdict) {
+            b.className = 'rounded-md px-2.5 py-1 text-xs font-medium text-white ' + (v === 'CORRECT' ? 'bg-success' : v === 'WRONG' ? 'bg-error' : 'bg-warn');
+          } else {
+            b.className = 'rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground';
+          }
+        });
+        card.setAttribute('data-verdict', verdict);
+        const editable = verdict === 'WRONG';
+        card.querySelectorAll('input.corr').forEach(function (i) { i.disabled = !editable; });
+      }
+
+      function submitItemAnnotation(itemId) {
+        const card = document.querySelector('[data-item="' + itemId + '"]');
+        const verdict = card.getAttribute('data-verdict') || 'UNCERTAIN';
+        if (!card.getAttribute('data-verdict')) { alert('请先选择评价（正确/错误/不确定）'); return; }
+        let corrections = [];
+        if (verdict === 'WRONG') {
+          card.querySelectorAll('input.corr').forEach(function (i) {
+            const corrected = i.value;
+            const original = i.getAttribute('data-cleaned') || '';
+            if (corrected !== original) {
+              corrections.push({ field: i.getAttribute('data-field'), raw: i.getAttribute('data-raw') || '', corrected: corrected });
+            }
+          });
+        }
+        const comment = (card.querySelector('.anno-comment') || {}).value || '';
+        fetch('/api/agent/annotations/item', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ itemId: itemId, verdict: verdict, corrections: corrections, comment: comment })
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            card.style.borderColor = 'var(--dsh-success)';
+            card.insertAdjacentHTML('beforeend', '<p class="mt-2 text-xs text-success">已提交' + (j.rulesCreated && j.rulesCreated.length ? '，沉淀规则「' + j.rulesCreated.join(', ') + '」' : '') + '</p>');
+          })
+          .catch(function (e) { alert('提交失败：' + e); });
+      }
+
+      function loadDecisions() {
+        const btn = document.getElementById('loadDecisionsBtn');
+        const st = document.getElementById('decisionsStatus');
+        const cont = document.getElementById('decisions');
+        btn.disabled = true; st.textContent = '加载中...';
+        fetch('/api/agent/decisions/recent?limit=30')
+          .then(function (r) { return r.json(); })
+          .then(function (list) {
+            cont.innerHTML = '';
+            if (!list.length) { cont.innerHTML = '<p class="text-xs text-muted-foreground">暂无决策，先运行一次筛选任务（POST /api/filter/tasks/run）。</p>'; return; }
+            list.forEach(renderDecision);
+            st.textContent = '共 ' + list.length + ' 条';
+          })
+          .catch(function (e) { st.textContent = '加载失败：' + e; })
+          .finally(function () { btn.disabled = false; });
+      }
+
+      function renderDecision(d) {
+        const el = document.createElement('div');
+        el.className = 'rounded-xl border border-border bg-background p-3';
+        el.setAttribute('data-decision', d.id);
+        const content = safeParse(d.itemContent);
+        let brief = '';
+        if (Array.isArray(content)) brief = JSON.stringify(content).slice(0, 160);
+        else if (typeof content === 'object') brief = JSON.stringify(content).slice(0, 160);
+        else brief = String(content || '').slice(0, 160);
+        el.innerHTML = '<div class="mb-2 flex flex-wrap items-center gap-2">'
+          + '<span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ' + (d.passed ? 'bg-success-bg text-success' : 'bg-error-bg text-error') + '">' + (d.passed ? 'PASS' : 'REJECT') + '</span>'
+          + '<span class="text-xs text-muted-foreground">#' + d.id + '</span>'
+          + '<span class="text-xs text-muted-foreground">任务 ' + esc(d.taskId || '').slice(0, 8) + '</span>'
+          + '<span class="text-xs text-muted-foreground">数据 ' + esc(d.itemId || '').slice(0, 8) + '</span>'
+          + '</div>'
+          + '<div class="mb-2 text-xs text-muted-foreground">' + esc(brief) + '</div>'
+          + '<div class="inline-flex rounded-lg border border-border bg-muted p-0.5">'
+          + '<button onclick="submitDecision(' + d.id + ',true)" class="rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">决策正确</button>'
+          + '<button onclick="submitDecision(' + d.id + ',false)" class="rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">决策错误</button>'
+          + '</div>';
+        document.getElementById('decisions').appendChild(el);
+      }
+
+      function submitDecision(id, correct) {
+        fetch('/api/agent/annotations/decision', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ taskId: null, itemId: null, passed: false, correct: correct, comment: '' })
+        })
+          .then(function (r) { return r.json(); })
+          .then(function () {
+            const el = document.querySelector('[data-decision="' + id + '"]');
+            el.style.borderColor = 'var(--dsh-success)';
+            el.insertAdjacentHTML('beforeend', '<p class="mt-2 text-xs text-success">已提交</p>');
+          })
+          .catch(function (e) { alert('提交失败：' + e); });
+      }
+
+      function loadRules() {
+        fetch('/api/agent/annotations/rules')
+          .then(function (r) { return r.json(); })
+          .then(function (list) {
+            const cont = document.getElementById('rules');
+            if (!list.length) { cont.innerHTML = '<p class="text-xs text-muted-foreground">尚无沉淀规则，先对条目做「错误」标注并纠错。</p>'; return; }
+            let html = '<div class="overflow-x-auto"><table class="w-full border-collapse text-xs"><thead><tr class="border-b border-border"><th class="py-1.5 pr-2 text-left font-medium text-muted-foreground">字段</th><th class="py-1.5 pr-2 text-left font-medium text-muted-foreground">原始值</th><th class="py-1.5 pr-2 text-left font-medium text-muted-foreground">纠正值</th><th class="py-1.5 pr-2 text-left font-medium text-muted-foreground">来源</th></tr></thead><tbody>';
+            list.forEach(function (r) {
+              html += '<tr class="border-b border-border last:border-0"><td class="py-1.5 pr-2">' + esc(r.fieldName) + '</td><td class="py-1.5 pr-2 text-muted-foreground">' + esc(r.rawValue) + '</td><td class="py-1.5 pr-2 font-medium text-foreground">' + esc(r.correctedValue) + '</td><td class="py-1.5 pr-2 text-muted-foreground">' + esc(r.sourceItemId || '').slice(0, 8) + '</td></tr>';
+            });
+            html += '</tbody></table></div>';
+            cont.innerHTML = html;
+          })
+          .catch(function (e) { document.getElementById('rules').innerHTML = '<p class="text-xs text-error">加载失败：' + e + '</p>'; });
+      }
+
+      function submitAnnotate() {
+        const goal = document.getElementById('annoGoal').value.trim();
+        const comment = document.getElementById('annoComment').value.trim();
+        const toast = document.getElementById('annoToast');
+        const annoBtn = document.getElementById('annoBtn');
+        const statusEl = document.getElementById('annoStatus');
+        if (!goal) { toast.className = 'mt-2 min-h-[18px] text-xs text-error'; toast.textContent = '请填写操作 / 目标描述'; return; }
+        annoBtn.disabled = true; statusEl.textContent = '提交中...';
+        fetch('/api/agent/annotations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ goal: goal, positive: polarity, comment: comment })
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            toast.className = 'mt-2 min-h-[18px] text-xs text-success'; toast.textContent = '标注已写入知识图谱'; statusEl.textContent = '';
+            document.getElementById('annoGoal').value = ''; document.getElementById('annoComment').value = '';
+          })
+          .catch(function (err) {
+            toast.className = 'mt-2 min-h-[18px] text-xs text-error'; toast.textContent = '标注提交失败：' + err; statusEl.textContent = '';
+          })
+          .finally(function () { annoBtn.disabled = false; });
+      }
+
+      /* ============ 系统洞察（index.html） ============ */
+      function refreshInsight() {
+        loadInsight();
+        loadElections();
+        loadAllocations();
+        loadAuditLogs('');
+        renderEventsSchema();
+      }
+
+      function loadInsight() {
+        const st = document.getElementById('insightStatus');
+        st.textContent = '加载中...';
+        Promise.all([
+          fetch('/api/agents/capabilities').then(function (r) { return r.json(); }),
+          fetch('/api/agents/credit-scores').then(function (r) { return r.json(); }),
+          fetch('/api/agents/stats').then(function (r) { return r.json(); }),
+          fetch('/api/agents/manager').then(function (r) { return r.json(); })
+        ]).then(function (res) {
+          const capabilities = res[0], scores = res[1], stats = res[2], manager = res[3];
+          renderManager(manager);
+          renderCapabilities(capabilities, scores, stats);
+          st.textContent = '已加载 ' + capabilities.length + ' 个能力';
+        }).catch(function (e) { st.textContent = '加载失败：' + e; });
+      }
+
+      function lookup(obj, key) {
+        if (obj[key] !== undefined) return obj[key];
+        const lk = String(key).toLowerCase();
+        for (const k of Object.keys(obj)) { if (String(k).toLowerCase() === lk) return obj[k]; }
+        return undefined;
+      }
+
+      function renderManager(manager) {
+        document.getElementById('manager').innerHTML =
+          '<div class="inline-flex items-center gap-2 rounded-lg bg-info-bg px-3 py-1.5 text-xs"><span class="text-muted-foreground">当前管理者（下一轮）：</span><b class="text-primary">' + esc(manager.currentManager) + '</b></div>';
+      }
+
+      function renderCapabilities(capabilities, scores, stats) {
+        const cont = document.getElementById('capabilities');
+        if (!capabilities.length) { cont.innerHTML = '<p class="text-xs text-muted-foreground">无已注册能力</p>'; return; }
+        let html = '<div class="overflow-x-auto"><table class="w-full border-collapse text-xs"><thead><tr class="border-b border-border"><th class="py-1.5 pr-2 text-left font-medium text-muted-foreground">能力</th><th class="py-1.5 pr-2 text-left font-medium text-muted-foreground">描述</th><th class="py-1.5 pr-2 text-left font-medium text-muted-foreground">信用分</th><th class="py-1.5 pr-2 text-left font-medium text-muted-foreground">分配</th><th class="py-1.5 pr-2 text-left font-medium text-muted-foreground">成功率</th><th class="py-1.5 pr-2 text-left font-medium text-muted-foreground">平均耗时</th></tr></thead><tbody>';
+        capabilities.forEach(function (c) {
+          const label = c.label;
+          const s = lookup(stats, label) || {};
+          const score = lookup(scores, label);
+          html += '<tr class="border-b border-border last:border-0"><td class="py-1.5 pr-2 font-medium text-foreground">' + esc(label) + '</td>'
+            + '<td class="py-1.5 pr-2 text-muted-foreground">' + esc(c.description || '') + '</td>'
+            + '<td class="py-1.5 pr-2">' + (score !== undefined ? score : 50) + '</td>'
+            + '<td class="py-1.5 pr-2">' + (s.allocationCount !== undefined ? s.allocationCount : 0) + '</td>'
+            + '<td class="py-1.5 pr-2">' + (s.successRate !== undefined ? Math.round(s.successRate * 100) + '%' : '—') + '</td>'
+            + '<td class="py-1.5 pr-2">' + (s.avgDurationMs !== undefined ? esc(fmtMs(s.avgDurationMs)) : '—') + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+        cont.innerHTML = html;
+      }
+
+      function loadElections() {
+        fetch('/api/agents/elections?limit=20')
+          .then(function (r) { return r.json(); })
+          .then(function (list) {
+            const cont = document.getElementById('elections');
+            if (!list.length) { cont.innerHTML = '<p class="text-xs text-muted-foreground">暂无选举记录，运行一次任务后自动产生。</p>'; return; }
+            let html = '';
+            list.forEach(function (e) {
+              const candArr = Array.isArray(safeParse(e.candidates)) ? safeParse(e.candidates) : [];
+              html += '<div class="rounded-xl border border-border bg-background p-3 mb-2">'
+                + '<div class="mb-2 flex flex-wrap items-center gap-2 text-xs">'
+                + '<b>第 ' + esc(e.round) + ' 轮</b>'
+                + '<span class="inline-flex rounded-full bg-info-bg px-2 py-0.5 text-[10px] font-medium text-primary">' + esc(e.winner || '—') + ' 当选</span>'
+                + '<span class="text-muted-foreground">管理者：' + esc(e.managerRef || '—') + '</span>'
+                + '<span class="text-muted-foreground">' + esc(e.createdAt || '') + '</span>'
+                + '</div>';
+              if (candArr.length) {
+                html += '<div class="flex flex-wrap gap-1.5">';
+                candArr.forEach(function (v) {
+                  const win = v.candidate === e.winner;
+                  html += '<span class="inline-flex rounded-full border border-border px-2 py-0.5 text-[10px] ' + (win ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground') + '" title="信用分=' + v.creditScore + ' · 成功率=' + v.successRate + ' · 耗时=' + v.timeScore + ' · 均衡=' + v.balanceScore + ' · term=' + v.scoreTerm + '">'
+                    + esc(v.candidate) + ' ' + esc(v.composite) + '</span>';
+                });
+                html += '</div>';
+              }
+              html += '</div>';
+            });
+            cont.innerHTML = html;
+          })
+          .catch(function (e) { document.getElementById('elections').innerHTML = '<p class="text-xs text-error">加载失败：' + e + '</p>'; });
+      }
+
+      function loadAllocations() {
+        fetch('/api/agents/allocations?limit=20')
+          .then(function (r) { return r.json(); })
+          .then(function (list) {
+            const cont = document.getElementById('allocations');
+            if (!list.length) { cont.innerHTML = '<p class="text-xs text-muted-foreground">暂无分配记录。</p>'; return; }
+            let html = '';
+            list.forEach(function (a) {
+              const ok = a.status === 'SUCCESS';
+              html += '<div class="rounded-xl border border-border bg-background p-3 mb-2">'
+                + '<div class="mb-1 flex flex-wrap items-center gap-2 text-xs">'
+                + '<span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ' + (ok ? 'bg-success-bg text-success' : 'bg-warn-bg text-warn') + '">' + esc(a.status || '') + '</span>'
+                + '<b>' + esc(a.capability || '') + '</b>'
+                + '<span class="text-muted-foreground">第 ' + esc(a.round) + ' 轮 / 步 ' + esc(a.stepNo) + '</span>'
+                + '<span class="text-muted-foreground">' + esc(fmtMs(a.durationMs)) + '</span>'
+                + '</div>'
+                + '<div class="dsh-mono text-xs text-muted-foreground">' + esc(a.subtaskGoal || '') + '</div>'
+                + '</div>';
+            });
+            cont.innerHTML = html;
+          })
+          .catch(function (e) { document.getElementById('allocations').innerHTML = '<p class="text-xs text-error">加载失败：' + e + '</p>'; });
+      }
+
+      const AUDIT_CATEGORIES = [
+        { key: '', label: '全部' },
+        { key: 'INGEST', label: '接入' },
+        { key: 'CLEAN', label: '清洗' },
+        { key: 'DECISION', label: '决策' },
+        { key: 'ANNOTATION', label: '标注' }
       ];
-      let html = '<table class="fields"><tr><th style="width:30%">事件类型</th><th>说明</th></tr>';
-      schema.forEach(function (e) {
-        html += '<tr><td class="kv">' + e[0] + '</td><td>' + e[1] + '</td></tr>';
-      });
-      html += '</table>';
-      document.getElementById('eventsSchema').innerHTML = html;
-    }
-  </script>
+
+      function renderAuditFilters(active) {
+        let html = '';
+        AUDIT_CATEGORIES.forEach(function (c) {
+          html += '<button onclick="loadAuditLogs(\'' + c.key + '\')" class="inline-flex rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ' + (c.key === active ? 'bg-primary text-primary-foreground' : 'border border-border bg-background text-muted-foreground hover:bg-muted') + '">' + c.label + '</button>';
+        });
+        document.getElementById('auditFilters').innerHTML = html;
+      }
+
+      function loadAuditLogs(category) {
+        const cat = category === undefined ? '' : category;
+        renderAuditFilters(cat);
+        const url = '/api/audit?limit=100' + (cat ? '&category=' + encodeURIComponent(cat) : '');
+        fetch(url)
+          .then(function (r) { return r.json(); })
+          .then(function (list) {
+            const cont = document.getElementById('audit');
+            if (!list.length) { cont.innerHTML = '<p class="text-xs text-muted-foreground">暂无审计日志。</p>'; return; }
+            let html = '';
+            list.forEach(function (l) {
+              html += '<div class="rounded-xl border border-border bg-background p-3 mb-2">'
+                + '<div class="mb-1 flex flex-wrap items-center gap-2 text-xs">'
+                + '<span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ' + esc(String(l.category || '').toLowerCase()) + '-badge">' + esc(l.category || '') + '</span>'
+                + '<b>' + esc(l.action || '') + '</b>'
+                + '<span class="text-muted-foreground">' + esc(l.entityType || '') + '#' + esc(String(l.entityId || '').slice(0, 8)) + '</span>'
+                + '<span class="text-muted-foreground">' + esc(l.actor || '') + '</span>'
+                + '<span class="text-muted-foreground">' + esc(l.createdAt || '') + '</span>'
+                + '</div>'
+                + '<div class="text-xs text-foreground">' + esc(l.summary || '') + '</div>'
+                + (l.detail ? '<div class="dsh-mono mt-1 text-xs text-muted-foreground">' + esc(safeJsonSummary(l.detail)) + '</div>' : '')
+                + '</div>';
+            });
+            cont.innerHTML = html;
+          })
+          .catch(function (e) { document.getElementById('audit').innerHTML = '<p class="text-xs text-error">加载失败：' + e + '</p>'; });
+      }
+
+      function safeJsonSummary(s) {
+        let d;
+        try { d = JSON.parse(typeof s === 'string' ? s : JSON.stringify(s)); } catch (e) { return s; }
+        if (typeof d !== 'object' || d === null) return String(d);
+        const items = [];
+        for (const k of Object.keys(d)) {
+          let v = d[k];
+          if (typeof v === 'object') v = JSON.stringify(v);
+          items.push(k + '=' + v);
+        }
+        return items.join('  ');
+      }
+
+      function renderEventsSchema() {
+        const schema = [
+          ['run:started', '一次运行开始，含 runId 与目标'],
+          ['run:plan', '首轮：管理者完成目标拆解，产出执行计划'],
+          ['run:iteration', '递归主循环第2轮起的观察与决策（DONE/CONTINUE/ABORT + 下一批步骤）'],
+          ['wave:started', '一波（轮）任务开始'],
+          ['wave:completed', '一波任务结束'],
+          ['step:status', '单个分配步骤的状态（能力路由/结果）'],
+          ['step:reflection', '步骤反思增强'],
+          ['run:synthesis', '汇总各步骤产出'],
+          ['run:elected', '本轮结束完成选举，产出当选管理者'],
+          ['run:completed', '运行成功结束'],
+          ['run:failed', '运行失败']
+        ];
+        let html = '<div class="overflow-x-auto"><table class="w-full border-collapse text-xs"><thead><tr class="border-b border-border"><th class="py-1.5 pr-2 text-left font-medium text-muted-foreground" style="width:30%">事件类型</th><th class="py-1.5 pr-2 text-left font-medium text-muted-foreground">说明</th></tr></thead><tbody>';
+        schema.forEach(function (e) {
+          html += '<tr class="border-b border-border last:border-0"><td class="dsh-mono py-1.5 pr-2 text-primary">' + e[0] + '</td><td class="py-1.5 pr-2 text-muted-foreground">' + e[1] + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+        document.getElementById('eventsSchema').innerHTML = html;
+      }
+
+      /* ============ 启动初始化 ============ */
+      lucide.createIcons();
+      loadExperiences();
+      loadRunHistory();
+      startBackendApp();
+      startAgentPolling();
+      setInterval(flowUpdateScores, 5000);
+    </script>
 </body>
 </html>

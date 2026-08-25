@@ -17,4 +17,7 @@ public @interface Capability {
 
     /** 能力描述，供 Manager 拆解/路由时选择 */
     String description();
+
+    /** 角色风格：谨慎/激进/平衡/高效，默认平衡 */
+    String style() default "BALANCED";
 }

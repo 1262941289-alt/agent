@@ -1,5 +1,6 @@
 package com.example.agent.agent;
 
+import com.example.agent.capability.AgentContext;
 import com.example.agent.capability.Capability;
 import com.example.agent.capability.CapabilityAgent;
 import org.springframework.ai.chat.client.ChatClient;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Component;
  * <p>记忆读权已收归 Manager，本 agent 只执行，不直接 recall。
  */
 @Component
-@Capability(label = "browser", description = "浏览器自动化助手：可打开网页、抓取页面真实数据（含网络抓包）、操作页面（点击/填写/提交），支持用友 U9 ERP 等内嵌 iframe 的企业系统")
+@Capability(label = "browser", description = "浏览器自动化助手：可打开网页、抓取页面真实数据（含网络抓包）、操作页面（点击/填写/提交），支持用友 U9 ERP 等内嵌 iframe 的企业系统", style = "AGGRESSIVE")
 public class BrowserWorker implements CapabilityAgent {
 
     private static final String SYSTEM_PROMPT = """
@@ -63,5 +64,10 @@ public class BrowserWorker implements CapabilityAgent {
     @Override
     public AgentResult run(String goal) {
         return reflectionLoop.execute(goal, browserClient, SYSTEM_PROMPT);
+    }
+
+    @Override
+    public AgentResult run(String goal, AgentContext context) {
+        return reflectionLoop.execute(goal, browserClient, SYSTEM_PROMPT, context);
     }
 }
