@@ -1,16 +1,18 @@
 package com.example.agent.config;
 
 import com.example.agent.service.ToolExecutionService;
+import com.example.agent.tools.AskUserTools;
 import com.example.agent.tools.AttributeRecordTools;
 import com.example.agent.tools.BrowserTools;
 import com.example.agent.tools.DataQueryTools;
 import com.example.agent.tools.DecisionTools;
+import com.example.agent.tools.FileTools;
 import com.example.agent.tools.GuardedToolCallback;
 import com.example.agent.tools.HistoryTools;
 import com.example.agent.tools.LayerRecordTools;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
-import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.context.annotation.Bean;
@@ -28,7 +30,7 @@ public class AgentConfig {
 
     @Bean
     public ChatClient layeringChatClient(
-            OpenAiChatModel chatModel,
+            ChatModel chatModel,
             DataQueryTools queryTools,
             LayerRecordTools layerTools,
             ToolExecutionService toolExecutionService) {
@@ -39,7 +41,7 @@ public class AgentConfig {
 
     @Bean
     public ChatClient attributeChatClient(
-            OpenAiChatModel chatModel,
+            ChatModel chatModel,
             DataQueryTools queryTools,
             AttributeRecordTools attrTools,
             ToolExecutionService toolExecutionService) {
@@ -50,7 +52,7 @@ public class AgentConfig {
 
     @Bean
     public ChatClient filterChatClient(
-            OpenAiChatModel chatModel,
+            ChatModel chatModel,
             DataQueryTools queryTools,
             DecisionTools decisionTools,
             ToolExecutionService toolExecutionService) {
@@ -61,23 +63,25 @@ public class AgentConfig {
     }
 
     @Bean
-    public ChatClient planningChatClient(OpenAiChatModel chatModel) {
+    public ChatClient planningChatClient(ChatModel chatModel) {
         return ChatClient.builder(chatModel).build();
     }
 
     @Bean
     public ChatClient browserChatClient(
-            OpenAiChatModel chatModel,
+            ChatModel chatModel,
             BrowserTools browserTools,
+            AskUserTools askUserTools,
+            FileTools fileTools,
             ToolExecutionService toolExecutionService) {
         return ChatClient.builder(chatModel)
-                .defaultToolCallbacks(guarded(toolExecutionService, browserTools))
+                .defaultToolCallbacks(guarded(toolExecutionService, browserTools, askUserTools, fileTools))
                 .build();
     }
 
     @Bean
     public ChatClient dataChatClient(
-            OpenAiChatModel chatModel,
+            ChatModel chatModel,
             DataQueryTools queryTools,
             LayerRecordTools layerTools,
             AttributeRecordTools attrTools,
@@ -90,7 +94,7 @@ public class AgentConfig {
 
     @Bean
     public ChatClient historyChatClient(
-            OpenAiChatModel chatModel,
+            ChatModel chatModel,
             HistoryTools historyTools,
             ToolExecutionService toolExecutionService) {
         return ChatClient.builder(chatModel)

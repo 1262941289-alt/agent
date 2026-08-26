@@ -46,8 +46,8 @@ if not %errorlevel%==0 (
   echo        "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysqld.exe" --datadir=C:\Users\12629\mysql-data
 )
 
-echo [START] java -jar %JAR%
-start "sk-agent" /min "%JAVA%" -jar "%JAR%"
+echo [START] java -Djdk.net.hosts.file="%~dp0local\dns-override.hosts" -jar %JAR%
+start "sk-agent" /min "%JAVA%" "-Djdk.net.hosts.file=%~dp0local\dns-override.hosts" -jar "%JAR%"
 
 echo [DONE] Launched in background window (first start takes 10-20s).
 echo        Console:  http://localhost:8080/

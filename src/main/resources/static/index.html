@@ -74,7 +74,1441 @@ body {
   --warn: #c78a00;
 }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script><style>/*! tailwindcss v4.3.1 | MIT License | https://tailwindcss.com */
+@layer properties;
+@layer theme, base, components, utilities;
+@layer theme {
+  :root, :host {
+    --font-sans: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+    --color-white: #fff;
+    --spacing: 0.25rem;
+    --container-6xl: 72rem;
+    --text-xs: 0.75rem;
+    --text-xs--line-height: calc(1 / 0.75);
+    --text-sm: 0.875rem;
+    --text-sm--line-height: calc(1.25 / 0.875);
+    --text-lg: 1.125rem;
+    --text-lg--line-height: calc(1.75 / 1.125);
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --tracking-tight: -0.025em;
+    --leading-relaxed: 1.625;
+    --radius-xl: 0.75rem;
+    --radius-2xl: 1rem;
+    --default-transition-duration: 150ms;
+    --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    --default-font-family: var(--font-sans);
+    --default-mono-font-family: var(--font-mono);
+  }
+}
+@layer base {
+  *, ::after, ::before, ::backdrop, ::file-selector-button {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+  }
+  html, :host {
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    tab-size: 4;
+    font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji');
+    font-feature-settings: var(--default-font-feature-settings, normal);
+    font-variation-settings: var(--default-font-variation-settings, normal);
+    -webkit-tap-highlight-color: transparent;
+  }
+  hr {
+    height: 0;
+    color: inherit;
+    border-top-width: 1px;
+  }
+  abbr:where([title]) {
+    -webkit-text-decoration: underline dotted;
+    text-decoration: underline dotted;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  a {
+    color: inherit;
+    -webkit-text-decoration: inherit;
+    text-decoration: inherit;
+  }
+  b, strong {
+    font-weight: bolder;
+  }
+  code, kbd, samp, pre {
+    font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace);
+    font-feature-settings: var(--default-mono-font-feature-settings, normal);
+    font-variation-settings: var(--default-mono-font-variation-settings, normal);
+    font-size: 1em;
+  }
+  small {
+    font-size: 80%;
+  }
+  sub, sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+  sub {
+    bottom: -0.25em;
+  }
+  sup {
+    top: -0.5em;
+  }
+  table {
+    text-indent: 0;
+    border-color: inherit;
+    border-collapse: collapse;
+  }
+  :-moz-focusring {
+    outline: auto;
+  }
+  progress {
+    vertical-align: baseline;
+  }
+  summary {
+    display: list-item;
+  }
+  ol, ul, menu {
+    list-style: none;
+  }
+  img, svg, video, canvas, audio, iframe, embed, object {
+    display: block;
+    vertical-align: middle;
+  }
+  img, video {
+    max-width: 100%;
+    height: auto;
+  }
+  button, input, select, optgroup, textarea, ::file-selector-button {
+    font: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    border-radius: 0;
+    background-color: transparent;
+    opacity: 1;
+  }
+  :where(select:is([multiple], [size])) optgroup {
+    font-weight: bolder;
+  }
+  :where(select:is([multiple], [size])) optgroup option {
+    padding-inline-start: 20px;
+  }
+  ::file-selector-button {
+    margin-inline-end: 4px;
+  }
+  ::placeholder {
+    opacity: 1;
+  }
+  @supports (not (-webkit-appearance: -apple-pay-button))  or (contain-intrinsic-size: 1px) {
+    ::placeholder {
+      color: currentcolor;
+      @supports (color: color-mix(in lab, red, red)) {
+        color: color-mix(in oklab, currentcolor 50%, transparent);
+      }
+    }
+  }
+  textarea {
+    resize: vertical;
+  }
+  ::-webkit-search-decoration {
+    -webkit-appearance: none;
+  }
+  ::-webkit-date-and-time-value {
+    min-height: 1lh;
+    text-align: inherit;
+  }
+  ::-webkit-datetime-edit {
+    display: inline-flex;
+  }
+  ::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+  }
+  ::-webkit-datetime-edit, ::-webkit-datetime-edit-year-field, ::-webkit-datetime-edit-month-field, ::-webkit-datetime-edit-day-field, ::-webkit-datetime-edit-hour-field, ::-webkit-datetime-edit-minute-field, ::-webkit-datetime-edit-second-field, ::-webkit-datetime-edit-millisecond-field, ::-webkit-datetime-edit-meridiem-field {
+    padding-block: 0;
+  }
+  ::-webkit-calendar-picker-indicator {
+    line-height: 1;
+  }
+  :-moz-ui-invalid {
+    box-shadow: none;
+  }
+  button, input:where([type='button'], [type='reset'], [type='submit']), ::file-selector-button {
+    appearance: button;
+  }
+  ::-webkit-inner-spin-button, ::-webkit-outer-spin-button {
+    height: auto;
+  }
+  [hidden]:where(:not([hidden='until-found'])) {
+    display: none !important;
+  }
+}
+@layer utilities {
+  .sticky {
+    position: sticky;
+  }
+  .top-0 {
+    top: 0;
+  }
+  .z-30 {
+    z-index: 30;
+  }
+  .mx-auto {
+    margin-inline: auto;
+  }
+  .mt-2 {
+    margin-top: calc(var(--spacing) * 2);
+  }
+  .mt-3 {
+    margin-top: calc(var(--spacing) * 3);
+  }
+  .mt-4 {
+    margin-top: calc(var(--spacing) * 4);
+  }
+  .mb-1\.5 {
+    margin-bottom: calc(var(--spacing) * 1.5);
+  }
+  .mb-2 {
+    margin-bottom: calc(var(--spacing) * 2);
+  }
+  .mb-3 {
+    margin-bottom: calc(var(--spacing) * 3);
+  }
+  .mb-4 {
+    margin-bottom: calc(var(--spacing) * 4);
+  }
+  .mb-6 {
+    margin-bottom: calc(var(--spacing) * 6);
+  }
+  .block {
+    display: block;
+  }
+  .flex {
+    display: flex;
+  }
+  .grid {
+    display: grid;
+  }
+  .hidden {
+    display: none;
+  }
+  .inline-flex {
+    display: inline-flex;
+  }
+  .h-3\.5 {
+    height: calc(var(--spacing) * 3.5);
+  }
+  .h-4 {
+    height: calc(var(--spacing) * 4);
+  }
+  .h-5 {
+    height: calc(var(--spacing) * 5);
+  }
+  .h-8 {
+    height: calc(var(--spacing) * 8);
+  }
+  .h-9 {
+    height: calc(var(--spacing) * 9);
+  }
+  .min-h-\[18px\] {
+    min-height: 18px;
+  }
+  .min-h-\[64px\] {
+    min-height: 64px;
+  }
+  .min-h-screen {
+    min-height: 100vh;
+  }
+  .w-3\.5 {
+    width: calc(var(--spacing) * 3.5);
+  }
+  .w-4 {
+    width: calc(var(--spacing) * 4);
+  }
+  .w-5 {
+    width: calc(var(--spacing) * 5);
+  }
+  .w-8 {
+    width: calc(var(--spacing) * 8);
+  }
+  .w-9 {
+    width: calc(var(--spacing) * 9);
+  }
+  .w-full {
+    width: 100%;
+  }
+  .max-w-6xl {
+    max-width: var(--container-6xl);
+  }
+  .resize-y {
+    resize: vertical;
+  }
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .justify-between {
+    justify-content: space-between;
+  }
+  .justify-center {
+    justify-content: center;
+  }
+  .gap-1 {
+    gap: var(--spacing);
+  }
+  .gap-1\.5 {
+    gap: calc(var(--spacing) * 1.5);
+  }
+  .gap-2 {
+    gap: calc(var(--spacing) * 2);
+  }
+  .gap-3 {
+    gap: calc(var(--spacing) * 3);
+  }
+  .gap-5 {
+    gap: calc(var(--spacing) * 5);
+  }
+  .space-y-2 {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 2) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
+  .space-y-3 {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 3) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 3) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
+  .space-y-5 {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 5) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 5) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
+  .rounded-2xl {
+    border-radius: var(--radius-2xl);
+  }
+  .rounded-lg {
+    border-radius: var(--dsh-radius-lg);
+  }
+  .rounded-md {
+    border-radius: var(--dsh-radius-md);
+  }
+  .rounded-xl {
+    border-radius: var(--radius-xl);
+  }
+  .border {
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+  }
+  .border-t {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 1px;
+  }
+  .border-b {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 1px;
+  }
+  .border-border {
+    border-color: var(--dsh-border);
+  }
+  .bg-background {
+    background-color: var(--dsh-background);
+  }
+  .bg-card {
+    background-color: var(--dsh-card);
+  }
+  .bg-card\/80 {
+    background-color: var(--dsh-card);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--dsh-card) 80%, transparent);
+    }
+  }
+  .bg-input {
+    background-color: var(--dsh-input);
+  }
+  .bg-muted {
+    background-color: var(--dsh-muted);
+  }
+  .bg-primary {
+    background-color: var(--dsh-primary);
+  }
+  .p-1 {
+    padding: var(--spacing);
+  }
+  .p-5 {
+    padding: calc(var(--spacing) * 5);
+  }
+  .px-3 {
+    padding-inline: calc(var(--spacing) * 3);
+  }
+  .px-4 {
+    padding-inline: calc(var(--spacing) * 4);
+  }
+  .px-6 {
+    padding-inline: calc(var(--spacing) * 6);
+  }
+  .py-1\.5 {
+    padding-block: calc(var(--spacing) * 1.5);
+  }
+  .py-2 {
+    padding-block: calc(var(--spacing) * 2);
+  }
+  .py-4 {
+    padding-block: calc(var(--spacing) * 4);
+  }
+  .py-6 {
+    padding-block: calc(var(--spacing) * 6);
+  }
+  .pt-3 {
+    padding-top: calc(var(--spacing) * 3);
+  }
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+  .font-sans {
+    font-family: var(--font-sans);
+  }
+  .text-lg {
+    font-size: var(--text-lg);
+    line-height: var(--tw-leading, var(--text-lg--line-height));
+  }
+  .text-sm {
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+  }
+  .text-xs {
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+  }
+  .leading-relaxed {
+    --tw-leading: var(--leading-relaxed);
+    line-height: var(--leading-relaxed);
+  }
+  .font-medium {
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+  }
+  .font-semibold {
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+  }
+  .tracking-tight {
+    --tw-tracking: var(--tracking-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  .text-foreground {
+    color: var(--dsh-foreground);
+  }
+  .text-muted-foreground {
+    color: var(--dsh-muted-foreground);
+  }
+  .text-primary {
+    color: var(--dsh-primary);
+  }
+  .text-primary-foreground {
+    color: var(--dsh-primary-foreground);
+  }
+  .text-white {
+    color: var(--color-white);
+  }
+  .antialiased {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  .shadow-sm {
+    --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+  .ring-ring\/0 {
+    --tw-ring-color: var(--dsh-ring);
+    @supports (color: color-mix(in lab, red, red)) {
+      --tw-ring-color: color-mix(in oklab, var(--dsh-ring) 0%, transparent);
+    }
+  }
+  .backdrop-blur {
+    --tw-backdrop-blur: blur(8px);
+    -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
+    backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
+  }
+  .transition-all {
+    transition-property: all;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+  .transition-colors {
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+  .outline-none {
+    --tw-outline-style: none;
+    outline-style: none;
+  }
+  .placeholder\:text-muted-foreground {
+    &::placeholder {
+      color: var(--dsh-muted-foreground);
+    }
+  }
+  .hover\:border-ring {
+    &:hover {
+      @media (hover: hover) {
+        border-color: var(--dsh-ring);
+      }
+    }
+  }
+  .hover\:bg-muted {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--dsh-muted);
+      }
+    }
+  }
+  .hover\:text-foreground {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--dsh-foreground);
+      }
+    }
+  }
+  .hover\:text-white {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-white);
+      }
+    }
+  }
+  .hover\:opacity-90 {
+    &:hover {
+      @media (hover: hover) {
+        opacity: 90%;
+      }
+    }
+  }
+  .focus\:ring-2 {
+    &:focus {
+      --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+  .focus\:ring-ring\/30 {
+    &:focus {
+      --tw-ring-color: var(--dsh-ring);
+      @supports (color: color-mix(in lab, red, red)) {
+        --tw-ring-color: color-mix(in oklab, var(--dsh-ring) 30%, transparent);
+      }
+    }
+  }
+  .lg\:grid-cols-2 {
+    @media (width >= 64rem) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+}
+@layer base {
+  body {
+    background: var(--dsh-background);
+    color: var(--dsh-foreground);
+  }
+  td, th {
+    overflow-wrap: break-word;
+    word-break: break-all;
+    word-break: auto-phrase;
+  }
+  th {
+    white-space: nowrap;
+  }
+}
+@property --tw-space-y-reverse {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-border-style {
+  syntax: "*";
+  inherits: false;
+  initial-value: solid;
+}
+@property --tw-leading {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-font-weight {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-tracking {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-inset-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-inset-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-ring-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ring-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-ring-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-inset-ring-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-ring-inset {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ring-offset-width {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --tw-ring-offset-color {
+  syntax: "*";
+  inherits: false;
+  initial-value: #fff;
+}
+@property --tw-ring-offset-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-backdrop-blur {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-brightness {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-contrast {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-grayscale {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-hue-rotate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-invert {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-opacity {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-saturate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-sepia {
+  syntax: "*";
+  inherits: false;
+}
+@layer properties {
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
+    *, ::before, ::after, ::backdrop {
+      --tw-space-y-reverse: 0;
+      --tw-border-style: solid;
+      --tw-leading: initial;
+      --tw-font-weight: initial;
+      --tw-tracking: initial;
+      --tw-shadow: 0 0 #0000;
+      --tw-shadow-color: initial;
+      --tw-shadow-alpha: 100%;
+      --tw-inset-shadow: 0 0 #0000;
+      --tw-inset-shadow-color: initial;
+      --tw-inset-shadow-alpha: 100%;
+      --tw-ring-color: initial;
+      --tw-ring-shadow: 0 0 #0000;
+      --tw-inset-ring-color: initial;
+      --tw-inset-ring-shadow: 0 0 #0000;
+      --tw-ring-inset: initial;
+      --tw-ring-offset-width: 0px;
+      --tw-ring-offset-color: #fff;
+      --tw-ring-offset-shadow: 0 0 #0000;
+      --tw-backdrop-blur: initial;
+      --tw-backdrop-brightness: initial;
+      --tw-backdrop-contrast: initial;
+      --tw-backdrop-grayscale: initial;
+      --tw-backdrop-hue-rotate: initial;
+      --tw-backdrop-invert: initial;
+      --tw-backdrop-opacity: initial;
+      --tw-backdrop-saturate: initial;
+      --tw-backdrop-sepia: initial;
+    }
+  }
+}
+</style><style>/*! tailwindcss v4.3.1 | MIT License | https://tailwindcss.com */
+@layer properties;
+@layer theme, base, components, utilities;
+@layer theme {
+  :root, :host {
+    --font-sans: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+    --color-white: #fff;
+    --spacing: 0.25rem;
+    --container-6xl: 72rem;
+    --text-xs: 0.75rem;
+    --text-xs--line-height: calc(1 / 0.75);
+    --text-sm: 0.875rem;
+    --text-sm--line-height: calc(1.25 / 0.875);
+    --text-lg: 1.125rem;
+    --text-lg--line-height: calc(1.75 / 1.125);
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --tracking-tight: -0.025em;
+    --leading-relaxed: 1.625;
+    --radius-xl: 0.75rem;
+    --radius-2xl: 1rem;
+    --default-transition-duration: 150ms;
+    --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    --default-font-family: var(--font-sans);
+    --default-mono-font-family: var(--font-mono);
+  }
+}
+@layer base {
+  *, ::after, ::before, ::backdrop, ::file-selector-button {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+  }
+  html, :host {
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    tab-size: 4;
+    font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji');
+    font-feature-settings: var(--default-font-feature-settings, normal);
+    font-variation-settings: var(--default-font-variation-settings, normal);
+    -webkit-tap-highlight-color: transparent;
+  }
+  hr {
+    height: 0;
+    color: inherit;
+    border-top-width: 1px;
+  }
+  abbr:where([title]) {
+    -webkit-text-decoration: underline dotted;
+    text-decoration: underline dotted;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  a {
+    color: inherit;
+    -webkit-text-decoration: inherit;
+    text-decoration: inherit;
+  }
+  b, strong {
+    font-weight: bolder;
+  }
+  code, kbd, samp, pre {
+    font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace);
+    font-feature-settings: var(--default-mono-font-feature-settings, normal);
+    font-variation-settings: var(--default-mono-font-variation-settings, normal);
+    font-size: 1em;
+  }
+  small {
+    font-size: 80%;
+  }
+  sub, sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+  sub {
+    bottom: -0.25em;
+  }
+  sup {
+    top: -0.5em;
+  }
+  table {
+    text-indent: 0;
+    border-color: inherit;
+    border-collapse: collapse;
+  }
+  :-moz-focusring {
+    outline: auto;
+  }
+  progress {
+    vertical-align: baseline;
+  }
+  summary {
+    display: list-item;
+  }
+  ol, ul, menu {
+    list-style: none;
+  }
+  img, svg, video, canvas, audio, iframe, embed, object {
+    display: block;
+    vertical-align: middle;
+  }
+  img, video {
+    max-width: 100%;
+    height: auto;
+  }
+  button, input, select, optgroup, textarea, ::file-selector-button {
+    font: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    border-radius: 0;
+    background-color: transparent;
+    opacity: 1;
+  }
+  :where(select:is([multiple], [size])) optgroup {
+    font-weight: bolder;
+  }
+  :where(select:is([multiple], [size])) optgroup option {
+    padding-inline-start: 20px;
+  }
+  ::file-selector-button {
+    margin-inline-end: 4px;
+  }
+  ::placeholder {
+    opacity: 1;
+  }
+  @supports (not (-webkit-appearance: -apple-pay-button))  or (contain-intrinsic-size: 1px) {
+    ::placeholder {
+      color: currentcolor;
+      @supports (color: color-mix(in lab, red, red)) {
+        color: color-mix(in oklab, currentcolor 50%, transparent);
+      }
+    }
+  }
+  textarea {
+    resize: vertical;
+  }
+  ::-webkit-search-decoration {
+    -webkit-appearance: none;
+  }
+  ::-webkit-date-and-time-value {
+    min-height: 1lh;
+    text-align: inherit;
+  }
+  ::-webkit-datetime-edit {
+    display: inline-flex;
+  }
+  ::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+  }
+  ::-webkit-datetime-edit, ::-webkit-datetime-edit-year-field, ::-webkit-datetime-edit-month-field, ::-webkit-datetime-edit-day-field, ::-webkit-datetime-edit-hour-field, ::-webkit-datetime-edit-minute-field, ::-webkit-datetime-edit-second-field, ::-webkit-datetime-edit-millisecond-field, ::-webkit-datetime-edit-meridiem-field {
+    padding-block: 0;
+  }
+  ::-webkit-calendar-picker-indicator {
+    line-height: 1;
+  }
+  :-moz-ui-invalid {
+    box-shadow: none;
+  }
+  button, input:where([type='button'], [type='reset'], [type='submit']), ::file-selector-button {
+    appearance: button;
+  }
+  ::-webkit-inner-spin-button, ::-webkit-outer-spin-button {
+    height: auto;
+  }
+  [hidden]:where(:not([hidden='until-found'])) {
+    display: none !important;
+  }
+}
+@layer utilities {
+  .sticky {
+    position: sticky;
+  }
+  .top-0 {
+    top: 0;
+  }
+  .z-30 {
+    z-index: 30;
+  }
+  .mx-auto {
+    margin-inline: auto;
+  }
+  .mt-2 {
+    margin-top: calc(var(--spacing) * 2);
+  }
+  .mt-3 {
+    margin-top: calc(var(--spacing) * 3);
+  }
+  .mt-4 {
+    margin-top: calc(var(--spacing) * 4);
+  }
+  .mb-1\.5 {
+    margin-bottom: calc(var(--spacing) * 1.5);
+  }
+  .mb-2 {
+    margin-bottom: calc(var(--spacing) * 2);
+  }
+  .mb-3 {
+    margin-bottom: calc(var(--spacing) * 3);
+  }
+  .mb-4 {
+    margin-bottom: calc(var(--spacing) * 4);
+  }
+  .mb-6 {
+    margin-bottom: calc(var(--spacing) * 6);
+  }
+  .block {
+    display: block;
+  }
+  .flex {
+    display: flex;
+  }
+  .grid {
+    display: grid;
+  }
+  .hidden {
+    display: none;
+  }
+  .inline-flex {
+    display: inline-flex;
+  }
+  .h-3\.5 {
+    height: calc(var(--spacing) * 3.5);
+  }
+  .h-4 {
+    height: calc(var(--spacing) * 4);
+  }
+  .h-5 {
+    height: calc(var(--spacing) * 5);
+  }
+  .h-8 {
+    height: calc(var(--spacing) * 8);
+  }
+  .h-9 {
+    height: calc(var(--spacing) * 9);
+  }
+  .min-h-\[18px\] {
+    min-height: 18px;
+  }
+  .min-h-\[64px\] {
+    min-height: 64px;
+  }
+  .min-h-screen {
+    min-height: 100vh;
+  }
+  .w-3\.5 {
+    width: calc(var(--spacing) * 3.5);
+  }
+  .w-4 {
+    width: calc(var(--spacing) * 4);
+  }
+  .w-5 {
+    width: calc(var(--spacing) * 5);
+  }
+  .w-8 {
+    width: calc(var(--spacing) * 8);
+  }
+  .w-9 {
+    width: calc(var(--spacing) * 9);
+  }
+  .w-full {
+    width: 100%;
+  }
+  .max-w-6xl {
+    max-width: var(--container-6xl);
+  }
+  .resize-y {
+    resize: vertical;
+  }
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .justify-between {
+    justify-content: space-between;
+  }
+  .justify-center {
+    justify-content: center;
+  }
+  .gap-1 {
+    gap: var(--spacing);
+  }
+  .gap-1\.5 {
+    gap: calc(var(--spacing) * 1.5);
+  }
+  .gap-2 {
+    gap: calc(var(--spacing) * 2);
+  }
+  .gap-3 {
+    gap: calc(var(--spacing) * 3);
+  }
+  .gap-5 {
+    gap: calc(var(--spacing) * 5);
+  }
+  .space-y-2 {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 2) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
+  .space-y-3 {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 3) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 3) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
+  .space-y-5 {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 5) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 5) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
+  .rounded-2xl {
+    border-radius: var(--radius-2xl);
+  }
+  .rounded-lg {
+    border-radius: var(--dsh-radius-lg);
+  }
+  .rounded-md {
+    border-radius: var(--dsh-radius-md);
+  }
+  .rounded-xl {
+    border-radius: var(--radius-xl);
+  }
+  .border {
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+  }
+  .border-t {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 1px;
+  }
+  .border-b {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 1px;
+  }
+  .border-border {
+    border-color: var(--dsh-border);
+  }
+  .bg-background {
+    background-color: var(--dsh-background);
+  }
+  .bg-card {
+    background-color: var(--dsh-card);
+  }
+  .bg-card\/80 {
+    background-color: var(--dsh-card);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--dsh-card) 80%, transparent);
+    }
+  }
+  .bg-input {
+    background-color: var(--dsh-input);
+  }
+  .bg-muted {
+    background-color: var(--dsh-muted);
+  }
+  .bg-primary {
+    background-color: var(--dsh-primary);
+  }
+  .p-1 {
+    padding: var(--spacing);
+  }
+  .p-5 {
+    padding: calc(var(--spacing) * 5);
+  }
+  .px-3 {
+    padding-inline: calc(var(--spacing) * 3);
+  }
+  .px-4 {
+    padding-inline: calc(var(--spacing) * 4);
+  }
+  .px-6 {
+    padding-inline: calc(var(--spacing) * 6);
+  }
+  .py-1\.5 {
+    padding-block: calc(var(--spacing) * 1.5);
+  }
+  .py-2 {
+    padding-block: calc(var(--spacing) * 2);
+  }
+  .py-4 {
+    padding-block: calc(var(--spacing) * 4);
+  }
+  .py-6 {
+    padding-block: calc(var(--spacing) * 6);
+  }
+  .pt-3 {
+    padding-top: calc(var(--spacing) * 3);
+  }
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+  .font-sans {
+    font-family: var(--font-sans);
+  }
+  .text-lg {
+    font-size: var(--text-lg);
+    line-height: var(--tw-leading, var(--text-lg--line-height));
+  }
+  .text-sm {
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+  }
+  .text-xs {
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+  }
+  .leading-relaxed {
+    --tw-leading: var(--leading-relaxed);
+    line-height: var(--leading-relaxed);
+  }
+  .font-medium {
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+  }
+  .font-semibold {
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+  }
+  .tracking-tight {
+    --tw-tracking: var(--tracking-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  .text-foreground {
+    color: var(--dsh-foreground);
+  }
+  .text-muted-foreground {
+    color: var(--dsh-muted-foreground);
+  }
+  .text-primary {
+    color: var(--dsh-primary);
+  }
+  .text-primary-foreground {
+    color: var(--dsh-primary-foreground);
+  }
+  .text-white {
+    color: var(--color-white);
+  }
+  .antialiased {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  .shadow-sm {
+    --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+  .ring-ring\/0 {
+    --tw-ring-color: var(--dsh-ring);
+    @supports (color: color-mix(in lab, red, red)) {
+      --tw-ring-color: color-mix(in oklab, var(--dsh-ring) 0%, transparent);
+    }
+  }
+  .backdrop-blur {
+    --tw-backdrop-blur: blur(8px);
+    -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
+    backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
+  }
+  .transition-all {
+    transition-property: all;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+  .transition-colors {
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+  .outline-none {
+    --tw-outline-style: none;
+    outline-style: none;
+  }
+  .placeholder\:text-muted-foreground {
+    &::placeholder {
+      color: var(--dsh-muted-foreground);
+    }
+  }
+  .hover\:border-ring {
+    &:hover {
+      @media (hover: hover) {
+        border-color: var(--dsh-ring);
+      }
+    }
+  }
+  .hover\:bg-muted {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--dsh-muted);
+      }
+    }
+  }
+  .hover\:text-foreground {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--dsh-foreground);
+      }
+    }
+  }
+  .hover\:text-white {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-white);
+      }
+    }
+  }
+  .hover\:opacity-90 {
+    &:hover {
+      @media (hover: hover) {
+        opacity: 90%;
+      }
+    }
+  }
+  .focus\:ring-2 {
+    &:focus {
+      --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+  .focus\:ring-ring\/30 {
+    &:focus {
+      --tw-ring-color: var(--dsh-ring);
+      @supports (color: color-mix(in lab, red, red)) {
+        --tw-ring-color: color-mix(in oklab, var(--dsh-ring) 30%, transparent);
+      }
+    }
+  }
+  .lg\:grid-cols-2 {
+    @media (width >= 64rem) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+}
+@layer base {
+  body {
+    background: var(--dsh-background);
+    color: var(--dsh-foreground);
+  }
+  td, th {
+    overflow-wrap: break-word;
+    word-break: break-all;
+    word-break: auto-phrase;
+  }
+  th {
+    white-space: nowrap;
+  }
+}
+@property --tw-space-y-reverse {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-border-style {
+  syntax: "*";
+  inherits: false;
+  initial-value: solid;
+}
+@property --tw-leading {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-font-weight {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-tracking {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-inset-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-inset-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-ring-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ring-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-ring-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-inset-ring-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-ring-inset {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ring-offset-width {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --tw-ring-offset-color {
+  syntax: "*";
+  inherits: false;
+  initial-value: #fff;
+}
+@property --tw-ring-offset-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-backdrop-blur {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-brightness {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-contrast {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-grayscale {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-hue-rotate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-invert {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-opacity {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-saturate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-sepia {
+  syntax: "*";
+  inherits: false;
+}
+@layer properties {
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
+    *, ::before, ::after, ::backdrop {
+      --tw-space-y-reverse: 0;
+      --tw-border-style: solid;
+      --tw-leading: initial;
+      --tw-font-weight: initial;
+      --tw-tracking: initial;
+      --tw-shadow: 0 0 #0000;
+      --tw-shadow-color: initial;
+      --tw-shadow-alpha: 100%;
+      --tw-inset-shadow: 0 0 #0000;
+      --tw-inset-shadow-color: initial;
+      --tw-inset-shadow-alpha: 100%;
+      --tw-ring-color: initial;
+      --tw-ring-shadow: 0 0 #0000;
+      --tw-inset-ring-color: initial;
+      --tw-inset-ring-shadow: 0 0 #0000;
+      --tw-ring-inset: initial;
+      --tw-ring-offset-width: 0px;
+      --tw-ring-offset-color: #fff;
+      --tw-ring-offset-shadow: 0 0 #0000;
+      --tw-backdrop-blur: initial;
+      --tw-backdrop-brightness: initial;
+      --tw-backdrop-contrast: initial;
+      --tw-backdrop-grayscale: initial;
+      --tw-backdrop-hue-rotate: initial;
+      --tw-backdrop-invert: initial;
+      --tw-backdrop-opacity: initial;
+      --tw-backdrop-saturate: initial;
+      --tw-backdrop-sepia: initial;
+    }
+  }
+}
+</style>
     <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
     <style type="text/tailwindcss">
   @theme inline {
@@ -324,6 +1758,13 @@ body {
       .exp-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
       .exp-actions { display: flex; gap: 6px; margin-left: auto; }
       .exp-actions button { padding: 3px 10px; font-size: 12px; border-radius: 6px; }
+      .exp-prog { display: inline-flex; align-items: center; gap: 6px; min-width: 92px; height: 8px; background: var(--dsh-muted); border-radius: 5px; overflow: hidden; position: relative; }
+      .exp-prog i { display: block; height: 100%; background: linear-gradient(90deg, var(--brand), #5a8dff); border-radius: 5px; transition: width .3s; }
+      .exp-prog em { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 10px; color: var(--text); font-style: normal; font-weight: 700; text-shadow: 0 0 3px var(--card); }
+      .exp-sec { font-size: 12px; font-weight: 600; margin: 2px 0 8px; padding: 6px 9px; border-radius: 6px; }
+      .exp-sec.ok { background: #e6f7ee; color: var(--ok); }
+      .exp-sec.warn { background: #fff4e0; color: var(--warn); }
+      .evt-card.knowledge-on { border-left: 3px solid var(--ok); }
       .muted { color: var(--muted); }
       .cnt { font-size: 12px; color: var(--muted); }
 
@@ -438,11 +1879,11 @@ body {
 
         <div class="mx-auto max-w-6xl px-6 py-6">
           <nav class="mb-6 inline-flex gap-1 rounded-xl border border-border bg-card p-1 shadow-sm">
-            <button id="tab-run" data-dom-id="tab-run" onclick="switchTab('run')" class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all text-muted-foreground hover:bg-muted hover:text-foreground">
+            <button id="tab-run" data-dom-id="tab-run" onclick="switchTab('run')" class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all dsh-tab-active">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="play-circle" aria-hidden="true" class="lucide lucide-play-circle h-4 w-4"><path d="M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"></path><circle cx="12" cy="12" r="10"></circle></svg>
               执行监控
             </button>
-            <button id="tab-anno" data-dom-id="tab-anno" onclick="switchTab('anno')" class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all dsh-tab-active">
+            <button id="tab-anno" data-dom-id="tab-anno" onclick="switchTab('anno')" class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all text-muted-foreground hover:bg-muted hover:text-foreground">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="tags" aria-hidden="true" class="lucide lucide-tags h-4 w-4"><path d="M13.172 2a2 2 0 0 1 1.414.586l6.71 6.71a2.4 2.4 0 0 1 0 3.408l-4.592 4.592a2.4 2.4 0 0 1-3.408 0l-6.71-6.71A2 2 0 0 1 6 9.172V3a1 1 0 0 1 1-1z"></path><path d="M2 7v6.172a2 2 0 0 0 .586 1.414l6.71 6.71a2.4 2.4 0 0 0 3.191.193"></path><circle cx="10.5" cy="6.5" r=".5" fill="currentColor"></circle></svg>
               数据标注
             </button>
@@ -453,12 +1894,13 @@ body {
           </nav>
 
           <!-- =================== 执行监控（整合自 run.html） =================== -->
-          <section id="panel-run" class="space-y-5 ev-wrap hidden">
+          <section id="panel-run" class="space-y-5 ev-wrap">
             <div class="ev-card">
               <div class="ev-row">
                 <input type="text" id="goal" placeholder="输入总体目标，如：在用友U9 ERP中抓取料品列表数据并汇报">
                 <button id="runBtn" onclick="startRun()">开始执行</button>
                 <button class="bad-btn" id="stopBtn" onclick="stopRun()" disabled="">停止执行</button>
+                <button class="ghost" id="clearContextBtn" onclick="clearContext()" title="清空当前会话上下文（短期记忆），让 Agent 忘掉本轮之前的对话">清空上下文</button>
                 <select id="exportFormat" style="padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--dsh-input);color:var(--text)">
                   <option value="txt">TXT</option>
                   <option value="md">Markdown</option>
@@ -467,8 +1909,8 @@ body {
                 </select>
                 <button class="ghost" id="exportBtn" onclick="exportResult()" disabled="">导出结果</button>
                 <button class="ghost" onclick="loadExperiences()">刷新经验</button>
-                <button class="ghost" id="appBtn" onclick="startBackendApp()" disabled="">启动后端应用</button>
-                <span class="ev-status app-bad" id="appStatus">后端未运行，等待看门狗拉起…（已等 18s，也可手动双击 start-agent.bat）</span>
+                <button class="ghost" id="appBtn" onclick="startBackendApp()">启动后端应用</button>
+                <span class="ev-status app-bad" id="appStatus">等待超时（3 分钟）：请手动双击项目目录 start-agent.bat 启动</span>
                 <span class="ev-status" id="status">空闲</span>
               </div>
             </div>
@@ -621,9 +2063,11 @@ body {
               </div>
               <div class="col-side">
                 <div class="ev-card">
-                  <h2 style="font-size:15px;margin:0 0 4px">经验沉淀</h2>
+                  <h2 style="font-size:15px;margin:0 0 4px">经验沉淀
+                    <button class="ghost" style="float:right;margin-top:-2px" onclick="loadExperiences()">刷新</button>
+                  </h2>
                   <p class="hint" style="color:var(--muted);font-size:12.5px;margin:0 0 10px">
-                    自动收集的执行经验先为候选；<b>重复出现 ≥2 次</b>且<b>经人工认可</b>后升级为优质经验，才会注入 Planner 参与后续规划
+                    自动收集的执行经验先为候选；<b>重复出现 ≥2 次</b>且<b>经人工认可</b>后升级为优质经验，才会注入 Planner 参与后续规划。可对照执行时间线的「知识注入（规划前置）」卡片查证本次是否真正召回。
                   </p>
                   <div id="expList"><p class="muted">暂无经验，完成一次执行后自动收集。</p></div>
                 </div>
@@ -659,7 +2103,7 @@ body {
           </section>
 
           <!-- =================== 数据标注（自 index.html） =================== -->
-          <section id="panel-anno" class="space-y-5">
+          <section id="panel-anno" class="space-y-5 hidden">
             <div class="grid gap-5 lg:grid-cols-2">
               <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
                 <div class="mb-3 flex items-center gap-2">
@@ -889,6 +2333,21 @@ body {
           .catch(() => setStatus('运行中', true));
       }
 
+      function clearContext() {
+        if (!confirm('确定清空当前会话上下文？Agent 将忘掉本轮之前的对话，此操作不可恢复。')) { return; }
+        const btn = document.getElementById('clearContextBtn');
+        btn.disabled = true;
+        const cid = window.conversationId;
+        const url = '/api/agent/context/clear' + (cid ? '?conversationId=' + encodeURIComponent(cid) : '');
+        fetch(url, { method: 'POST' })
+          .then(r => r.json())
+          .then(j => {
+            setStatus('上下文已清空', false);
+            btn.disabled = false;
+          })
+          .catch(e => { setStatus('清空失败：' + e, false); btn.disabled = false; });
+      }
+
       function setStatus(text, running) {
         const el = document.getElementById('status');
         el.textContent = text;
@@ -899,6 +2358,7 @@ body {
       function handleEvent(type, p) {
         if (type === 'run:started') { currentRunId = p.runId; setPhase(0); flowStart(); addCard(goalCard(p)); }
         else if (type === 'run:plan') { setPhase(1); flowPhase('制定计划'); addCard(planCard(p)); }
+        else if (type === 'run:knowledge') { addCard(knowledgeCard(p)); }
         else if (type === 'run:iteration') { setPhase(1, 0); flowPhase('观察决策'); addCard(iterationCard(p)); }
         else if (type === 'wave:started') { setPhase(2, 1); flowWave(p); addWave(p); }
         else if (type === 'wave:completed') { markWaveDone(p); flowWaveEnd(); }
@@ -1312,6 +2772,18 @@ body {
         return card;
       }
 
+      /* ---- 知识注入卡片：展示本次规划是否真正召回并注入了优质经验/人工标注 ---- */
+      function knowledgeCard(p) {
+        const n = p.injectedCount || 0;
+        const tag = n > 0 ? '<span class="evt-tag ok">已注入 ' + n + ' 条</span>'
+                          : '<span class="evt-tag mut">未命中</span>';
+        const body = n > 0
+          ? `<div class="evt-body"><b>本次规划已注入以下优质经验 / 人工标注：</b>
+               <div style="margin-top:6px;font-size:12px;color:var(--muted);white-space:pre-wrap;word-break:break-word;max-height:220px;overflow:auto">${esc(p.injected || '')}</div></div>`
+          : `<div class="evt-body">未检出已沉淀的优质经验或人工标注与本目标相关（需先「重复≥2 次 + 人工认可」后才会被召回）。</div>`;
+        return baseCard('知识注入（规划前置）', tag, body, p.ts, n > 0 ? ' knowledge-on' : '');
+      }
+
       function toggleOut(id, btn) {
         const el = document.getElementById(id);
         if (el.classList.toggle('open')) btn.textContent = '收起 ▴';
@@ -1372,26 +2844,36 @@ body {
       function renderExperiences(list) {
         const box = document.getElementById('expList');
         const visible = list.filter(e => e.approved !== 'REJECTED');
-        if (!visible.length) { box.innerHTML = '<p class="muted">暂无经验，完成一次执行后自动收集。</p>'; return; }
-        box.innerHTML = visible.map(e => {
+        if (!visible.length) { box.innerHTML = '<p class="muted">暂无经验，完成一次执行后自动收集；同一目标重复执行≥2 次且人工认可后会升级为优质经验，参与后续规划。</p>'; return; }
+        const rank = e => e.quality ? 0 : (e.repeatCount >= 2 && e.approved !== 'APPROVED' ? 1 : (e.approved === 'APPROVED' ? 2 : 3));
+        const sorted = [...visible].sort((a, b) => rank(a) - rank(b) || b.repeatCount - a.repeatCount);
+        const qualityCount = visible.filter(e => e.quality).length;
+        const sectionHead = qualityCount
+          ? '<div class="exp-sec ok">已认可的优质经验 —— 当前会注入 Planner 参与后续规划（' + qualityCount + ' 条）</div>'
+          : '<div class="exp-sec warn">尚无经认可的优质经验 —— 下方为候选，需「重复≥2 次 + 人工认可」后才参与规划</div>';
+        box.innerHTML = sectionHead + sorted.map(e => {
           const typeName = e.type === 'PITFALL' ? '教训' : '经验';
           let state;
-          if (e.quality) state = '<span class="evt-tag ok">优质经验</span>';
-          else if (e.approved === 'APPROVED') state = `<span class="evt-tag">已认可 · 待重复（${e.repeatCount}/2）</span>`;
-          else if (e.approved === 'REJECTED') state = '<span class="evt-tag bad">已否决</span>';
+          if (e.quality) state = '<span class="evt-tag ok">优质 · 参与规划</span>';
+          else if (e.approved === 'APPROVED') state = '<span class="evt-tag">已认可 · 待重复（' + e.repeatCount + '/2）</span>';
           else if (e.repeatCount >= 2) state = '<span class="evt-tag warn">重复达标 · 待认可</span>';
-          else state = `<span class="evt-tag mut">候选（${e.repeatCount}/2）</span>`;
-          const actions = e.approved === 'REJECTED' ? '' :
-            `<div class="exp-actions">
-               <button class="ok-btn" onclick="approveExp('${e.id}')">认可</button>
-               <button class="bad-btn" onclick="rejectExp('${e.id}')">否决</button>
-             </div>`;
+          else state = '<span class="evt-tag mut">候选（' + e.repeatCount + '/2）</span>';
+          const barPct = Math.min(100, Math.round((e.repeatCount / 2) * 100));
+          const needUpgrade = e.repeatCount >= 2 && !e.quality && e.approved !== 'APPROVED';
+          const approveBtn = needUpgrade
+            ? `<button class="ok-btn" onclick="approveExp('${e.id}')">认可并升级为优质</button>`
+            : (e.approved !== 'APPROVED' ? `<button class="ok-btn" onclick="approveExp('${e.id}')">认可</button>` : '');
+          const src = e.runIds ? e.runIds.split(',').filter(Boolean).map(n => n.slice(0, 8)).join(', ') : '';
           return `<div class="exp-item${e.quality ? ' quality' : ''}">
-            <div class="exp-head"><span class="evt-tag mut">${typeName}</span>${state}
-              <span class="cnt">重复 ${e.repeatCount} 次</span></div>
+            <div class="exp-head"><span class="evt-tag mut">${typeName}</span>${state}</div>
             <div class="exp-name">${esc(e.name || '')}</div>
             <div class="exp-content">${esc(e.content || '')}</div>
-            <div class="exp-meta">${actions}</div>
+            <div class="exp-meta">
+              <div class="exp-prog"><i style="width:${barPct}%"></i><em>${e.repeatCount}/2</em></div>
+              <span class="cnt">重复 ${e.repeatCount} 次</span>
+              ${src ? '<span class="cnt">来源 ' + esc(src) + '</span>' : ''}
+              <span class="exp-actions">${approveBtn}<button class="bad-btn" onclick="rejectExp('${e.id}')">否决</button></span>
+            </div>
           </div>`;
         }).join('');
       }
@@ -2113,5 +3595,7 @@ body {
       startAgentPolling();
       setInterval(flowUpdateScores, 5000);
     </script>
+
+
 
 </body></html>

@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,6 +53,7 @@ public class ManagerAgent {
     private final Memory memory;
     private final Executor executor;
     private final ExperienceCollector experienceCollector;
+    private final ExperienceRetriever experienceRetriever;
     private final CreditScoreService creditScoreService;
     private final AgentStatsService agentStatsService;
     private final ElectionService electionService;
@@ -66,6 +68,7 @@ public class ManagerAgent {
                         Memory memory,
                         @Qualifier("agentExecutor") Executor executor,
                         ExperienceCollector experienceCollector,
+                        ExperienceRetriever experienceRetriever,
                         CreditScoreService creditScoreService,
                         AgentStatsService agentStatsService,
                         ElectionService electionService,
@@ -79,6 +82,7 @@ public class ManagerAgent {
         this.memory = memory;
         this.executor = executor;
         this.experienceCollector = experienceCollector;
+        this.experienceRetriever = experienceRetriever;
         this.creditScoreService = creditScoreService;
         this.agentStatsService = agentStatsService;
         this.electionService = electionService;
@@ -138,7 +142,8 @@ public class ManagerAgent {
             }
             // 阶段三最小版：注入当选管理者身份，供规划器感知（管理者只分配不执行）
             planningGoal = "本轮管理者（负责拆解与分配，不直接执行）：" + managerRef + "\n" + planningGoal;
-            String experience = memoryAsString(goal);
+            String experience = knowledgeContext(goal);
+            emitKnowledgeInjected(events, streamSink, runId, experience);
 
             // 递归主循环：获取信息（观察已执行步骤的真实结果）→ 制定计划（决策 + 下一批步骤）
             // → 执行操作（分波并行）→ 循环，直到 DONE / ABORT / 超上限
@@ -240,9 +245,37 @@ public class ManagerAgent {
         return result;
     }
 
-    private String memoryAsString(String goal) {
-        List<String> recalled = memory.recall(goal, 5);
-        return recalled.isEmpty() ? "" : String.join("\n", recalled);
+    /**
+     * 组装注入规划器的知识上下文（按优先级置顶排列）：
+     * 1) 优质经验 + 人工标注（由 {@link ExperienceRetriever} 召回，仅「重复≥2 次且经人工认可」的经验 +
+     *    全部人工标注，作为最高优先遵循信号）；
+     * 2) 通用长期记忆（知识图谱历史，作为背景参考）。
+     */
+    private String knowledgeContext(String goal) {
+        StringBuilder sb = new StringBuilder();
+        String quality = experienceRetriever.retrieve(goal, 6);
+        if (!quality.isBlank()) {
+            sb.append("【已沉淀的优质经验与人工标注（重复≥2 次且经人工认可，优先遵循）】\n")
+                    .append(quality).append("\n\n");
+        }
+        List<String> recall = memory.recall(goal, 5);
+        if (!recall.isEmpty()) {
+            sb.append("【历史记忆（背景参考）】\n").append(String.join("\n", recall));
+        }
+        return sb.toString().trim();
+    }
+
+    /** 发射「本次规划注入的知识」事件，供控制台在时间线上显式展示优质经验是否真正参与。 */
+    private void emitKnowledgeInjected(List<AgentEvent> events, AgentEventSink sink, String runId, String context) {
+        long injected = Arrays.stream((context == null ? "" : context).split("\n"))
+                .filter(l -> l.startsWith("- ")).count();
+        String snippet = context == null ? "" : context;
+        if (snippet.length() > 1500) {
+            snippet = snippet.substring(0, 1500) + "…（截断）";
+        }
+        emit(events, sink, "run:knowledge", runId, Map.of(
+                "injectedCount", injected,
+                "injected", snippet));
     }
 
     private Map<String, Object> electionData(int round, String managerRef, ElectionEntity e) {

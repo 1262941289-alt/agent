@@ -29,6 +29,13 @@ public class BrowserController {
         return resp(browser.navigate(body.getOrDefault("url", "")));
     }
 
+    @PostMapping("/u9-login")
+    public Map<String, Object> u9Login(@RequestBody(required = false) Map<String, String> body) {
+        String account = body == null ? null : body.get("account");
+        String password = body == null ? null : body.get("password");
+        return resp(browser.u9Login(account, password));
+    }
+
     @GetMapping("/text")
     public Map<String, Object> text(@RequestParam(defaultValue = "8000") int maxChars) {
         return resp(browser.bodyText(maxChars));

@@ -1,6 +1,7 @@
 package com.example.agent.agent;
 
 import com.example.agent.capability.AgentContext;
+import com.example.agent.tools.GuardedToolCallback;
 import com.example.agent.util.PromptRenderer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,6 +55,7 @@ public class ReflectionLoop {
         List<Reflection> trail = new ArrayList<>();
 
         for (int i = 0; i < MAX_ITERATIONS; i++) {
+            GuardedToolCallback.resetTurn();
             lastOutput = workerClient.prompt()
                     .system(systemPrompt)
                     .user(context)

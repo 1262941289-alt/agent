@@ -44,6 +44,11 @@ public class BrowserTools {
         return browser.click(selector);
     }
 
+    @Tool(description = "按可见文字点击按钮/菜单项/链接（如 clickButton('查找')、clickButton('物料清单')），自动跨 iframe 匹配第一个文本相等或包含的元素。定位工具栏按钮或导航菜单时优先用这个，不要反复 getText 探测")
+    public String clickButton(@ToolParam(description = "元素可见文字，如 '查找'、'物料清单'、'确定'") String text) {
+        return browser.clickByText(text);
+    }
+
     @Tool(description = "向匹配 CSS 选择器的输入框/文本域填写文本")
     public String fill(@ToolParam(description = "CSS 选择器") String selector,
                        @ToolParam(description = "要填写的文本") String value) {
@@ -64,6 +69,17 @@ public class BrowserTools {
     @Tool(description = "返回当前页面 URL")
     public String currentUrl() {
         return browser.currentUrl();
+    }
+
+    @Tool(description = "【页面探针】扫描当前页面全部 iframe，一次性返回结构化布局骨架：输入框/按钮/链接/下拉/表格表头与前几行/菜单导航。刚打开未知页面、想快速判断数据在哪、从哪个控件入手时优先用它，比逐个 getText 探测更高效")
+    public String probePage() {
+        return browser.probePage();
+    }
+
+    @Tool(description = "用友 U9 自动登录（内置登录状态机，会自动区分有无图形验证码）：用配置/入参的账号密码登录 U9。返回会明确告知四种情形之一：①无验证码→已自动登录；②登录页自带图形验证码→需人工输入；③提交后要求验证码→需人工输入；④已登录→跳过。只有返回里明确说「验证码/人工」时才需要人工介入，不要因登录页有输入框就误判需要验证码")
+    public String u9Login(@ToolParam(description = "账号，默认用配置 sk-agent.u9.account，可留空") String account,
+                          @ToolParam(description = "密码，默认用配置 sk-agent.u9.password，可留空") String password) {
+        return browser.u9Login(account, password);
     }
 
     @Tool(description = "对当前页面截图并保存到本地文件")

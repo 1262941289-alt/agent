@@ -56,4 +56,25 @@ public class ShortTermMemory {
         }
         return sb.toString();
     }
+
+    /** 清空指定会话的上下文，返回被移除的条目数；会话不存在返回 0 */
+    public int clear(String conversationId) {
+        if (conversationId == null || conversationId.isBlank()) {
+            return 0;
+        }
+        Deque<String> queue = conversations.remove(conversationId);
+        return queue == null ? 0 : queue.size();
+    }
+
+    /** 清空所有会话的上下文，返回被移除的会话数 */
+    public int clearAll() {
+        int size = conversations.size();
+        conversations.clear();
+        return size;
+    }
+
+    /** 当前保留的会话数量 */
+    public int size() {
+        return conversations.size();
+    }
 }

@@ -22,20 +22,38 @@ services:
       timeout: 5s
       retries: 10
 
+  # 向量化推理边车（经验/标注语义召回）。服务不可用时 Java 侧 fail-open 回退 bigram，非硬依赖。
+  vector-service:
+    build: ./python
+    restart: unless-stopped
+    # 默认不对外暴露端口，仅 compose 内部网络按服务名可达；如需宿主机调试可取消注释
+    # ports:
+    #   - "8000:8000"
+
   app:
     build: .
     restart: unless-stopped
     depends_on:
       mysql:
         condition: service_healthy
+      vector-service:
+        condition: service_started
     environment:
       DB_URL: jdbc:mysql://mysql:3306/sk_agent?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
       # 应用以最小权限业务账号连接，而不是数据库 root
       DB_USERNAME: ${MYSQL_USER:-sk_app}
       DB_PASSWORD: ${MYSQL_PASSWORD:?请在 .env 设置 MYSQL_PASSWORD}
+      # 主模型通道（DeepSeek）
       AI_BASE_URL: ${AI_BASE_URL:-https://api.deepseek.com}
       AI_API_KEY: ${AI_API_KEY:-}
       AI_MODEL: ${AI_MODEL:-deepseek-chat}
+      # 备用通道（SiliconFlow）+ 账号池多 key 主备降级
+      SF_BASE_URL: ${SF_BASE_URL:-https://api.siliconflow.cn}
+      SF_API_KEY_1: ${SF_API_KEY_1:-}
+      SF_API_KEY_2: ${SF_API_KEY_2:-}
+      SF_API_KEY_3: ${SF_API_KEY_3:-}
+      # 向量边车地址：指向 compose 内部服务名 vector-service
+      VECTOR_BASE_URL: http://vector-service:8000
     ports:
       - "8080:8080"
 
